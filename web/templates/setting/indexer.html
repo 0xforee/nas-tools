@@ -71,9 +71,14 @@
       {{ FORM.gen_form_config_elements(Type, Config, Indexer.config) }}
       </div>
       <div class="modal-footer">
-        <button onclick="test_indexer_config('{{ Type }}')" id="{{ Type }}_test_btn" class="btn me-auto">
+        <button onclick="test_indexer_config('{{ Type }}')" id="{{ Type }}_test_btn" class="btn">
           测试
         </button>
+        {% if Config.get(Type) %}
+          <button onclick="javascript:window.open('{{Config.get(Type).get('host')}}', '_blank');" id="goto_btn" class="btn me-auto">
+            跳转
+          </button>
+        {% endif %}
         <button onclick="save_indexer_config('{{ Type }}')" id="{{ Type }}_save_btn" class="btn btn-primary">
           确定
         </button>

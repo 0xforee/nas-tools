@@ -46,9 +46,14 @@
       {{ FORM.gen_form_config_elements(Type, Config, MediaServer.config) }}
       </div>
       <div class="modal-footer">
-        <a href="javascript:test_mediaserver_config('{{ Type }}')" id="{{ Type }}_test_btn" class="btn me-auto">
+        <a href="javascript:test_mediaserver_config('{{ Type }}')" id="{{ Type }}_test_btn" class="btn">
           测试
         </a>
+        {% if Config.get(Type) %}
+        <button onclick="javascript:window.open('{{Config.get(Type).get('host')}}', '_blank');" id="goto_btn" class="btn me-auto">
+          跳转
+        </button>
+        {% endif %}
         <a href="javascript:save_mediaserver_config('{{ Type }}')" id="{{ Type }}_save_btn" class="btn btn-primary">
           确定
         </a>
