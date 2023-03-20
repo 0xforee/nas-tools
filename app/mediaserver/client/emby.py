@@ -812,3 +812,5 @@ class Emby(_IMediaClient):
             ExceptionUtils.exception_traceback(e)
             log.error(f"【{self.client_name}】连接Users/Items/Latest出错：" + str(e))
         return []
+    def get_host(self):
+        return self._host

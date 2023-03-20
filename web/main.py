@@ -280,6 +280,7 @@ def index():
 
     # 最近添加
     Latests = MediaServer().get_latest()
+    Host = MediaServer().get_host()
 
     return render_template("index.html",
                            ServerSucess=ServerSucess,
@@ -298,7 +299,8 @@ def index():
                            LibrarySyncConf=LibrarySyncConf,
                            LibraryManageConf=LibraryManageConf,
                            Resumes=Resumes,
-                           Latests=Latests
+                           Latests=Latests,
+                           Host = Host
                            )
 
 

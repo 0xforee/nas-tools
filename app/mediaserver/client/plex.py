@@ -606,3 +606,5 @@ class Plex(_IMediaClient):
                 "link": link
             })
         return ret_resume
+    def get_host(self):
+        return self._host

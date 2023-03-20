@@ -178,3 +178,9 @@ class _IMediaClient(metaclass=ABCMeta):
                 return ""
         else:
             return f"img?url={quote(url)}"
+    @abstractmethod
+    def get_host(self):
+        """
+        获取 host 地址，直接跳转
+        """
+        pass

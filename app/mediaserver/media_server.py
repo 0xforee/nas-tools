@@ -393,3 +393,5 @@ class MediaServer:
         if not self.server:
             return []
         return self.server.get_latest(num=num)
+    def get_host(self):
+        return self.server.get_host()

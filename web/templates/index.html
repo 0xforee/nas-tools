@@ -7,9 +7,9 @@
       {% for item in LibraryManageConf %}
         {% if item['name'] == '我的媒体库' and item['selected'] %}
           <div class="col">
-            <h2 class="page-title">
-              我的媒体库
-            </h2>
+            <a href="{{ Host }}" class="page-title" target="_blank">
+              我的媒体库 - {{ MediaServerType }}
+            </a>
           </div>
         {% endif %}
       {% endfor %}
