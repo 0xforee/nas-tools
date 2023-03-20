@@ -80,6 +80,8 @@
                         {{ SVG.dots_vertical() }}
                       </a>
                       <div class="dropdown-menu dropdown-menu-end">
+                        <a href="{{ Torrent.site_url }}" id="view_btn" target="_blank"
+                          class="dropdown-item">查看</a>
                         <a href="javascript:start_pt_download('{{ Torrent.id }}')" id="start_btn_{{ Torrent.id }}"
                           class="dropdown-item"
                           style="{% if Torrent.state == 'Downloading' %}display:none{% endif %}">开始</a>

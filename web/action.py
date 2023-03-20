@@ -3798,9 +3798,11 @@ class WebAction:
                 poster_path = download_info.POSTER
                 se = download_info.SE
             else:
+                site_url = torrent.get("site_url")
                 media_info = MediaHander.get_media_info(title=name)
                 if not media_info:
                     torrent.update({
+                        "site_url": site_url,
                         "title": name,
                         "image": ""
                     })
@@ -3818,6 +3820,7 @@ class WebAction:
                 title = "%s %s" % (name, se)
 
             torrent.update({
+                "site_url": site_url,
                 "title": title,
                 "image": poster_path or ""
             })

@@ -61,6 +61,15 @@
               {{ Attr.config.get("host") }}:{{ Attr.config.get("port") }}
             {% endif %}
           </div>
+
+<!--          <td> TODO 0xforee323: downloader link-->
+<!--                    <a class="d-none d-md-inline-block" href="{% if Attr.config.get('host') %} {{ Attr.config.get('host') }}:{{Attr.config.get('port')}} {% endif %} " >-->
+<!--                    {% if Attr.config.get("host")  %}-->
+<!--                      {{ Attr.config.get("host") }}:{{ Attr.config.get("port") }}-->
+<!--                    {% endif %}-->
+<!--                    </a>-->
+<!--                  </td>-->
+
           <div class="text-muted mt-2">
             <small>
               {% if Attr.transfer == 1 %}

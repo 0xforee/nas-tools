@@ -624,6 +624,7 @@ class Qbittorrent(_IDownloadClient):
                 'name': torrent.get('name'),
                 'speed': speed,
                 'state': state,
+                'site_url': self.host.rstrip('/') + ':' + str(self.port).lstrip('/'),
                 'progress': progress
             })
         return DispTorrents

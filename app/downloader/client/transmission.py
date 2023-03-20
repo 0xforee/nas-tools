@@ -528,6 +528,7 @@ class Transmission(_IDownloadClient):
                 'name': torrent.name,
                 'speed': speed,
                 'state': state,
+                'site_url': self.host.rstrip('/') + ':' + str(self.port).lstrip('/'),
                 'progress': progress
             })
         return DispTorrents
