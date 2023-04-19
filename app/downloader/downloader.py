@@ -1087,13 +1087,15 @@ class Downloader:
             for file_id, torrent_file in enumerate(torrent_files):
                 ret_files.append({
                     "id": file_id,
-                    "name": torrent_file.name
+                    "name": torrent_file.name,
+                    "size": torrent_file.size
                 })
         elif _client.get_type() == DownloaderType.QB:
             for torrent_file in torrent_files:
                 ret_files.append({
                     "id": torrent_file.get("index"),
-                    "name": torrent_file.get("name")
+                    "name": torrent_file.get("name"),
+                    "size": torrent_file.get("size")
                 })
 
         return ret_files
@@ -1485,3 +1487,75 @@ class Downloader:
         )
         self.init_config()
         return ret
+    def fraction_download(self, size, downloader_id, download_id):
+        """
+        做种使用文件部分下载，开启最小化文件做种模式后使用
+        size: rss 中种子总大小，后续会给出真实使用的大小
+        return:
+        result: 当前种子是否要触发下载
+        real_size: 当前种子触发下载后，真实下载多大
+        """
+        log.info(f"【Downloader】部分下载开始")
+        _client = self.__get_client(downloader_id)
+        torrent_files = self.get_files(tid=download_id, downloader_id=downloader_id)
+        downloader_conf = self.get_downloader_conf(downloader_id)
+        if not torrent_files:
+            return False, 0
+
+        # 根据规则挑选合适的文件
+        # 1. 0-10GB，放行
+        # 2. 10-100GB，不超过 1/5
+        # 3. 100-无穷大，不超过1/15，且文件体积不超过 100GB
+        gb_size = size / 1024 / 1024 / 1024
+        limit_size = 0
+        if gb_size < 10 :
+            limit_size = size
+        elif gb_size < 100:
+            limit_size = size / 5
+        else:
+            limit_size = min(100 * 1024 * 1024 * 1024, size / 15)
+
+        # for qb
+        priority_info = {
+            "high": [],
+            "mid": [],
+            "normal": [],
+            "donotdownload": []
+        }
+        # for transmission
+        transmission_priority_info = {}
+
+        cur_size = 0
+        for torrent_file in torrent_files:
+            file_id = torrent_file.get("id")
+            file_size = torrent_file.get("size")
+            cur_size += file_size
+
+            if cur_size > limit_size:
+                priority_info['donotdownload'].append(file_id)
+                transmission_priority_info[file_id] = {'priority': 'low', 'selected': False}
+                # 加了当前文件超标了，不添加了，继续往下找合适的(多加的file_size记得减回去）
+                cur_size -= file_size
+                continue
+
+            if cur_size < limit_size/3:
+                priority_info['high'].append(file_id)
+                transmission_priority_info[file_id] = {'priority': 'high', 'selected': True}
+            elif cur_size < limit_size * 2 /3:
+                priority_info['mid'].append(file_id)
+                transmission_priority_info[file_id] = {'priority': 'normal', 'selected': True}
+            elif cur_size <= limit_size:
+                priority_info['normal'].append(file_id)
+                transmission_priority_info[file_id] = {'priority': 'low', 'selected': True}
+
+        log.info(f"【Downloader】部分下载添加文件: %s " % priority_info)
+
+        if downloader_conf.get("type") == "transmission":
+            _client.set_files(file_info={download_id: transmission_priority_info})
+        elif downloader_conf.get("type") == "qbittorrent":
+            _client.set_files(torrent_hash=download_id, file_ids=priority_info['donotdownload'], priority=0)
+            _client.set_files(torrent_hash=download_id, file_ids=priority_info['normal'], priority=1)
+            _client.set_files(torrent_hash=download_id, file_ids=priority_info['mid'], priority=6)
+            _client.set_files(torrent_hash=download_id, file_ids=priority_info['high'], priority=7)
+
+        return True, cur_size

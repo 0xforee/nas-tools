@@ -684,12 +684,14 @@ class BrushTask(object):
         _, download_id, retmsg = self.downloader.download(
             media_info=meta_info,
             tag=tag,
+            is_paused=True,
             downloader_id=downloader_id,
             download_dir=download_dir,
             download_setting="-2",
             download_limit=download_limit,
             upload_limit=upload_limit
         )
+
         if not download_id:
             # 下载失败
             log.warn(f"【Brush】{taskname} 添加下载任务出错：{title}，"
@@ -697,8 +699,25 @@ class BrushTask(object):
                      f"种子链接：{enclosure}")
             return False
         else:
-            # 下载成功
+            # 下载种子文件成功，开始部分下载功能
             log.info("【Brush】成功添加下载：%s" % title)
+
+            ## 第二种方案：先尝试添加下载任务，（下载后暂停），然后计算文件大小规则，决定是否要开启，还是删除任务
+            # 针对原有逻辑改动较少，可移植性大大增加
+            # 设置优先级
+            result, real_size = self.downloader.fraction_download(size, downloader_id, download_id)
+
+            if result:
+                # 开启下载
+                self.downloader.start_torrents(downloader_id, download_id)
+            else:
+                # 部分下载出现异常：获取文件列表失败，删除种子
+                self.downloader.delete_torrents(downloader_id, download_id)
+                log.warn(f"【Brush】{taskname} 添加下载任务出错：{title}，"
+                         f"错误原因：{'部分下载：获取种子文件列表失败'}，"
+                         f"种子链接：{enclosure}")
+                return False
+
             if sendmessage:
                 # 下载器参数
                 downloader_cfg = self.downloader.get_downloader_conf(downloader_id)
@@ -707,7 +726,7 @@ class BrushTask(object):
                 msg_title = f"【刷流任务 {taskname} 新增下载】"
                 msg_text = f"下载器名：{downlaod_name}\n" \
                            f"种子名称：{title}\n" \
-                           f"种子大小：{StringUtils.str_filesize(size)}\n" \
+                           f"种子大小：{StringUtils.str_filesize(real_size)}\n" \
                            f"添加时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}"
                 self.message.send_brushtask_added_message(title=msg_title, text=msg_text)
 
@@ -717,7 +736,7 @@ class BrushTask(object):
                                                   enclosure=enclosure,
                                                   downloader=downloader_id,
                                                   download_id=download_id,
-                                                  size=size):
+                                                  size=real_size):
             # 更新下载次数
             self.dbhelper.add_brushtask_download_count(brush_id=taskid)
         else:
