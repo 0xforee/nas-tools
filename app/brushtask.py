@@ -243,11 +243,11 @@ class BrushTask(object):
                 # 发布时间
                 pubdate = res.get('pubdate')
 
-                # if enclosure not in self._torrents_cache:
-                #     self._torrents_cache.append(enclosure)
-                # else:
-                #     log.debug("【Brush】%s 已处理过" % torrent_name)
-                #     continue
+                if enclosure not in self._torrents_cache:
+                    self._torrents_cache.append(enclosure)
+                else:
+                    log.debug("【Brush】%s 已处理过" % torrent_name)
+                    continue
 
                 # 检查种子是否符合选种规则
                 if not self.__check_rss_rule(rss_rule=rss_rule,
