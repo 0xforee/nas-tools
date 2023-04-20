@@ -684,18 +684,21 @@ class BrushTask(object):
                                    enclosure=enclosure,
                                    size=size)
 
-        # # 获取 download_dir 目录，防止获取目录时候的磁盘检查，将磁盘检查挪到部分下载中
-        # downloader_conf = self.downloader.get_downloader_conf(downloader_id)
-        # download_dirs = downloader_conf.get("download_dir")
-        # saved_path = ""
-        # if not downloader_conf:
-        #     log.error("请检查下载设置所选下载器是否有效且启用1")
-        #     return False
-        # if len(download_dirs) > 0:
-        #     saved_path = download_dirs[0].get('save_path')
-        # else:
-        #     log.error("请检查下载设置所选下载器是否有效且启用2")
-        #     return False
+
+        # 获取 download_dir 目录，防止获取目录时候的磁盘检查，将磁盘检查挪到部分下载中
+        downloader_conf = self.downloader.get_downloader_conf(downloader_id)
+        download_dirs = downloader_conf.get("download_dir")
+        save_path = ""
+        container_path = ""
+        if not downloader_conf:
+            log.error("请检查下载设置所选下载器是否有效且启用1")
+            return False
+        if len(download_dirs) > 0:
+            save_path = download_dirs[0].get('save_path')
+            container_path = download_dirs[0].get('container_path')
+        else:
+            log.error("请检查下载设置所选下载器是否有效且启用2")
+            return False
 
         _, download_id, retmsg = self.downloader.download(
             media_info=meta_info,
@@ -722,7 +725,7 @@ class BrushTask(object):
             ## 第二种方案：先尝试添加下载任务，（下载后暂停），然后计算文件大小规则，决定是否要开启，还是删除任务
             # 针对原有逻辑改动较少，可移植性大大增加
             # 设置优先级
-            result, real_size = self.downloader.fraction_download(size, saved_path, downloader_id, download_id)
+            result, real_size = self.downloader.fraction_download(size, container_path, downloader_id, download_id)
 
             if result:
                 # 开启下载
