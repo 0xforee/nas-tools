@@ -1210,10 +1210,13 @@ class Downloader:
                 if not attr:
                     continue
                 if attr.get("type") and attr.get("type") != media.type.value:
+                    log.info(f'continue 1')
                     continue
                 if attr.get("category") and attr.get("category") != media.category:
+                    log.info(f'continue 2')
                     continue
                 if not attr.get("save_path") and not attr.get("label"):
+                    log.info(f'continue 3')
                     continue
                 if (attr.get("container_path") or attr.get("save_path")) \
                         and os.path.exists(attr.get("container_path") or attr.get("save_path")) \
@@ -1223,6 +1226,7 @@ class Downloader:
                 ) < NumberUtils.get_size_gb(
                     StringUtils.num_filesize(media.size)
                 ):
+                    log.info(f'continue 4')
                     continue
                 return {
                     "path": attr.get("save_path"),
