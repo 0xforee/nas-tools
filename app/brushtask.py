@@ -724,16 +724,16 @@ class BrushTask(object):
             # 设置优先级
             result, real_size = self.downloader.fraction_download(size, saved_path, downloader_id, download_id)
 
-            # if result:
-            #     # 开启下载
-            #     self.downloader.start_torrents(downloader_id, download_id)
-            # else:
-            #     # 部分下载出现异常：获取文件列表失败，删除种子
-            #     self.downloader.delete_torrents(downloader_id, download_id)
-            #     log.warn(f"【Brush】{taskname} 添加下载任务出错：{title}，"
-            #              f"错误原因：{'部分下载：获取种子文件列表失败'}，"
-            #              f"种子链接：{enclosure}")
-            #     return False
+            if result:
+                # 开启下载
+                self.downloader.start_torrents(downloader_id, download_id)
+            else:
+                # 部分下载出现异常：获取文件列表失败，删除种子
+                self.downloader.delete_torrents(downloader_id, download_id)
+                log.warn(f"【Brush】{taskname} 添加下载任务出错：{title}，"
+                         f"错误原因：{'部分下载：获取种子文件列表失败'}，"
+                         f"种子链接：{enclosure}")
+                return False
 
             if sendmessage:
                 # 下载器参数
@@ -747,17 +747,17 @@ class BrushTask(object):
                            f"添加时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}"
                 self.message.send_brushtask_added_message(title=msg_title, text=msg_text)
 
-        # # 插入种子数据
-        # if self.dbhelper.insert_brushtask_torrent(brush_id=taskid,
-        #                                           title=title,
-        #                                           enclosure=enclosure,
-        #                                           downloader=downloader_id,
-        #                                           download_id=download_id,
-        #                                           size=real_size):
-        #     # 更新下载次数
-        #     self.dbhelper.add_brushtask_download_count(brush_id=taskid)
-        # else:
-        #     log.info("【Brush】%s 已下载过" % title)
+        # 插入种子数据
+        if self.dbhelper.insert_brushtask_torrent(brush_id=taskid,
+                                                  title=title,
+                                                  enclosure=enclosure,
+                                                  downloader=downloader_id,
+                                                  download_id=download_id,
+                                                  size=real_size):
+            # 更新下载次数
+            self.dbhelper.add_brushtask_download_count(brush_id=taskid)
+        else:
+            log.info("【Brush】%s 已下载过" % title)
 
         return True
 
