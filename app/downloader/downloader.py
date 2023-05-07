@@ -1556,7 +1556,7 @@ class Downloader:
                 priority_info['normal'].append(file_id)
                 transmission_priority_info[file_id] = {'priority': 'low', 'selected': True}
 
-        log.info(f"【Downloader】部分下载添加文件: %s " % priority_info)
+        log.info(f"【Downloader】部分下载添加文件: {priority_info}, 限制大小: {limit_size}, 磁盘剩余空间: {free_space} ")
 
         if downloader_conf.get("type") == "transmission":
             _client.set_files(file_info={download_id: transmission_priority_info})
