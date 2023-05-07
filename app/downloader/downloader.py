@@ -1503,7 +1503,7 @@ class Downloader:
         torrent_files = self.get_files(tid=download_id, downloader_id=downloader_id)
         downloader_conf = self.get_downloader_conf(downloader_id)
         if not torrent_files:
-            return False, 0
+            return False, 0, "torrent content files get error"
 
         # 根据规则挑选合适的文件
         # 1. 0-10GB，放行
@@ -1566,4 +1566,8 @@ class Downloader:
             _client.set_files(torrent_hash=download_id, file_ids=priority_info['mid'], priority=6)
             _client.set_files(torrent_hash=download_id, file_ids=priority_info['high'], priority=7)
 
-        return True, cur_size
+        # 如果没有找到合适的文件，删除这个任务
+        if cur_size == 0:
+            return False, 0, "torrent match file size is 0"
+
+        return True, cur_size, "success"

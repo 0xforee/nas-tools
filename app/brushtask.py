@@ -725,16 +725,16 @@ class BrushTask(object):
             ## 第二种方案：先尝试添加下载任务，（下载后暂停），然后计算文件大小规则，决定是否要开启，还是删除任务
             # 针对原有逻辑改动较少，可移植性大大增加
             # 设置优先级
-            result, real_size = self.downloader.fraction_download(size, container_path, downloader_id, download_id)
+            result, real_size, fraction_retmsg = self.downloader.fraction_download(size, container_path, downloader_id, download_id)
 
             if result:
                 # 开启下载
                 self.downloader.start_torrents(downloader_id, download_id)
             else:
-                # 部分下载出现异常：获取文件列表失败，删除种子
+                # 部分下载出现异常：获取文件列表失败或者没有找到合适 size 的文件，删除种子
                 self.downloader.delete_torrents(downloader_id, download_id)
                 log.warn(f"【Brush】{taskname} 添加下载任务出错：{title}，"
-                         f"错误原因：{'部分下载：获取种子文件列表失败'}，"
+                         f"错误原因：'部分下载：{fraction_retmsg}，"
                          f"种子链接：{enclosure}")
                 return False
 
