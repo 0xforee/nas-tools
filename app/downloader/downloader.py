@@ -1490,6 +1490,19 @@ class Downloader:
         )
         self.init_config()
         return ret
+    def set_downloadspeed_limit(self, downloader_id, torrent_ids, limit):
+        """
+        设置种子的下载限速 kb/s
+        """
+        log.info(f"【Downloader】设置种子: %s 下载限速 %s" % (torrent_ids, limit))
+        if not downloader_id:
+            return
+        _client = self.__get_client(downloader_id)
+        if not _client:
+            return
+
+        _client.set_downloadspeed_limit(torrent_ids, limit)
+
     def fraction_download(self, size, container_path, downloader_id, download_id):
         """
         做种使用文件部分下载，开启最小化文件做种模式后使用

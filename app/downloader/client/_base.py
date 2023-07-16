@@ -186,3 +186,8 @@ class _IDownloadClient(metaclass=ABCMeta):
         下载控制：重新校验
         """
         pass
+    def set_downloadspeed_limit(self, ids, limit):
+        """
+        设置速度限制
+        """
+        pass

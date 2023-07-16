@@ -272,6 +272,17 @@ class BrushTask(object):
                 if self.is_torrent_handled(enclosure=enclosure):
                     log.info("【Brush】%s 已在刷流任务中" % torrent_name)
                     continue
+
+                # 检查种子种包含的免费限时信息
+                torrent_attr = self.siteconf.check_torrent_attr(torrent_url=page_url,
+                                                                cookie=cookie,
+                                                                ua=ua,
+                                                                proxy=site_proxy)
+                free_deadline = torrent_attr.get("free_deadline")
+                tags = []
+                if free_deadline:
+                    tags.append("ddl:" + free_deadline)
+
                 # 开始下载
                 log.debug("【Brush】%s 符合条件，开始下载..." % torrent_name)
                 if self.__download_torrent(taskinfo=taskinfo,
@@ -279,7 +290,9 @@ class BrushTask(object):
                                            site_info=site_info,
                                            title=torrent_name,
                                            enclosure=enclosure,
-                                           size=size):
+                                           size=size,
+                                           tags=tags
+                                           ):
                     # 计数
                     success_count += 1
                     # 添加种子后不能超过最大下载数量
@@ -502,6 +515,31 @@ class BrushTask(object):
                                                     taskid,
                                                     torrent_id))
 
+                    # 判断是否超过免费截止
+                    tags = torrent_info.get("tags").split(",")
+                    ddl = ""
+                    if tags:
+                        for t in tags:
+                            if t and t.find("ddl:") != -1:
+                                ddl = t.strip("ddl:")
+                                break
+
+                    if ddl:
+                        pattern = "%Y%m%d_%H%M"
+                        ddl_time = datetime.strptime(ddl, pattern)
+                        if datetime.now() >= ddl_time:
+                            # reach ddl
+                            log.info(
+                                "【Brush】%s 已达到限免时间：开启下载限速 1kb/s ..." % (torrent.get('name')))
+                            if sendmessage:
+                                title = "【刷流任务 {} 限免结束】".format(task_name)
+                                msg = "限免截止时间：{}\n种子名称：{}".format(ddl, torrent.get('name'))
+                                self.message.send_custom_message(title, msg)
+
+                            # 设置下载限速为1kb
+                            self.downloader.set_downloadspeed_limit(downloader_id, torrent_id, 1)
+
+
                 # 手工删除的种子，清除对应记录
                 if remove_torrent_ids:
                     log.info("【Brush】任务 %s 的这些下载任务在下载器中不存在，将删除任务记录：%s" % (
@@ -647,7 +685,8 @@ class BrushTask(object):
                            site_info,
                            title,
                            enclosure,
-                           size
+                           size,
+                           tags,
                            ):
         """
         添加下载任务，更新任务数据
@@ -678,6 +717,9 @@ class BrushTask(object):
                 tag += ["已整理"]
             else:
                 tag = ["已整理"]
+        # 追加免费截止标记
+        tag.extend(tags)
+
         # 开始下载
         meta_info = MetaInfo(title=title)
         meta_info.set_torrent_info(site=site_info.get("name"),
@@ -1001,6 +1043,8 @@ class BrushTask(object):
             # 添加时间
             add_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(torrent.get("added_on") or 0))
 
+            # tag
+            tags = torrent.get("tags")
         else:
 
             # ID
@@ -1036,6 +1080,8 @@ class BrushTask(object):
             # 添加时间
             add_time = time.strftime('%Y-%m-%d %H:%M:%S',
                                      time.localtime(torrent.date_added.timestamp() if torrent.date_added else 0))
+            # tags
+            tags = torrent.labels
 
         return {
             "id": torrent_id,
@@ -1047,7 +1093,8 @@ class BrushTask(object):
             "iatime": iatime,
             "dltime": dltime,
             "total_size": total_size,
-            "add_time": add_time
+            "add_time": add_time,
+            "tags": tags if tags else ""
         }
 
     def stop_service(self):
