@@ -32,6 +32,7 @@ class BrushTask(object):
     _scheduler = None
     _brush_tasks = {}
     _torrents_cache = []
+    _torrents_free_limit_cache = []
     _qb_client = "qbittorrent"
     _tr_client = "transmission"
 
@@ -514,30 +515,38 @@ class BrushTask(object):
                             update_torrents.append(("%s,%s" % (uploaded, downloaded),
                                                     taskid,
                                                     torrent_id))
+                    # 不删种的情况下处理限速
+                    else:
+                        # 限免限速的处理只一次
+                        if torrent_id not in self._torrents_free_limit_cache:
+                            self._torrents_free_limit_cache.append(torrent_id)
+                        else:
+                            log.debug("【Brush】%s 限速已处理过" % torrent_info.get("name"))
+                            continue
 
-                    # 判断是否超过免费截止
-                    tags = torrent_info.get("tags").split(",")
-                    ddl = ""
-                    if tags:
-                        for t in tags:
-                            if t and t.find("ddl:") != -1:
-                                ddl = t.strip("ddl:")
-                                break
+                        # 判断是否超过免费截止
+                        tags = torrent_info.get("tags").split(",")
+                        ddl = ""
+                        if tags:
+                            for t in tags:
+                                if t and t.find("ddl:") != -1:
+                                    ddl = t.strip("ddl:")
+                                    break
 
-                    if ddl:
-                        pattern = "%Y%m%d_%H%M"
-                        ddl_time = datetime.strptime(ddl, pattern)
-                        if datetime.now() >= ddl_time:
-                            # reach ddl
-                            log.info(
-                                "【Brush】%s 已达到限免时间：开启下载限速 1kb/s ..." % (torrent.get('name')))
-                            if sendmessage:
-                                title = "【刷流任务 {} 限免结束】".format(task_name)
-                                msg = "限免截止时间：{}\n种子名称：{}".format(ddl, torrent.get('name'))
-                                self.message.send_custom_message(title, msg)
+                        if ddl:
+                            pattern = "%Y%m%d_%H%M"
+                            ddl_time = datetime.strptime(ddl, pattern)
+                            if datetime.now() >= ddl_time:
+                                # reach ddl
+                                log.info(
+                                    "【Brush】%s 已达到限免时间：开启下载限速 1kb/s ..." % (torrent.get('name')))
+                                if sendmessage:
+                                    title = "【刷流任务 {} 限免结束】".format(task_name)
+                                    msg = "限免截止时间：{}\n种子名称：{}".format(ddl, torrent.get('name'))
+                                    self.message.send_custom_message(title, msg)
 
-                            # 设置下载限速为1kb
-                            self.downloader.set_downloadspeed_limit(downloader_id, torrent_id, 1)
+                                # 设置下载限速为1kb
+                                self.downloader.set_downloadspeed_limit(downloader_id, torrent_id, 1)
 
 
                 # 手工删除的种子，清除对应记录
