@@ -542,8 +542,8 @@ class BrushTask(object):
                                     "【Brush】%s 已达到限免时间：开启下载限速 1kb/s ..." % (torrent.get('name')))
                                 if sendmessage:
                                     title = "【刷流任务 {} 限免结束】".format(task_name)
-                                    msg = "限免截止时间：{}\n种子名称：{}".format(ddl, torrent.get('name'))
-                                    self.message.send_custom_message(title, msg)
+                                    msg = "限免结束，开启下载限速 1B/s\n限免截止时间：{}\n种子名称：{}".format(ddl, torrent.get('name'))
+                                    self.message.send_brushtask_remove_message(title, msg)
 
                                 # 设置下载限速为1kb
                                 self.downloader.set_downloadspeed_limit(downloader_id, torrent_id, 1)
