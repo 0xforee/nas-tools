@@ -1,7 +1,7 @@
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -536,13 +536,14 @@ class BrushTask(object):
                         if ddl:
                             pattern = "%Y%m%d_%H%M"
                             ddl_time = datetime.strptime(ddl, pattern)
-                            if datetime.now() >= ddl_time:
+                            # 删种检查间隔为5分钟，如果5分钟内限免结束了，提早结束下载，防止流量偷跑
+                            if (datetime.now() + timedelta(minutes=BRUSH_REMOVE_TORRENTS_INTERVAL/60)) >= ddl_time:
                                 # reach ddl
                                 log.info(
                                     "【Brush】%s 已达到限免时间：开启下载限速 1kb/s ..." % (torrent.get('name')))
                                 if sendmessage:
                                     title = "【刷流任务 {} 限免结束】".format(task_name)
-                                    msg = "限免结束，开启下载限速 1B/s\n限免截止时间：{}\n种子名称：{}".format(ddl, torrent.get('name'))
+                                    msg = "限免即将结束，开启下载限速 1B/s\n限免截止时间：{}\n种子名称：{}".format(ddl, torrent.get('name'))
                                     self.message.send_brushtask_remove_message(title, msg)
 
                                 # 设置下载限速为1kb
