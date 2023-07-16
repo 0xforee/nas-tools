@@ -176,14 +176,23 @@ class SiteConf:
         free_deadline_str = ""
         try:
             import re
-            free_deadline_reversed_pattern = r'分(\d+)時?时?(\d*)天?日?(\d*)'
-            result = re.search(free_deadline_reversed_pattern, deadline_str[::-1])
-            day = int(result.group(3)[::-1] if result.group(3) else 0)
-            hour = int(result.group(2)[::-1] if result.group(2) else 0)
-            min = int(result.group(1)[::-1] if result.group(1) else 0)
-            import datetime
-            res = datetime.datetime.now() + datetime.timedelta(days=day, hours=hour, minutes=min)
-            free_deadline_str = res.strftime("%Y%m%d_%H%M")
+            free_deadline_re_day_pattern = r'(\d+)[天|日]'
+            free_deadline_re_hour_pattern = r'(\d+)[時|时]'
+            free_deadline_re_minutes_pattern = r'(\d+)[分]'
+            day_result = re.search(free_deadline_re_day_pattern, deadline_str)
+            hour_result = re.search(free_deadline_re_hour_pattern, deadline_str)
+            minutes_result = re.search(free_deadline_re_minutes_pattern, deadline_str)
+            day_str = (day_result.group(1) if day_result and len(day_result.groups()) > 0 else "")
+            hour_str = (hour_result.group(1) if hour_result and len(hour_result.groups()) > 0 else "")
+            min_str = (minutes_result.group(1) if minutes_result and len(minutes_result.groups()) > 0 else "")
+
+            day = int(day_str if day_str else 0)
+            hour = int(hour_str if hour_str else 0)
+            min = int(min_str if min_str else 0)
+            if day > 0 or hour > 0 or min > 0:
+                import datetime
+                res = datetime.datetime.now() + datetime.timedelta(days=day, hours=hour, minutes=min)
+                free_deadline_str = res.strftime("%Y%m%d_%H%M")
         except Exception as err:
             ExceptionUtils.exception_traceback(err)
             # 如果没有限时信息，就直接crash掉了，返回空
