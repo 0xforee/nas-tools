@@ -518,38 +518,43 @@ class BrushTask(object):
                                                     torrent_id))
                     # 不删种的情况下处理限速
                     else:
-                        log.debug("【Brush】%s 检查限免限速" % torrent_info.get("name"))
-                        # 判断是否超过免费截止
-                        tags = torrent_info.get("tags").split(",")
-                        ddl = ""
-                        if tags:
-                            for t in tags:
-                                if t and t.find("ddl:") != -1:
-                                    ddl = t.strip("ddl:")
-                                    break
+                        try:
+                            log.debug("【Brush】%s 检查限免限速" % torrent.get("name"))
+                            # 判断是否超过免费截止
+                            tags = torrent_info.get("tags").split(",")
+                            ddl = ""
+                            if tags:
+                                for t in tags:
+                                    if t and t.find("ddl:") != -1:
+                                        ddl = t.strip("ddl:")
+                                        break
 
-                        if ddl:
-                            pattern = "%Y%m%d_%H%M"
-                            ddl_time = datetime.strptime(ddl, pattern)
-                            # 删种检查间隔为5分钟，如果5分钟内限免结束了，提早结束下载，防止流量偷跑
-                            if (datetime.now() + timedelta(minutes=BRUSH_REMOVE_TORRENTS_INTERVAL/60)) >= ddl_time:
-                                # 限免限速的处理只一次
-                                if torrent_id not in self._torrents_free_limit_cache:
-                                    self._torrents_free_limit_cache.append(torrent_id)
-                                else:
-                                    log.debug("【Brush】%s 限速已处理过" % torrent_info.get("name"))
-                                    continue
+                            if ddl:
+                                pattern = "%Y%m%d_%H%M"
+                                ddl_time = datetime.strptime(ddl, pattern)
+                                log.debug("【Brush】%s 限时为 %s: " % (torrent.get("name"), ddl))
+                                # 删种检查间隔为5分钟，如果5分钟内限免结束了，提早结束下载，防止流量偷跑
+                                if (datetime.now() + timedelta(minutes=BRUSH_REMOVE_TORRENTS_INTERVAL/60)) >= ddl_time:
+                                    # 限免限速的处理只一次
+                                    if torrent_id not in self._torrents_free_limit_cache:
+                                        self._torrents_free_limit_cache.append(torrent_id)
+                                    else:
+                                        log.debug("【Brush】%s 限速已处理过" % torrent.get("name"))
+                                        continue
 
-                                # reach ddl
-                                log.info(
-                                    "【Brush】%s 已达到限免时间：开启下载限速 1kb/s ..." % (torrent.get('name')))
-                                if sendmessage:
-                                    title = "【刷流任务 {} 限免结束】".format(task_name)
-                                    msg = "限免即将结束，开启下载限速 1B/s\n限免截止时间：{}\n种子名称：{}".format(ddl, torrent.get('name'))
-                                    self.message.send_brushtask_remove_message(title, msg)
+                                    # reach ddl
+                                    log.info(
+                                        "【Brush】%s 已达到限免时间：开启下载限速 1kb/s ..." % (torrent.get('name')))
+                                    if sendmessage:
+                                        title = "【刷流任务 {} 限免结束】".format(task_name)
+                                        msg = "限免即将结束，开启下载限速 1B/s\n限免截止时间：{}\n种子名称：{}".format(ddl, torrent.get('name'))
+                                        self.message.send_brushtask_remove_message(title, msg)
 
-                                # 设置下载限速为1kb
-                                self.downloader.set_downloadspeed_limit(downloader_id, torrent_id, 1)
+                                    # 设置下载限速为1kb
+                                    self.downloader.set_downloadspeed_limit(downloader_id, torrent_id, 1)
+                        except Exception as e:
+                            log.error("【Brush】，限时限免检查出了点问题")
+                            ExceptionUtils.exception_traceback(e)
 
 
                 # 手工删除的种子，清除对应记录
