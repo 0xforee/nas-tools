@@ -529,10 +529,10 @@ class BrushTask(object):
                                         ddl = t.strip("ddl:")
                                         break
 
+                            log.debug("【Brush】%s 限时为 %s: " % (torrent.get("name"), ddl))
                             if ddl:
                                 pattern = "%Y%m%d_%H%M"
                                 ddl_time = datetime.strptime(ddl, pattern)
-                                log.debug("【Brush】%s 限时为 %s: " % (torrent.get("name"), ddl))
                                 # 删种检查间隔为5分钟，如果5分钟内限免结束了，提早结束下载，防止流量偷跑
                                 if (datetime.now() + timedelta(minutes=BRUSH_REMOVE_TORRENTS_INTERVAL/60)) >= ddl_time:
                                     # 限免限速的处理只一次
