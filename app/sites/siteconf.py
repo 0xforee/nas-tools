@@ -135,11 +135,14 @@ class SiteConf:
             for xpath_str in xpath_strs.get("FREE"):
                 if html.xpath(xpath_str):
                     ret_attr["free"] = True
-            # 检测限时信息
+            # 检测限时信息，result为空表示未找到 限时信息
             try:
                 title_xpath_str = "//h1[@id='top']//span"
                 result = html.xpath(title_xpath_str)
-                free_ddl = self.__parse_free_deadline(result[0].text)
+                if len(result) > 0:
+                    free_ddl = self.__parse_free_deadline(result[0].text)
+                else:
+                    free_ddl = ""
                 ret_attr["free_deadline"] = free_ddl
             except Exception as err:
                 ExceptionUtils.exception_traceback(err)
