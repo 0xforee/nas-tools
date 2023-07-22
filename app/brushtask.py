@@ -125,6 +125,7 @@ class BrushTask(object):
                 "free": task.FREELEECH,
                 "rss_rule": eval(task.RSS_RULE),
                 "remove_rule": eval(task.REMOVE_RULE),
+                "fraction_rule": eval(task.FRACTION_RULE) if task.FRACTION_RULE else "",
                 "seed_size": task.SEED_SIZE,
                 "total_size": total_size,
                 "rss_url": task.RSSURL if task.RSSURL else site_info.get("rssurl"),
@@ -165,6 +166,7 @@ class BrushTask(object):
         site_id = taskinfo.get("site_id")
         rss_url = taskinfo.get("rss_url")
         rss_rule = taskinfo.get("rss_rule")
+        fraction_rule = taskinfo.get("fraction_rule")
         cookie = taskinfo.get("cookie")
         rss_free = taskinfo.get("free")
         downloader_id = taskinfo.get("downloader")
@@ -288,6 +290,7 @@ class BrushTask(object):
                 log.debug("【Brush】%s 符合条件，开始下载..." % torrent_name)
                 if self.__download_torrent(taskinfo=taskinfo,
                                            rss_rule=rss_rule,
+                                           fraction_rule=fraction_rule,
                                            site_info=site_info,
                                            title=torrent_name,
                                            enclosure=enclosure,
@@ -699,6 +702,7 @@ class BrushTask(object):
     def __download_torrent(self,
                            taskinfo,
                            rss_rule,
+                           fraction_rule,
                            site_info,
                            title,
                            enclosure,
@@ -709,6 +713,7 @@ class BrushTask(object):
         添加下载任务，更新任务数据
         :param taskinfo: 任务信息
         :param rss_rule: rss规则
+        :param fraction_rule: 部分下载规则
         :param site_info: 站点信息
         :param title: 种子名称
         :param enclosure: 种子地址
@@ -784,7 +789,7 @@ class BrushTask(object):
             ## 第二种方案：先尝试添加下载任务，（下载后暂停），然后计算文件大小规则，决定是否要开启，还是删除任务
             # 针对原有逻辑改动较少，可移植性大大增加
             # 设置优先级
-            result, real_size, fraction_retmsg = self.downloader.fraction_download(size, container_path, downloader_id, download_id)
+            result, real_size, fraction_retmsg = self.downloader.fraction_download(fraction_rule, size, container_path, downloader_id, download_id)
 
             if result:
                 # 开启下载

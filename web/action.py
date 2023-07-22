@@ -1979,6 +1979,9 @@ class WebAction:
         brushtask_pubdate = data.get("brushtask_pubdate")
         brushtask_upspeed = data.get("brushtask_upspeed")
         brushtask_downspeed = data.get("brushtask_downspeed")
+        frac_before_range = data.get("frac_before_range")
+        frac_before_percent = data.get("frac_before_percent")
+        frac_after_range = data.get("frac_after_range")
         # 选种规则
         rss_rule = {
             "free": brushtask_free,
@@ -2003,6 +2006,12 @@ class WebAction:
             "avg_upspeed": brushtask_avg_upspeed,
             "iatime": brushtask_iatime
         }
+        # 部分下载规则
+        fraction_rule = {
+            "frac_before_range": frac_before_range,
+            "frac_before_percent": frac_before_percent,
+            "frac_after_range": frac_after_range
+        }
         # 添加记录
         item = {
             "name": brushtask_name,
@@ -2020,6 +2029,7 @@ class WebAction:
             "state": brushtask_state,
             "rss_rule": rss_rule,
             "remove_rule": remove_rule,
+            "fraction_rule": fraction_rule,
             "sendmessage": brushtask_sendmessage
         }
         BrushTask().update_brushtask(brushtask_id, item)

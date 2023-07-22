@@ -1503,9 +1503,10 @@ class Downloader:
 
         _client.set_downloadspeed_limit(torrent_ids, limit)
 
-    def fraction_download(self, size, container_path, downloader_id, download_id):
+    def fraction_download(self, fraction_rule, size, container_path, downloader_id, download_id):
         """
         做种使用文件部分下载，开启最小化文件做种模式后使用
+        fraction_rule: 部分下载规则
         size: rss 中种子总大小，后续会给出真实使用的大小
         return:
         result: 当前种子是否要触发下载
@@ -1518,18 +1519,46 @@ class Downloader:
         if not torrent_files:
             return False, 0, "torrent content files get error"
 
-        # 根据规则挑选合适的文件
-        # 1. 0-10GB，放行
-        # 2. 10-100GB，不超过 1/5
-        # 3. 100-无穷大，不超过1/15，且文件体积不超过 100GB
-        gb_size = size / 1024 / 1024 / 1024
+        gb2bytes = 1024*1024*1024
         limit_size = 0
-        if gb_size < 10 :
-            limit_size = size
-        elif gb_size < 100:
-            limit_size = size / 5
-        else:
-            limit_size = min(100 * 1024 * 1024 * 1024, size / 15)
+        percent = 1
+        # 根据规则挑选合适的文件
+        if fraction_rule:
+            before_range = fraction_rule.get("frac_before_range")
+            before_percent = fraction_rule.get("frac_before_percent")
+            after_range = fraction_rule.get("frac_after_range")
+            if before_range and before_percent:
+                before_range_num = len(before_range.split(","))
+                before_percent_num = len(before_percent.split(","))
+                if len(before_range.split(",")) == len(before_percent.split(",")):
+                    target_range_index = -1
+                    #
+                    """
+                    查找目标index，假设range为10,20,100，percent为 1, 0.5, 0.25
+                    <10，index=-1, percent 为默认1，不裁切
+                    10<size<20,index=0, percent=1
+                    20<size<100,index=1, percent=0.5
+                    100<size, index=2, percent=0.25
+                    """
+                    for index in range(before_range_num):
+                        if size <= before_range[index] * gb2bytes:
+                            target_range_index = index - 1
+                            break
+                    if target_range_index == -1:
+                        # 命中左边区间
+                        percent = 1
+                    else:
+                        percent = before_percent[target_range_index]
+                else:
+                    log.info(f"【部分下载】下载前设置区间个数不一致，range: {before_range} 个数{before_range_num} 和 percent: {before_percent} 个数{before_percent_num}，请修正！")
+
+            # 计算后的尺寸限制
+            if after_range:
+                if len(after_range.split(",")) == 2:
+                    limit_size = max(size * percent, after_range[0] * gb2bytes)
+                    limit_size = min(limit_size, after_range[1] * gb2bytes)
+                else:
+                    log.info(f"下载后设置格式错误，应该为 A,B 形式，请修正！")
 
         # 不要超过磁盘剩余空间，如果目录没找到，跳过
         free_space = SystemUtils.get_free_space(container_path)
