@@ -772,7 +772,7 @@
           </div>
           <div class="col-lg-4">
             <div class="mb-3">
-              <label class="form-label">计算前比例 <span class="form-help" title="和范围成对出现，例如比例为1,0.5,0.25时，0-10GB下载比例为1，10-100GB下载比例0.5，100GB-无穷大下载比例0.25"
+              <label class="form-label">计算前比例 <span class="form-help" title="为小于等于1的数，和范围成对出现，例如比例为1,0.5,0.25时，0-10GB下载比例为1，10-100GB下载比例0.5，100GB-无穷大下载比例0.25"
                                                              data-bs-toggle="tooltip">?</span></label>
                 <input type="text" id="frac_before_percent" class="form-control" placeholder="">
             </div>
@@ -785,7 +785,6 @@
             </div>
           </div>
         </div>
-      </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-link me-auto" data-bs-dismiss="modal">取消</button>
@@ -1220,27 +1219,69 @@
 
     //部分下载前范围
     let frac_before_range = $("#frac_before_range").val();
-    if (frac_before_range && isNaN(frac_before_range)) {
-      $("#frac_before_range").addClass("is-invalid");
-      return;
-    } else {
-      $("#frac_before_range").removeClass("is-invalid");
+    let range_split_num = 0
+    if (frac_before_range) {
+      range_split_num = frac_before_range.split(',').length;
     }
+    // 范围要从小到大
+    let before_range_array = frac_before_range.split(',');
+    for(let i=0;i<before_range_array.length -1;i++){
+      if(parseFloat(before_range_array[i])>=parseFloat(before_range_array[i+1])){
+        $("#frac_before_range").addClass("is-invalid");
+        return;
+      }else{
+        $("#frac_before_range").removeClass("is-invalid");
+      }
+    }
+
+
     //部分下载前比例
     let frac_before_percent = $("#frac_before_percent").val();
-    if (frac_before_percent && isNaN(frac_before_percent)) {
+    let percent_split_num = 0
+    if (frac_before_percent) {
+      percent_split_num = frac_before_percent.split(',').length;
+    }
+
+    // 成对出现
+    if(range_split_num != percent_split_num){
+      $("#frac_before_range").addClass("is-invalid");
       $("#frac_before_percent").addClass("is-invalid");
       return;
-    } else {
+    }else{
+      $("#frac_before_range").removeClass("is-invalid");
       $("#frac_before_percent").removeClass("is-invalid");
     }
+
+
+    // 比例每个数字不超过1
+    let percent_array = frac_before_percent.split(',');
+    for(let i=0;i<percent_array.length;i++){
+      if(parseFloat(percent_array[i])>1){
+        $("#frac_before_percent").addClass("is-invalid");
+        return;
+      }else{
+        $("#frac_before_percent").removeClass("is-invalid");
+      }
+    }
+
     //部分下载后范围
     let frac_after_range = $("#frac_after_range").val();
-    if (frac_after_range && isNaN(frac_after_range)) {
+    if (frac_after_range && !/\d+,\d+/.test(frac_after_range)) {
       $("#frac_after_range").addClass("is-invalid");
       return;
     } else {
       $("#frac_after_range").removeClass("is-invalid");
+    }
+
+    // 范围要从小到大
+    let after_range_array = frac_after_range.split(',');
+    for(let i=0;i<after_range_array.length -1;i++){
+      if(parseFloat(after_range_array[i])>=parseFloat(after_range_array[i+1])){
+        $("#frac_after_range").addClass("is-invalid");
+        return;
+      }else{
+        $("#frac_after_range").removeClass("is-invalid");
+      }
     }
 
     // 参数
