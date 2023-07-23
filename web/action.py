@@ -4629,6 +4629,9 @@ class WebAction:
                                                      active=False)
         if not results:
             return {"code": 1, "msg": "未下载种子或未获取到种子明细"}
+        # 返回最多300个，优化页面性能
+        if len(results) > 0:
+            results = results[0: min(300, len(results))]
         return {"code": 0, "data": [item.as_dict() for item in results]}
 
     @staticmethod
