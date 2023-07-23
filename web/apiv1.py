@@ -1676,6 +1676,7 @@ class BrushTaskUpdate(ClientResource):
     parser.add_argument('brushtask_rssurl', type=str, help='RSS地址', location='form')
     parser.add_argument('brushtask_state', type=str, help='状态（Y/N）', location='form', required=True)
     parser.add_argument('brushtask_transfer', type=str, help='转移到媒体库（Y/N）', location='form')
+    parser.add_argument('brushtask_free_limit_speed', type=str, help='限免到期限速（Y/N）', location='form')
     parser.add_argument('brushtask_sendmessage', type=str, help='消息推送（Y/N）', location='form')
     parser.add_argument('brushtask_free', type=str, help='促销（FREE/2XFREE）', location='form')
     parser.add_argument('brushtask_hr', type=str, help='Hit&Run（HR）', location='form')

@@ -1647,6 +1647,7 @@ class DbHelper:
                 DL_LIMIT=item.get('dl_limit'),
                 SAVEPATH=item.get('savepath'),
                 TRANSFER=item.get('transfer'),
+                BRUSHTASK_FREE_LIMIT_SPEED=item.get('brushtask_free_limit_speed'),
                 DOWNLOAD_COUNT=0,
                 REMOVE_COUNT=0,
                 DOWNLOAD_SIZE=0,
@@ -1673,6 +1674,7 @@ class DbHelper:
                     "DL_LIMIT": item.get('dl_limit'),
                     "SAVEPATH": item.get('savepath'),
                     "TRANSFER": item.get('transfer'),
+                    "BRUSHTASK_FREE_LIMIT_SPEED": item.get('brushtask_free_limit_speed'),
                     "STATE": item.get('state'),
                     "LST_MOD_DATE": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())),
                     "SENDMESSAGE": item.get('sendmessage')
@@ -1698,6 +1700,9 @@ class DbHelper:
             return self._db.query(SITEBRUSHTASK) \
                 .join(CONFIGSITE, SITEBRUSHTASK.SITE == CONFIGSITE.ID) \
                 .order_by(cast(CONFIGSITE.PRI, Integer).asc()).all()
+
+    def get_brushtask_totalsize_gb(self, brush_id):
+        return round(self.get_brushtask_totalsize(brush_id)/1024/1024/1024, 2)
 
     def get_brushtask_totalsize(self, brush_id):
         """
@@ -1781,7 +1786,7 @@ class DbHelper:
         })
 
     @DbPersist(_db)
-    def insert_brushtask_torrent(self, brush_id, title, enclosure, downloader, download_id, size):
+    def insert_brushtask_torrent(self, brush_id, title, enclosure, downloader, download_id, free_deadline, size):
         """
         增加刷流下载的种子信息
         """
@@ -1796,6 +1801,7 @@ class DbHelper:
             ENCLOSURE=enclosure,
             DOWNLOADER=downloader,
             DOWNLOAD_ID=download_id,
+            FREE_DEADLINE=free_deadline,
             LST_MOD_DATE=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
         ))
 

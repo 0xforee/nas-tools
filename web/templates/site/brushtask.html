@@ -198,6 +198,10 @@
                             </div>
                         </div>
                         <div class="datagrid-item">
+                            <div class="datagrid-title">已保种体积</div>
+                            <div class="datagrid-content">{{ Task.total_size }} GB</div>
+                        </div>
+                        <div class="datagrid-item">
                             <div class="datagrid-title">已下载种子数</div>
                             <div class="datagrid-content">{{ Task.download_count }}</div>
                         </div>
@@ -411,6 +415,16 @@
                                 <span class="form-check-label">转移到媒体库 <span class="form-help"
                                                                                   title="开启后刷流的下载也会进行转移并识别重命名到媒体库"
                                                                                   data-bs-toggle="tooltip">?</span></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="mb-3">
+                            <label class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="brushtask_free_limit_speed">
+                                <span class="form-check-label">限免到期下载限速 <span class="form-help"
+                                                                  title="开启后，限免到期后下载速度降为1B/s，防止流量偷跑。测试站点有限，请观察后开启。请注意开启后会 qb 会增加大量 tag，可能会造成卡顿。"
+                                                                  data-bs-toggle="tooltip">?</span></span>
                             </label>
                         </div>
                     </div>
@@ -854,6 +868,12 @@
         } else {
           $("#brushtask_transfer").prop("checked", false);
         }
+        // 限免到期限速
+        if (ret.task.brushtask_free_limit_speed) {
+          $("#brushtask_free_limit_speed").prop("checked", true);
+        } else {
+          $("#brushtask_free_limit_speed").prop("checked", false);
+        }
         if (ret.task.sendmessage) {
           $("#brushtask_sendmessage").prop("checked", true);
         } else {
@@ -1043,6 +1063,7 @@
     let brushtask_savepath = $("#brushtask_savepath").val();
     let brushtask_state = $("#brushtask_state").val();
     let brushtask_transfer = $("#brushtask_transfer").prop('checked');
+    let brushtask_free_limit_speed = $("#brushtask_free_limit_speed").prop('checked');
     let brushtask_sendmessage = $("#brushtask_sendmessage").prop('checked');
     let brushtask_free = $("#brushtask_free").val();
     let brushtask_hr = $("#brushtask_hr").val();
@@ -1299,6 +1320,7 @@
       brushtask_savepath: brushtask_savepath,
       brushtask_state: brushtask_state,
       brushtask_transfer: brushtask_transfer,
+      brushtask_free_limit_speed: brushtask_free_limit_speed,
       brushtask_sendmessage: brushtask_sendmessage,
       brushtask_free: brushtask_free,
       brushtask_hr: brushtask_hr,
@@ -1354,6 +1376,8 @@
         let content_th = `<thead><tr>
                           <th>标题</th>
                           <th>状态</th>
+                          <th>大小</th>
+                          <th>限免过期时间</th>
                           <th>添加时间</th>
                           </tr></thead>`;
         let content_td = '';
@@ -1361,6 +1385,8 @@
           const download = downloads[i];
           let title = '';
           let state = '';
+          let size = '';
+          let free_ddl = '';
           let date = '';
           if (download.TORRENT_NAME) {
             title = `<span class="text-muted">${download.TORRENT_NAME}</span>`
@@ -1374,7 +1400,18 @@
           } else {
             state = `<span class="badge bg-green me-1 mb-1">正常</span>`;
           }
-          content_td = `${content_td}<tr><td>${title}</td>><td>${state}</td><td class="text-nowrap">${date}</td></tr>`;
+          let gbsize = (parseInt(download.TORRENT_SIZE)/1024/1024/1024).toFixed(2);
+          if(gbsize > 0){
+            size = `<span class="text-muted">${gbsize}GB</span>`
+          } else {
+            size = `<span class="text-muted"> </span>`
+          }
+          if(download.FREE_DEADLINE){
+            free_ddl = `<span class="text-muted">${download.FREE_DEADLINE}</span>`
+          } else {
+            free_ddl = `<span class="text-muted"> </span>`
+          }
+          content_td = `${content_td}<tr><td>${title}</td>><td>${state}</td><td>${size}</td><td>${free_ddl}</td><td class="text-nowrap">${date}</td></tr>`;
           let content_tb = `<tbody>${content_td}</tbody>`;
           content = `${content_th}${content_tb}`;
         };

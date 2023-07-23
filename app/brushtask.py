@@ -121,6 +121,7 @@ class BrushTask(object):
                 "downloader": task.DOWNLOADER,
                 "downloader_name": downloader_info.get("name") if downloader_info else None,
                 "transfer": True if task.TRANSFER == "Y" else False,
+                "brushtask_free_limit_speed": True if task.BRUSHTASK_FREE_LIMIT_SPEED == "Y" else False,
                 "sendmessage": True if task.SENDMESSAGE == "Y" else False,
                 "free": task.FREELEECH,
                 "rss_rule": eval(task.RSS_RULE),
@@ -252,16 +253,19 @@ class BrushTask(object):
                     log.debug("【Brush】%s 已处理过" % torrent_name)
                     continue
 
+                # 检查种子种包含的免费限时信息
+                torrent_attr = self.siteconf.check_torrent_attr(torrent_url=page_url,
+                                                                cookie=cookie,
+                                                                ua=ua,
+                                                                proxy=site_proxy)
+
                 # 检查种子是否符合选种规则
                 if not self.__check_rss_rule(rss_rule=rss_rule,
                                              title=torrent_name,
-                                             torrent_url=page_url,
+                                             torrent_attr=torrent_attr,
                                              torrent_size=size,
                                              pubdate=pubdate,
-                                             siteid=site_id,
-                                             cookie=cookie,
-                                             ua=ua,
-                                             proxy=site_proxy):
+                                             siteid=site_id):
                     continue
                 # 检查能否添加当前种子，判断是否超过保种体积大小
                 if not self.__is_allow_new_torrent(taskinfo=taskinfo,
@@ -276,15 +280,7 @@ class BrushTask(object):
                     log.info("【Brush】%s 已在刷流任务中" % torrent_name)
                     continue
 
-                # 检查种子种包含的免费限时信息
-                torrent_attr = self.siteconf.check_torrent_attr(torrent_url=page_url,
-                                                                cookie=cookie,
-                                                                ua=ua,
-                                                                proxy=site_proxy)
-                free_deadline = torrent_attr.get("free_deadline")
-                tags = []
-                if free_deadline:
-                    tags.append("ddl:" + free_deadline)
+
 
                 # 开始下载
                 log.debug("【Brush】%s 符合条件，开始下载..." % torrent_name)
@@ -295,7 +291,7 @@ class BrushTask(object):
                                            title=torrent_name,
                                            enclosure=enclosure,
                                            size=size,
-                                           tags=tags
+                                           torrent_attr=torrent_attr,
                                            ):
                     # 计数
                     success_count += 1
@@ -358,6 +354,7 @@ class BrushTask(object):
                 downloader_id = taskinfo.get("downloader")
                 remove_rule = taskinfo.get("remove_rule")
                 sendmessage = taskinfo.get("sendmessage")
+                brushtask_free_limit_speed = taskinfo.get("brushtask_free_limit_speed")
 
                 # 当前任务种子详情
                 task_torrents = self.get_brushtask_torrents(taskid)
@@ -521,43 +518,42 @@ class BrushTask(object):
                                                     torrent_id))
                     # 不删种的情况下处理限速
                     else:
-                        try:
-                            log.debug("【Brush】%s 检查限免限速" % torrent.get("name"))
-                            # 判断是否超过免费截止
-                            tags = torrent_info.get("tags").split(",")
-                            ddl = ""
-                            if tags:
-                                for t in tags:
-                                    if t and t.find("ddl:") != -1:
-                                        ddl = t.strip("ddl:")
-                                        break
+                        if brushtask_free_limit_speed:
+                            try:
+                                log.debug("【Brush】%s 检查限免限速" % torrent.get("name"))
+                                # 判断是否超过免费截止
+                                ddl = ""
+                                # 遍历 task_torrents
+                                for item in task_torrents:
+                                    if item.DOWNLOAD_ID == torrent_id and item.FREE_DEADLINE:
+                                        ddl = item.FREE_DEADLINE
 
-                            log.debug("【Brush】%s 限时为 %s: " % (torrent.get("name"), ddl))
-                            if ddl:
-                                pattern = "%Y%m%d_%H%M"
-                                ddl_time = datetime.strptime(ddl, pattern)
-                                # 删种检查间隔为5分钟，如果5分钟内限免结束了，提早结束下载，防止流量偷跑
-                                if (datetime.now() + timedelta(minutes=BRUSH_REMOVE_TORRENTS_INTERVAL/60)) >= ddl_time:
-                                    # 限免限速的处理只一次
-                                    if torrent_id not in self._torrents_free_limit_cache:
-                                        self._torrents_free_limit_cache.append(torrent_id)
-                                    else:
-                                        log.debug("【Brush】%s 限速已处理过" % torrent.get("name"))
-                                        continue
+                                log.debug("【Brush】%s 限时为 %s: " % (torrent.get("name"), ddl))
+                                if ddl:
+                                    pattern = "%Y%m%d_%H%M"
+                                    ddl_time = datetime.strptime(ddl, pattern)
+                                    # 删种检查间隔为5分钟，如果5分钟内限免结束了，提早结束下载，防止流量偷跑
+                                    if (datetime.now() + timedelta(minutes=BRUSH_REMOVE_TORRENTS_INTERVAL/60)) >= ddl_time:
+                                        # 限免限速的处理只一次
+                                        if torrent_id not in self._torrents_free_limit_cache:
+                                            self._torrents_free_limit_cache.append(torrent_id)
+                                        else:
+                                            log.debug("【Brush】%s 限速已处理过" % torrent.get("name"))
+                                            continue
 
-                                    # reach ddl
-                                    log.info(
-                                        "【Brush】%s 已达到限免时间：开启下载限速 1kb/s ..." % (torrent.get('name')))
-                                    if sendmessage:
-                                        title = "【刷流任务 {} 限免结束】".format(task_name)
-                                        msg = "限免即将结束，开启下载限速 1B/s\n限免截止时间：{}\n种子名称：{}".format(ddl, torrent.get('name'))
-                                        self.message.send_brushtask_remove_message(title, msg)
+                                        # reach ddl
+                                        log.info(
+                                            "【Brush】%s 已达到限免时间：开启下载限速 1kb/s ..." % (torrent.get('name')))
+                                        if sendmessage:
+                                            title = "【刷流任务 {} 限免结束】".format(task_name)
+                                            msg = "限免即将结束，开启下载限速 1B/s\n限免截止时间：{}\n种子名称：{}".format(ddl, torrent.get('name'))
+                                            self.message.send_brushtask_remove_message(title, msg)
 
-                                    # 设置下载限速为1kb
-                                    self.downloader.set_downloadspeed_limit(downloader_id, torrent_id, 1)
-                        except Exception as e:
-                            log.error("【Brush】，限时限免检查出了点问题")
-                            ExceptionUtils.exception_traceback(e)
+                                        # 设置下载限速为1kb
+                                        self.downloader.set_downloadspeed_limit(downloader_id, torrent_id, 1)
+                            except Exception as e:
+                                log.error("【Brush】，限时限免检查出了点问题")
+                                ExceptionUtils.exception_traceback(e)
 
 
                 # 手工删除的种子，清除对应记录
@@ -707,7 +703,7 @@ class BrushTask(object):
                            title,
                            enclosure,
                            size,
-                           tags,
+                           torrent_attr,
                            ):
         """
         添加下载任务，更新任务数据
@@ -718,6 +714,7 @@ class BrushTask(object):
         :param title: 种子名称
         :param enclosure: 种子地址
         :param size: 种子大小
+        :param torrent_attr: 种子属性
         """
         if not enclosure:
             return False
@@ -732,6 +729,7 @@ class BrushTask(object):
         download_limit = rss_rule.get("downspeed")
         upload_limit = rss_rule.get("upspeed")
         download_dir = taskinfo.get("savepath")
+        brushtask_free_limit_speed = taskinfo.get("brushtask_free_limit_speed")
         tag = taskinfo.get("label").split(',') if taskinfo.get("label") else None
         # 标签
         if not transfer:
@@ -739,8 +737,6 @@ class BrushTask(object):
                 tag += ["已整理"]
             else:
                 tag = ["已整理"]
-        # 追加免费截止标记
-        tag.extend(tags)
 
         # 开始下载
         meta_info = MetaInfo(title=title)
@@ -814,12 +810,18 @@ class BrushTask(object):
                            f"添加时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}"
                 self.message.send_brushtask_added_message(title=msg_title, text=msg_text)
 
+        # free deadline
+        free_deadline = ""
+        if brushtask_free_limit_speed:
+            free_deadline = torrent_attr.get("free_deadline")
+
         # 插入种子数据
         if self.dbhelper.insert_brushtask_torrent(brush_id=taskid,
                                                   title=title,
                                                   enclosure=enclosure,
                                                   downloader=downloader_id,
                                                   download_id=download_id,
+                                                  free_deadline=free_deadline,
                                                   size=real_size):
             # 更新下载次数
             self.dbhelper.add_brushtask_download_count(brush_id=taskid)
@@ -831,23 +833,17 @@ class BrushTask(object):
     def __check_rss_rule(self,
                          rss_rule,
                          title,
-                         torrent_url,
+                         torrent_attr,
                          torrent_size,
                          pubdate,
-                         siteid,
-                         cookie,
-                         ua,
-                         proxy):
+                         siteid):
         """
         检查种子是否符合刷流过滤条件
         :param rss_rule: 过滤条件字典
         :param title: 种子名称
-        :param torrent_url: 种子页面地址
         :param torrent_size: 种子大小
         :param pubdate: 发布时间
         :param siteid: 站点ID
-        :param cookie: Cookie
-        :param ua: User-Agent
         :return: 是否命中
         """
         if not rss_rule:
@@ -886,10 +882,6 @@ class BrushTask(object):
             if self.sites.check_ratelimit(siteid):
                 return False
 
-            torrent_attr = self.siteconf.check_torrent_attr(torrent_url=torrent_url,
-                                                            cookie=cookie,
-                                                            ua=ua,
-                                                            proxy=proxy)
             torrent_peer_count = torrent_attr.get("peer_count")
             log.debug("【Brush】%s 解析详情, %s" % (title, torrent_attr))
 
