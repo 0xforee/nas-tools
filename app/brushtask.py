@@ -791,8 +791,8 @@ class BrushTask(object):
                 # 开启下载
                 self.downloader.start_torrents(downloader_id, download_id)
             else:
-                # 部分下载出现异常：获取文件列表失败或者没有找到合适 size 的文件，删除种子
-                self.downloader.delete_torrents(downloader_id, download_id)
+                # 部分下载出现异常：获取文件列表失败或者没有找到合适 size 的文件，删除种子以及文件
+                self.downloader.delete_torrents(downloader_id, download_id, delete_file=True)
                 log.warn(f"【Brush】{taskname} 添加下载任务出错：{title}，"
                          f"错误原因：'部分下载：{fraction_retmsg}，"
                          f"种子链接：{enclosure}")
