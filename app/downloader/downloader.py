@@ -1572,10 +1572,13 @@ class Downloader:
             ExceptionUtils.exception_traceback(e)
             log.error("【部分下载】部分下载规则参数出错：%s" % (str(e)))
 
-        # 不要超过磁盘剩余空间，如果目录没找到，跳过
+        # 不要超过磁盘剩余空间，如果目录没找到，默认为0
         free_space = SystemUtils.get_free_space(container_path)
-        if free_space != 0.0:
-            limit_size = min(limit_size, free_space * 1024 * 1024 * 1024)
+        limit_size = min(limit_size, free_space * gb2bytes)
+
+        # 计算出来的限制大小为0，跳过文件优先级处理
+        if limit_size == 0:
+            return False, 0, "torrent limit file size is 0"
 
         # for qb
         priority_info = {
