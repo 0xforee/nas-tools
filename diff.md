@@ -26,4 +26,7 @@ Docker：https://hub.docker.com/repository/docker/0xforee/nas-tools
    * 我的媒体库：增加标题跳转媒体库能力
    * 索引器：jackett 和 prowlarr 增加跳转各服务能力
    * 媒体服务器：每个服务器配置界面增加跳转服务能力
+6. 支持 Mteam 新架构
+   * 目前自测使用 ok，但是仍然可能有些场景没有测试到，我会尽快修正
+   * 架构层面不支持 api key 的方式，所以仍旧使用 cookies 方式认证（请及时关注官方信息来判断这种方式是否合法）
 
