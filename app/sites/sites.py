@@ -303,11 +303,11 @@ class Sites:
             if SiteHelper.is_logged_in(html_text):
                 return True, "连接成功", seconds
             else:
-                if site_url.find("m-team"):
+                if site_url.find("m-team") != -1:
                     return self.mteam_sign(site_info)
                 return False, "Cookie失效", seconds
         else:
-            if site_url.find("m-team"):
+            if site_url.find("m-team") != -1:
                 return self.mteam_sign(site_info)
             # 计时
             start_time = datetime.now()
