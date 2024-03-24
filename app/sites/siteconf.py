@@ -96,6 +96,23 @@ class SiteConf:
                 return v
         return {}
 
+    def get_mteam_torrent_info(self, torrent_url, cookie, ua=None, proxy=False):
+        api = "%s/api/torrent/detail"
+        from urllib.parse import urlparse
+        parse_result = urlparse(torrent_url)
+        api = api % (str(parse_result.scheme) + "://" + str(parse_result.hostname))
+        torrent_id = torrent_url.split('/')[-1]
+        req = RequestUtils(
+            headers=ua,
+            cookies=cookie,
+            proxies=Config().get_proxies() if proxy else None
+        ).post_res(url=api, params={"id": torrent_id})
+
+        if req and req.status_code == 200:
+            return req.json().get("data")
+
+        return None
+
     def check_torrent_attr(self, torrent_url, cookie, ua=None, proxy=False):
         """
         检验种子是否免费，当前做种人数
@@ -114,6 +131,19 @@ class SiteConf:
         }
         if not torrent_url:
             return ret_attr
+
+        if torrent_url.find('m-team') != -1:
+            info = self.get_mteam_torrent_info(torrent_url, cookie, ua, proxy)
+            if info:
+                status = info.get('status')
+                discount = status.get('discount')
+                if discount == 'FREE':
+                    ret_attr["free"] = True
+                elif discount == '_2X_FREE':
+                    ret_attr["free"] = True
+                    ret_attr["2xfree"] = True
+            return ret_attr
+
         xpath_strs = self.get_grap_conf(torrent_url)
         if not xpath_strs:
             return ret_attr
