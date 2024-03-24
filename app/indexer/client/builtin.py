@@ -11,6 +11,7 @@ from app.indexer.client._spider import TorrentSpider
 from app.indexer.client._tnode import TNodeSpider
 from app.indexer.client._torrentleech import TorrentLeech
 from app.indexer.client._plugins import PluginsSpider
+from app.indexer.client._mteam import MTeamSpider
 from app.sites import Sites
 from app.utils import StringUtils
 from app.utils.types import SearchType, IndexerType, ProgressKey, SystemConfigKey
@@ -184,6 +185,8 @@ class BuiltinIndexer(_IIndexClient):
                     mtype=match_media.type if match_media and match_media.tmdb_info else None)
             elif indexer.parser == "TorrentLeech":
                 error_flag, result_array = TorrentLeech(indexer).search(keyword=search_word)
+            elif indexer.parser == "MTeamSpider":
+                error_flag, result_array = MTeamSpider(indexer=indexer).search(keyword=search_word)
             else:
                 if PluginsSpider().status(indexer=indexer):
                     error_flag, result_array = PluginsSpider().search(keyword=search_word, indexer=indexer)
@@ -274,6 +277,13 @@ class BuiltinIndexer(_IIndexClient):
         :param: timeout: 超时时间
         :return: 是否发生错误, 种子列表
         """
+        log.debug(f"spider search start {indexer.name}")
+        if indexer.name.find("MTeam") != -1:
+            spider = MTeamSpider(indexer)
+            flag, torrents = spider.inner_search(keyword)
+            log.debug(f"spider search end  {indexer.name}")
+            return flag, torrents
+
         spider = TorrentSpider()
         spider.setparam(indexer=indexer,
                         keyword=keyword,
@@ -294,4 +304,5 @@ class BuiltinIndexer(_IIndexClient):
         # 重置状态
         spider.torrents_info_array.clear()
 
+        log.debug(f"spider search end  {indexer.name}")
         return result_flag, result_array

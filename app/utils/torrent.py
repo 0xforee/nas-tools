@@ -4,7 +4,7 @@ import time
 import re
 import tempfile
 import hashlib
-from urllib.parse import unquote, urlencode, urlparse
+from urllib.parse import quote, unquote, urlencode, urlparse
 
 import libtorrent
 from bencode import bencode, bdecode
@@ -55,17 +55,45 @@ class Torrent:
         except Exception as err:
             return None, None, "", [], "下载种子文件出现异常：%s" % str(err)
 
-    def save_torrent_file(self, url, cookie=None, ua=None, referer=None, proxy=False):
-        """
-        把种子下载到本地
-        :return: 种子保存路径，错误信息
-        """
+    def get_mteam_url(self, url, cookie=None, ua=None, referer=None, proxy=False):
+        api = "%s/api/torrent/genDlToken"
+        parse_result = urlparse(url)
+        api = api % (str(parse_result.scheme) + "://" + str(parse_result.hostname))
+        torrent_id = url.split('/')[-1]
         req = RequestUtils(
             headers=ua,
             cookies=cookie,
             referer=referer,
             proxies=Config().get_proxies() if proxy else None
-        ).get_res(url=url, allow_redirects=False)
+        ).post_res(url=api, params={"id": torrent_id})
+
+        if req and req.status_code == 200:
+            return req.json().get("data")
+
+        return None
+
+    def save_torrent_file(self, url, cookie=None, ua=None, referer=None, proxy=False):
+        """
+        把种子下载到本地
+        :return: 种子保存路径，错误信息
+        """
+        if url.find("m-team"):
+            url = self.get_mteam_url(url, cookie, ua, referer, proxy)
+            if not url:
+                return None, url, f"mteam 种子链接获取出错，详情地址为 {url}"
+            req = RequestUtils(
+                headers=ua,
+                cookies=cookie,
+                referer=referer,
+                proxies=Config().get_proxies() if proxy else None
+            ).get_res(url=url, allow_redirects=False)
+        else:
+            req = RequestUtils(
+                headers=ua,
+                cookies=cookie,
+                referer=referer,
+                proxies=Config().get_proxies() if proxy else None
+            ).get_res(url=url, allow_redirects=False)
         while req and req.status_code in [301, 302]:
             url = req.headers['Location']
             if url and url.startswith("magnet:"):

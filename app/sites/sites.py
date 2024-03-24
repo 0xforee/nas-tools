@@ -303,8 +303,12 @@ class Sites:
             if SiteHelper.is_logged_in(html_text):
                 return True, "连接成功", seconds
             else:
+                if site_url.find("m-team"):
+                    return self.mteam_sign(site_info)
                 return False, "Cookie失效", seconds
         else:
+            if site_url.find("m-team"):
+                return self.mteam_sign(site_info)
             # 计时
             start_time = datetime.now()
             res = RequestUtils(cookies=site_cookie,
@@ -321,6 +325,25 @@ class Sites:
                 return False, f"连接失败，状态码：{res.status_code}", seconds
             else:
                 return False, "无法打开网站", seconds
+
+    def mteam_sign(self, site_info):
+        start_time = datetime.now()
+        site_url = site_info.get("signurl")
+        site_cookie = site_info.get("cookie")
+        ua = site_info.get("ua")
+        url = f"{site_url}api/member/profile"
+        res = RequestUtils(
+            headers=ua,
+            cookies=site_cookie,
+            proxies=Config().get_proxies() if site_info.get("proxy") else None,
+            timeout=15
+        ).post_res(url=url)
+        seconds = int((datetime.now() - start_time).microseconds / 1000)
+        if res and res.status_code == 200:
+            user_info = res.json()
+            if user_info and user_info.get("data"):
+                return True, "连接成功", seconds
+        return False, "Cookie 时效", seconds
 
     @staticmethod
     def __get_site_note_items(note):
