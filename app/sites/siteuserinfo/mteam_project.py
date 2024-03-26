@@ -12,6 +12,28 @@ from app.utils.types import SiteSchema
 
 
 class MteamSiteUserInfo(_ISiteUserInfo):
+
+    _roleToLevelMap = {
+        '1': 'User',
+        '2': 'Power User',
+        '3': 'Elite User',
+        '4': 'Crazy User',
+        '5': 'Insane User',
+        '6': 'Veteran User',
+        '7': 'Extreme User',
+        '8': 'Ultimate User',
+        '9': 'Nexus Master',
+        '10': 'VIP',
+        '17': 'Offer memberStaff',
+        '18': 'bet memberStaff',
+        '12': '巡查',
+        '11': '職人',
+        '13':'總版',
+        '14': '總管',
+        '15': '維護開發員',
+        '16': '站長',
+
+    }
     def _parse_message_unread_links(self, html_text, msg_links):
         pass
 
@@ -145,7 +167,7 @@ class MteamSiteUserInfo(_ISiteUserInfo):
             self.ratio = memerberCount.get("shareRate")
             self.bonus = memerberCount.get("bonus")
             self.userid = user_info.get("id")
-            self.user_level = user_info.get("role")
+            self.user_level = self._roleToLevelMap.get(user_info.get("role"))
             self.join_at = user_info.get("createdDate")
 
             self.parse_seeding()
