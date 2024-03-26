@@ -67,10 +67,6 @@ class SiteSignin(object):
         签到一个站点
         """
         site_module = self.__build_class(site_info.get("signurl"))
-        site_url = site_info.get("signurl")
-
-        if site_url.find('m-team') != -1:
-            return MteamUtils.mteam_sign(site_info)
 
         if site_module:
             return site_module.signin(site_info)

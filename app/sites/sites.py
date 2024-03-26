@@ -305,11 +305,11 @@ class Sites:
                 return True, "连接成功", seconds
             else:
                 if site_url.find("m-team") != -1:
-                    return MteamUtils.mteam_sign(site_info)
+                    return self.mteam_sign(site_info)
                 return False, "Cookie失效", seconds
         else:
             if site_url.find("m-team") != -1:
-                return MteamUtils.mteam_sign(site_info)
+                return self.mteam_sign(site_info)
             # 计时
             start_time = datetime.now()
             res = RequestUtils(cookies=site_cookie,
@@ -329,22 +329,9 @@ class Sites:
 
     def mteam_sign(self, site_info):
         start_time = datetime.now()
-        site_url = site_info.get("signurl")
-        site_cookie = site_info.get("cookie")
-        ua = site_info.get("ua")
-        url = f"{site_url}api/member/profile"
-        res = RequestUtils(
-            headers=ua,
-            cookies=site_cookie,
-            proxies=Config().get_proxies() if site_info.get("proxy") else None,
-            timeout=15
-        ).post_res(url=url)
+        result, reason = MteamUtils.mteam_sign(site_info)
         seconds = int((datetime.now() - start_time).microseconds / 1000)
-        if res and res.status_code == 200:
-            user_info = res.json()
-            if user_info and user_info.get("data"):
-                return True, "连接成功", seconds
-        return False, "Cookie 时效", seconds
+        return result, reason, seconds
 
     @staticmethod
     def __get_site_note_items(note):
