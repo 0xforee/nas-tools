@@ -16,6 +16,7 @@ class RequestUtils:
     def __init__(self,
                  headers=None,
                  cookies=None,
+                 api_key=None,
                  proxies=False,
                  session=None,
                  timeout=None,
@@ -48,6 +49,10 @@ class RequestUtils:
                 self._cookies = self.cookie_parse(cookies)
             else:
                 self._cookies = cookies
+        if api_key:
+            self._headers.update({
+                'x-api-key': api_key
+            })
         if proxies:
             self._proxies = proxies
         if session:

@@ -1,17 +1,38 @@
 # -*- coding: utf-8 -*-
 import json
 import re
+from abc import ABC
 
 from lxml import etree
 
 import log
 from app.sites.siteuserinfo._base import _ISiteUserInfo, SITE_BASE_ORDER
-from app.utils import StringUtils
+from app.utils import StringUtils, MteamUtils
 from app.utils.types import SiteSchema
-from app.utils import RequestUtils, ExceptionUtils
-from app.sites.siteuserinfo.nexus_php import NexusPhpSiteUserInfo
 
-class MteamSiteUserInfo(NexusPhpSiteUserInfo):
+
+class MteamSiteUserInfo(_ISiteUserInfo):
+    def _parse_message_unread_links(self, html_text, msg_links):
+        pass
+
+    def _parse_site_page(self, html_text):
+        pass
+
+    def _parse_user_base_info(self, html_text):
+        pass
+
+    def _parse_user_traffic_info(self, html_text):
+        pass
+
+    def _parse_user_torrent_seeding_info(self, html_text, multi_page=False):
+        pass
+
+    def _parse_user_detail_info(self, html_text):
+        pass
+
+    def _parse_message_content(self, html_text):
+        pass
+
     schema = SiteSchema.Mteam
     order = SITE_BASE_ORDER
 
@@ -26,7 +47,7 @@ class MteamSiteUserInfo(NexusPhpSiteUserInfo):
 
     def _parse_logged_in(self, html_text):
         url = f"{self.site_url}api/member/profile"
-        res = RequestUtils(
+        res = MteamUtils.buildRequestUtils(
             headers=self._ua,
             cookies=self._site_cookie,
             timeout=15
@@ -39,7 +60,7 @@ class MteamSiteUserInfo(NexusPhpSiteUserInfo):
 
     def get_user_profile(self):
         url = f"{self.site_url}/api/member/profile"
-        res = RequestUtils(
+        res = MteamUtils.buildRequestUtils(
             headers=self._ua,
             cookies=self._site_cookie,
             session=self._session,
@@ -96,7 +117,7 @@ class MteamSiteUserInfo(NexusPhpSiteUserInfo):
             "type": "SEEDING"
         }
 
-        res =RequestUtils(
+        res = MteamUtils.buildRequestUtils(
             headers=self._ua,
             content_type="application/json",
             accept_type="application/json",
@@ -128,4 +149,6 @@ class MteamSiteUserInfo(NexusPhpSiteUserInfo):
             self.join_at = user_info.get("createdDate")
 
             self.parse_seeding()
+        else:
+            self.seeding_info = ''
 

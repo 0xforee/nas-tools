@@ -6,6 +6,7 @@ from app.helper import ChromeHelper, SiteHelper, DbHelper
 from app.message import Message
 from app.sites.site_limiter import SiteRateLimiter
 from app.utils import RequestUtils, StringUtils
+from app.utils import RequestUtils, StringUtils, ExceptionUtils, MteamUtils
 from app.utils.commons import singleton
 from config import Config
 
@@ -304,11 +305,11 @@ class Sites:
                 return True, "连接成功", seconds
             else:
                 if site_url.find("m-team") != -1:
-                    return self.mteam_sign(site_info)
+                    return MteamUtils.mteam_sign(site_info)
                 return False, "Cookie失效", seconds
         else:
             if site_url.find("m-team") != -1:
-                return self.mteam_sign(site_info)
+                return MteamUtils.mteam_sign(site_info)
             # 计时
             start_time = datetime.now()
             res = RequestUtils(cookies=site_cookie,

@@ -1,7 +1,7 @@
 import requests
 
 import log
-from app.utils import RequestUtils
+from app.utils import RequestUtils, MteamUtils
 from config import Config
 
 
@@ -26,7 +26,7 @@ class MTeamSpider(object):
 
     def init_config(self):
         session = requests.session()
-        self._req = RequestUtils(proxies=Config().get_proxies(), session=session, content_type="application/json",
+        self._req = MteamUtils.buildRequestUtils(proxies=Config().get_proxies(), session=session, content_type="application/json",
             accept_type="application/json", cookies=self._cookie, headers=self._ua, timeout=10)
 
     def get_discount(self, discount):
