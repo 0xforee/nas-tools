@@ -70,7 +70,7 @@ class Torrent:
                 cookies=cookie,
                 referer=referer,
                 proxies=Config().get_proxies() if proxy else None
-            ).get_res(url=url, allow_redirects=False)
+            ).get_res(url=url, allow_redirects=True)
         else:
             req = RequestUtils(
                 headers=ua,

@@ -39,6 +39,8 @@ class MteamUtils:
 
     @staticmethod
     def get_mteam_url(url, cookie=None, ua=None, referer=None, proxy=False):
+        if url.find('api/rss/dl') != -1:
+            return url
         api = "%s/api/torrent/genDlToken"
         parse_result = urlparse(url)
         api = api % (str(parse_result.scheme) + "://" + str(parse_result.hostname))
