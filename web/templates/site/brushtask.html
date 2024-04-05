@@ -773,10 +773,8 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="hr-text hr-text-center hr-text-spaceless mt-1 mb-3">部分下载规则</div>
-        <div class="row">
+                <div class="hr-text hr-text-center hr-text-spaceless mt-1 mb-3">部分下载规则</div>
+                <div class="row">
           <div class="col-lg-4">
             <div class="mb-3">
               <label class="form-label">计算前范围(GB) <span class="form-help" title="和比例成对出现，例如范围为0,10,100时，将种子大小范围分为三个区间，0-10,10-100,100-无穷大"
@@ -799,11 +797,14 @@
             </div>
           </div>
         </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-link me-auto" data-bs-dismiss="modal">取消</button>
+                <a href="javascript:add_brushtask_job()" id="brushtask_add_btn" class="btn btn-primary">确定</a>
+            </div>
+        </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-link me-auto" data-bs-dismiss="modal">取消</button>
-        <a href="javascript:add_brushtask_job()" id="brushtask_add_btn" class="btn btn-primary">确定</a>
-      </div>
+
     </div>
 </div>
 <div class="modal modal-blur fade" id="modal-brushtask-torrents" tabindex="-1" role="dialog" aria-hidden="true">

@@ -1574,6 +1574,9 @@ class Downloader:
 
         # 不要超过磁盘剩余空间，如果目录没找到，默认为0
         free_space = SystemUtils.get_free_space(container_path)
+        if free_space == 0:
+            return False, 0, "磁盘空间为 0，请检查磁盘空间或者是否挂载正常"
+
         limit_size = min(limit_size, free_space * gb2bytes)
 
         # 计算出来的限制大小为0，跳过文件优先级处理
