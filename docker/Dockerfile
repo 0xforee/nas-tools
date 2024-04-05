@@ -1,28 +1,20 @@
 FROM python:3.10.11-alpine
-RUN apk add --no-cache --virtual .build-deps \
-        libffi-dev \
-        gcc \
-        musl-dev \
-        libxml2-dev \
-        libxslt-dev \
+RUN apk update  \
+    && apk add --no-cache libffi-dev \
     && apk add --no-cache $(echo $(wget --no-check-certificate -qO- https://raw.githubusercontent.com/0xforee/nas-tools/master/package_list.txt)) \
+    && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
+    && echo "${TZ}" > /etc/timezone \
+    && ln -sf /usr/bin/python3 /usr/bin/python \
     && curl https://rclone.org/install.sh | bash \
     && if [ "$(uname -m)" = "x86_64" ]; then ARCH=amd64; elif [ "$(uname -m)" = "aarch64" ]; then ARCH=arm64; fi \
-    && curl https://dl.min.io/client/mc/release/linux-${ARCH}/mc --create-dirs -o /usr/bin/mc \
+    && curl https://dl.minio.org.cn/client/mc/release/linux-${ARCH}/mc --create-dirs -o /usr/bin/mc \
     && chmod +x /usr/bin/mc \
-    && pip install --upgrade pip setuptools wheel \
-    && pip install cython \
-    && pip install -r https://raw.githubusercontent.com/0xforee/nas-tools/master/requirements.txt \
-    && apk del --purge .build-deps \
+    && pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade pip setuptools wheel \
+    && pip install -i https://pypi.tuna.tsinghua.edu.cn/simple cython \
+    && pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r https://raw.githubusercontent.com/0xforee/nas-tools/master/requirements.txt \
+    && npm install pm2 -g \
     && rm -rf /tmp/* /root/.cache /var/cache/apk/*
-ENV S6_SERVICES_GRACETIME=30000 \
-    S6_KILL_GRACETIME=60000 \
-    S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0 \
-    S6_SYNC_DISKS=1 \
-    HOME="/nt" \
-    TERM="xterm" \
-    PATH=${PATH}:/usr/lib/chromium \
-    LANG="C.UTF-8" \
+ENV LANG="C.UTF-8" \
     TZ="Asia/Shanghai" \
     NASTOOL_CONFIG="/config/config.yaml" \
     NASTOOL_AUTO_UPDATE=false \
@@ -35,23 +27,21 @@ ENV S6_SERVICES_GRACETIME=30000 \
     PUID=0 \
     PGID=0 \
     UMASK=000 \
-    PYTHONWARNINGS="ignore:semaphore_tracker:UserWarning" \
-    WORKDIR="/nas-tools"
+    WORKDIR="/nas-tools" \
+    NT_HOME="/nt"
 WORKDIR ${WORKDIR}
-RUN mkdir ${HOME} \
+RUN mkdir ${NT_HOME} \
     && addgroup -S nt -g 911 \
-    && adduser -S nt -G nt -h ${HOME} -s /bin/bash -u 911 \
+    && adduser -S nt -G nt -h ${NT_HOME} -s /bin/bash -u 911 \
     && python_ver=$(python3 -V | awk '{print $2}') \
-    && python_path=$(which python3) \
-    && [ -d "/usr/lib/python${python_ver%.*}/site-packages" ] || mkdir -p "/usr/lib/python${python_ver%.*}/site-packages" \
     && echo "${WORKDIR}/" > /usr/lib/python${python_ver%.*}/site-packages/nas-tools.pth \
     && echo 'fs.inotify.max_user_watches=5242880' >> /etc/sysctl.conf \
     && echo 'fs.inotify.max_user_instances=5242880' >> /etc/sysctl.conf \
     && echo "nt ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
     && git config --global pull.ff only \
     && git clone -b master ${REPO_URL} ${WORKDIR} --depth=1 --recurse-submodule \
-    && git config --global --add safe.directory ${WORKDIR}
-COPY --chmod=755 ./rootfs /
+    && git config --global --add safe.directory ${WORKDIR} \
+    && chmod +x ${WORKDIR}/docker/entrypoint.sh
 EXPOSE 3000
 VOLUME ["/config"]
-ENTRYPOINT [ "/init" ]
+ENTRYPOINT ["/nas-tools/docker/entrypoint.sh"]
