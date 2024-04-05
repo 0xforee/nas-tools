@@ -182,8 +182,19 @@
         <div class="col-lg-12">
           <div class="mb-3">
             <label class="form-label">COOKIE <span class="form-help"
-                title="站点的Cookie，用于站点自动签到、站点数据统计、刷流、内置索引器等，需要在浏览器中F12->网络页抓取" data-bs-toggle="tooltip">?</span></label>
+                title="站点的Cookie，用于站点自动签到。站点数据统计、刷流、内置索引器等功能有令牌会优先使用令牌，其次为 Cookie，需要在浏览器中F12->网络页抓取" data-bs-toggle="tooltip">?</span></label>
             <textarea class="form-control" id="site_cookie" rows="2" placeholder="站点COOKIE"></textarea>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="mb-3">
+              <label class="form-label">令牌 <span class="form-help"
+                                                         title="数据统计，数据获取，刷流，搜索请求等使用的 Api Key，为空则尝试使用 Cookies（有些站点推荐使用 Api Key)" data-bs-toggle="tooltip">?</span></label>
+              <div class="input-group input-group-flat">
+                <input type="text" class="form-control" id="site_api_key" value="" placeholder="令牌/Api Key">
+              </div>
+            </div>
           </div>
         </div>
         <div class="row">
@@ -478,6 +489,7 @@
     $("#site_rssurl").val('');
     $("#site_signurl").val('');
     $("#site_cookie").val('');
+    $("#site_api_key").val('');
     $("#site_rule").val('');
     $("#site_ua").val('');
     $("#site_chrome").val('N');
@@ -507,6 +519,7 @@
         $("#site_rssurl").val(ret.site.rssurl);
         $("#site_signurl").val(ret.site.signurl);
         $("#site_cookie").val(ret.site.cookie);
+        $("#site_api_key").val(ret.site.api_key);
         $("#site_ua").val(ret.site.ua);
         $("#site_download_setting").val(ret.site.download_setting);
         if (ret.site.parse) {
@@ -584,6 +597,8 @@
     }
     //Cookie
     let site_cookie = $("#site_cookie").val();
+    //Api Key
+    let site_api_key = $("#site_api_key").val();
     //RSS URL
     let site_rssurl = $("#site_rssurl").val();
     if (site_rssurl) {
@@ -639,6 +654,7 @@
       "site_rssurl": site_rssurl,
       "site_signurl": site_signurl,
       "site_cookie": site_cookie,
+      "site_api_key": site_api_key,
       "site_include": site_uses,
       "site_note": {
         "rule": site_rule,

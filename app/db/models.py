@@ -49,6 +49,7 @@ class CONFIGSITE(Base):
     RSSURL = Column(Text)
     SIGNURL = Column(Text)
     COOKIE = Column(Text)
+    APIKEY = Column(Text)
     INCLUDE = Column(Text)
     EXCLUDE = Column(Text)
     SIZE = Column(Text)

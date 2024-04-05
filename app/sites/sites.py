@@ -346,7 +346,7 @@ class Sites:
         return infos
 
     def add_site(self, name, site_pri,
-                 rssurl=None, signurl=None, cookie=None, note=None, rss_uses=None):
+                 rssurl=None, signurl=None, cookie=None, api_key=None, note=None, rss_uses=None):
         """
         添加站点
         """
@@ -355,13 +355,14 @@ class Sites:
                                                rssurl=rssurl,
                                                signurl=signurl,
                                                cookie=cookie,
+                                               api_key=api_key,
                                                note=note,
                                                rss_uses=rss_uses)
         self.init_config()
         return ret
 
     def update_site(self, tid, name, site_pri,
-                    rssurl, signurl, cookie, note, rss_uses):
+                    rssurl, signurl, cookie, api_key, note, rss_uses):
         """
         更新站点
         """
@@ -371,6 +372,7 @@ class Sites:
                                                rssurl=rssurl,
                                                signurl=signurl,
                                                cookie=cookie,
+                                               api_key=api_key,
                                                note=note,
                                                rss_uses=rss_uses)
         self.init_config()

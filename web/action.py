@@ -1099,6 +1099,7 @@ class WebAction:
         rssurl = data.get('site_rssurl')
         signurl = data.get('site_signurl')
         cookie = data.get('site_cookie')
+        api_key = data.get('site_api_key')
         note = data.get('site_note')
         if isinstance(note, dict):
             note = json.dumps(note)
@@ -1119,6 +1120,7 @@ class WebAction:
                                      rssurl=rssurl,
                                      signurl=signurl,
                                      cookie=cookie,
+                                     api_key=api_key,
                                      note=note,
                                      rss_uses=rss_uses)
             if ret and (name != old_name):
@@ -1131,6 +1133,7 @@ class WebAction:
                                   rssurl=rssurl,
                                   signurl=signurl,
                                   cookie=cookie,
+                                  api_key=api_key,
                                   note=note,
                                   rss_uses=rss_uses)
         if ret:
