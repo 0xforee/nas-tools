@@ -61,6 +61,7 @@ class Sites:
             site_rssurl = site.RSSURL
             site_signurl = site.SIGNURL
             site_cookie = site.COOKIE
+            site_api_key = site.APIKEY
             site_uses = site.INCLUDE or ''
             uses = []
             if site_uses:
@@ -81,6 +82,7 @@ class Sites:
                 "rssurl": site_rssurl,
                 "signurl": site_signurl,
                 "cookie": site_cookie,
+                "api_key": site_api_key,
                 "rule": site_note.get("rule"),
                 "download_setting": site_note.get("download_setting"),
                 "rss_enable": rss_enable,
@@ -305,11 +307,11 @@ class Sites:
                 return True, "连接成功", seconds
             else:
                 if site_url.find("m-team") != -1:
-                    return self.mteam_sign(site_info)
+                    return self.mteam_test_connection(site_info)
                 return False, "Cookie失效", seconds
         else:
             if site_url.find("m-team") != -1:
-                return self.mteam_sign(site_info)
+                return self.mteam_test_connection(site_info)
             # 计时
             start_time = datetime.now()
             res = RequestUtils(cookies=site_cookie,
@@ -327,7 +329,7 @@ class Sites:
             else:
                 return False, "无法打开网站", seconds
 
-    def mteam_sign(self, site_info):
+    def mteam_test_connection(self, site_info):
         start_time = datetime.now()
         result, reason = MteamUtils.mteam_sign(site_info)
         seconds = int((datetime.now() - start_time).microseconds / 1000)

@@ -62,7 +62,7 @@ class Torrent:
         :return: 种子保存路径，错误信息
         """
         if url.find("m-team") != -1:
-            url = MteamUtils.get_mteam_url(url, cookie, ua, referer, proxy)
+            url = MteamUtils.get_mteam_torrent_url(url, cookie, ua, referer, proxy)
             if not url:
                 return None, url, f"mteam 种子链接获取出错，详情地址为 {url}"
             req = MteamUtils.buildRequestUtils(
