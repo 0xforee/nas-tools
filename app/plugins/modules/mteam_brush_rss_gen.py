@@ -123,7 +123,7 @@ class MteamRssGen(_IPluginModule):
         self.info('Starting mteam rss server, listen at % localhost:' + str(self._server.server_port))
 
     def get_state(self):
-        return self._enable
+        return False
 
     def stop_service(self):
         """
