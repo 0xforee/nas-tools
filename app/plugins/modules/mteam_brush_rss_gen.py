@@ -54,7 +54,7 @@ class MteamRssGen(_IPluginModule):
     # 插件描述
     module_desc = "后台服务定期监控馒头大包，并发布 RSS"
     # 插件图标
-    module_icon = "signin.png"
+    module_icon = "mteam_rss.png"
     # 主题色
     module_color = "#4179F4"
     # 插件版本
@@ -158,7 +158,7 @@ class MteamRssGen(_IPluginModule):
                         {
                             'title': '开启',
                             'required': "",
-                            'tooltip': '开启后会启动 RSS 生成服务',
+                            'tooltip': '开启后会启动 RSS 生成服务，将 http://127.0.0.1/rss_pub.xml 填入馒头刷流任务 RSS 地址使用',
                             'type': 'switch',
                             'id': 'enabled',
                         },
@@ -166,18 +166,25 @@ class MteamRssGen(_IPluginModule):
                 ]
             },
             {
-                'title': '种子体积最小值（GB）',
-                'required': "required",
-                'tooltip': '大于配置值的种子才会被监控到，默认为 0',
-                'type': 'text',
+                'type': 'div',
                 'content': [
-                    {
-                        'id': 'torrent_min_size',
-                        'placeholder': '0',
-                    }
+                    # 同一行
+                    [
+                        {
+                            'title': '种子体积最小值（GB）',
+                            'required': "required",
+                            'tooltip': '大于配置值的种子才会被监控到，默认为 0',
+                            'type': 'text',
+                            'content': [
+                                {
+                                    'id': 'torrent_min_size',
+                                    'placeholder': '0',
+                                }
+                            ]
+                        },
+                    ]
                 ]
             },
-
             {
                 'type': 'details',
                 'summary': '监控类别',
@@ -204,22 +211,6 @@ class MteamRssGen(_IPluginModule):
                                     'name': '剧集',
                                 }
                             }
-                        },
-                    ]
-                ]
-            },
-            {
-                'type': 'div',
-                'summary': 'RSS 地址',
-                'required': "required",
-                'tooltip': '监控选中的类别，必选！！',
-                'content': [
-                    # 同一行
-                    [
-                        {
-                            'id': 'title',
-                            'content': 'http://127.0.0.1:8001'
-
                         },
                     ]
                 ]
@@ -340,7 +331,7 @@ class MteamRssGen(_IPluginModule):
             torrent_info.enclosure = page_url
             torrent_info.link = page_url
             torrent_info.category = tr.get('category')
-            if discount.find('FREE') != -1:
+            if discount.find('FREE') != -1 and self.match_size(torrent_info.size):
                 torrent_info.mark_brush = True
             else:
                 torrent_info.mark_brush = False
@@ -353,3 +344,11 @@ class MteamRssGen(_IPluginModule):
             self.info("found 0 torrents match")
 
         return torrents
+
+    def match_size(self, torrent_size):
+        limit = int(self._torrent_min_size) * 1024 ** 3
+        torrent_size = int(torrent_size)
+        if torrent_size > limit:
+            return True
+
+        return False
