@@ -52,7 +52,7 @@ class WebUtils:
         获取最新版本号
         """
         try:
-            releases_update_only = Config().get_config("app").get("releases_update_only")
+            releases_update_only = True
             version_res = RequestUtils(proxies=Config().get_proxies()).get_res(
                 "https://api.github.com/repos/0xforee/nas-tools/releases/latest")
             commit_res = RequestUtils(proxies=Config().get_proxies()).get_res(
