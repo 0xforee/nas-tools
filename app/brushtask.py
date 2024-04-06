@@ -203,10 +203,6 @@ class BrushTask(object):
 
         log.info("【Brush】开始站点 %s 的刷流任务：%s..." % (site_name, task_name))
         # 检查是否达到保种体积
-        if not self.__is_torrent_size_match(taskinfo):
-            return
-
-        # 检查站点其他规则
         if not self.__is_allow_new_torrent(taskinfo=taskinfo,
                                            dlcount=rss_rule.get("dlcount"),
                                            current_site_count=rss_rule.get("current_site_count"),
@@ -271,9 +267,10 @@ class BrushTask(object):
                                              pubdate=pubdate,
                                              siteid=site_id):
                     continue
-                # 检查能否添加当前种子，判断流控和任务数量限制等（种子大小等部分下载后才能判断）
+                # 检查能否添加当前种子，判断是否超过保种体积大小
                 if not self.__is_allow_new_torrent(taskinfo=taskinfo,
                                                    dlcount=max_dlcount,
+                                                   torrent_size=size,
                                                    current_site_count=current_site_count,
                                                    current_site_dlcount=current_site_dlcount,
                                                    site_info=site_info):
@@ -293,7 +290,7 @@ class BrushTask(object):
                                            site_info=site_info,
                                            title=torrent_name,
                                            enclosure=enclosure,
-                                           torrent_size=size,
+                                           size=size,
                                            torrent_attr=torrent_attr,
                                            ):
                     # 计数
@@ -303,10 +300,6 @@ class BrushTask(object):
                         break
 
                     # 再判断一次
-                    # 检查是否达到保种体积
-                    if not self.__is_torrent_size_match(taskinfo):
-                        return
-                    # 检查其他规则
                     if not self.__is_allow_new_torrent(taskinfo=taskinfo,
                                                        dlcount=max_dlcount,
                                                        current_site_count=current_site_count,
@@ -606,12 +599,19 @@ class BrushTask(object):
             except Exception as e:
                 ExceptionUtils.exception_traceback(e)
 
-    def __is_torrent_size_match(self, taskinfo, torrent_size=None):
+    def __is_allow_new_torrent(self, taskinfo, dlcount, current_site_dlcount, current_site_count, site_info, torrent_size=None):
         """
-        检查种子大小是否符合要求
+        检查是否还能添加新的下载
         """
-        task_name = taskinfo.get("name")
+        if not taskinfo:
+            return False
+        # 判断大小
         seed_size = taskinfo.get("seed_size") or None
+        task_name = taskinfo.get("name")
+        up_limit_speed = taskinfo.get("up_limit") or None
+        dl_limit_speed = taskinfo.get("dl_limit") or None
+        downloader_id = taskinfo.get("downloader")
+        downloader_name = taskinfo.get("downloader_name")
         total_size = self.dbhelper.get_brushtask_totalsize(taskinfo.get("id"))
         if torrent_size and seed_size:
             if float(torrent_size) + int(total_size) >= (float(seed_size) + 5) * 1024 ** 3:
@@ -624,19 +624,6 @@ class BrushTask(object):
                 log.warn("【Brush】刷流任务 %s 当前保种体积 %sGB，不再新增下载"
                          % (task_name, round(int(total_size) / 1024 / 1024 / 1024, 1)))
                 return False
-        return True
-
-    def __is_allow_new_torrent(self, taskinfo, dlcount, current_site_dlcount, current_site_count, site_info):
-        """
-        检查是否还能添加新的下载
-        """
-        if not taskinfo:
-            return False
-        task_name = taskinfo.get("name")
-        up_limit_speed = taskinfo.get("up_limit") or None
-        dl_limit_speed = taskinfo.get("dl_limit") or None
-        downloader_id = taskinfo.get("downloader")
-        downloader_name = taskinfo.get("downloader_name")
 
         # 检查下载速度上限、上传速度上限
         if (up_limit_speed and str(up_limit_speed).isdigit()) or (dl_limit_speed and str(dl_limit_speed).isdigit()):
@@ -715,7 +702,7 @@ class BrushTask(object):
                            site_info,
                            title,
                            enclosure,
-                           torrent_size,
+                           size,
                            torrent_attr,
                            ):
         """
@@ -726,7 +713,7 @@ class BrushTask(object):
         :param site_info: 站点信息
         :param title: 种子名称
         :param enclosure: 种子地址
-        :param torrent_size: 种子大小
+        :param size: 种子大小
         :param torrent_attr: 种子属性
         """
         if not enclosure:
@@ -744,13 +731,6 @@ class BrushTask(object):
         download_dir = taskinfo.get("savepath")
         brushtask_free_limit_speed = taskinfo.get("brushtask_free_limit_speed")
         tag = taskinfo.get("label").split(',') if taskinfo.get("label") else None
-
-        seed_size = taskinfo.get("seed_size") or None
-        total_size = self.dbhelper.get_brushtask_totalsize(taskinfo.get("id"))
-        origin_limit = torrent_size
-        if torrent_size and seed_size:
-            origin_limit = int(total_size) - (float(seed_size) + 5) * 1024 ** 3
-
         # 标签
         if not transfer:
             if tag:
@@ -762,7 +742,7 @@ class BrushTask(object):
         meta_info = MetaInfo(title=title)
         meta_info.set_torrent_info(site=site_info.get("name"),
                                    enclosure=enclosure,
-                                   size=torrent_size)
+                                   size=size)
 
 
         # 获取 download_dir 目录，防止获取目录时候的磁盘检查，将磁盘检查挪到部分下载中
@@ -805,7 +785,7 @@ class BrushTask(object):
             ## 第二种方案：先尝试添加下载任务，（下载后暂停），然后计算文件大小规则，决定是否要开启，还是删除任务
             # 针对原有逻辑改动较少，可移植性大大增加
             # 设置优先级
-            result, real_size, fraction_retmsg = self.downloader.fraction_download(fraction_rule, origin_limit, torrent_size, container_path, downloader_id, download_id)
+            result, real_size, fraction_retmsg = self.downloader.fraction_download(fraction_rule, size, container_path, downloader_id, download_id)
 
             if result:
                 # 开启下载

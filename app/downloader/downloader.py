@@ -1503,12 +1503,11 @@ class Downloader:
 
         _client.set_downloadspeed_limit(torrent_ids, limit)
 
-    def fraction_download(self, fraction_rule, origin_limit, torrent_size, container_path, downloader_id, download_id):
+    def fraction_download(self, fraction_rule, size, container_path, downloader_id, download_id):
         """
         做种使用文件部分下载，开启最小化文件做种模式后使用
         fraction_rule: 部分下载规则
-        origin_limit：根据当前保种体积和保种限制体积计算出来的限制大小
-        torrent_size: rss 中种子总大小，后续会给出真实使用的大小
+        size: rss 中种子总大小，后续会给出真实使用的大小
         return:
         result: 当前种子是否要触发下载
         real_size: 当前种子触发下载后，真实下载多大
@@ -1521,7 +1520,7 @@ class Downloader:
             return False, 0, "torrent content files get error"
 
         gb2bytes = 1024*1024*1024
-        limit_size = torrent_size
+        limit_size = size
         percent = 1
         # 根据规则挑选合适的文件
         try:
@@ -1545,7 +1544,7 @@ class Downloader:
                         before_range_array = before_range.split(",")
                         before_percent_array = before_percent.split(",")
                         for index in range(before_range_num):
-                            if torrent_size <= int(before_range_array[index]) * gb2bytes:
+                            if size <= int(before_range_array[index]) * gb2bytes:
                                 target_range_index = index - 1
                                 break
                         if target_range_index == -1:
@@ -1557,7 +1556,7 @@ class Downloader:
                         else:
                             percent = before_percent_array[target_range_index]
 
-                        limit_size = torrent_size * float(percent)
+                        limit_size = size * float(percent)
                     else:
                         log.info(f"【部分下载】下载前设置区间个数不一致，range: {before_range} 个数{before_range_num} 和 percent: {before_percent} 个数{before_percent_num}，请修正！")
 
@@ -1572,9 +1571,6 @@ class Downloader:
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
             log.error("【部分下载】部分下载规则参数出错：%s" % (str(e)))
-
-        # 不要超过站点要求的限制
-        limit_size = min(limit_size, origin_limit)
 
         # 不要超过磁盘剩余空间，如果目录没找到，默认为0
         free_space = SystemUtils.get_free_space(container_path)
