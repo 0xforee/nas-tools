@@ -280,11 +280,6 @@ class BuiltinIndexer(_IIndexClient):
         :return: 是否发生错误, 种子列表
         """
         log.debug(f"spider search start {indexer.name}")
-        if indexer.parser.find("MTeam") != -1:
-            spider = MTeamSpider(indexer)
-            flag, torrents = spider.inner_search(keyword)
-            log.debug(f"spider search end  {indexer.name}")
-            return flag, torrents
 
         spider = TorrentSpider()
         spider.setparam(indexer=indexer,
