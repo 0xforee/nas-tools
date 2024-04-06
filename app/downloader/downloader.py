@@ -313,7 +313,7 @@ class Downloader:
         page_url = media_info.page_url
         # 默认值
         site_info, dl_files_folder, dl_files, retmsg = {}, "", [], ""
-
+        container_path = download_dir
         if torrent_file:
             # 有种子文件时解析种子信息
             url = os.path.basename(torrent_file)
@@ -422,6 +422,7 @@ class Downloader:
                 log.info(f"【Downloader】下载器 before, down_dir: {download_dir}, media: {media_info}, down_conf: {downloader_conf}")
                 download_info = self.__get_download_dir_info(media_info, downloader_conf.get("download_dir"), skip_size_check)
                 download_dir = download_info.get('path')
+                container_path = download_info.get('container_path')
                 # 从下载目录中获取分类标签
                 log.info(f"【Downloader】下载器 after, down_dir: {download_dir}")
                 if not category:
@@ -524,7 +525,7 @@ class Downloader:
                                                        can_item=media_info,
                                                        download_setting_name=download_setting_name,
                                                        downloader_name=downloader_name)
-                return downloader_id, download_id, download_dir, ""
+                return downloader_id, download_id, container_path, ""
             else:
                 __download_fail("请检查下载任务是否已存在")
                 return downloader_id, None, None, f"下载器 {downloader_name} 添加下载任务失败，请检查下载任务是否已存在"
@@ -1229,7 +1230,8 @@ class Downloader:
                         continue
                 return {
                     "path": attr.get("save_path"),
-                    "category": attr.get("label")
+                    "category": attr.get("label"),
+                    "container_path": attr.get("container_path")
                 }
         return {"path": None, "category": None}
 
