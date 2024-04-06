@@ -492,7 +492,7 @@ class TorrentTransfer(_IPluginModule):
                             continue
 
                 # 发送到另一个下载器中下载：默认暂停、传输下载路径、关闭自动管理模式
-                _, download_id, retmsg = self.downloader.download(
+                _, download_id, dir, retmsg = self.downloader.download(
                     media_info=MetaInfo("自动转移做种"),
                     torrent_file=torrent_file,
                     is_paused=True,

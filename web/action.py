@@ -573,7 +573,7 @@ class WebAction:
                                        res.UPLOAD_VOLUME_FACTOR),
                                    download_volume_factor=float(res.DOWNLOAD_VOLUME_FACTOR))
             # 添加下载
-            _, ret, ret_msg = Downloader().download(media_info=media,
+            _, ret, dir, ret_msg = Downloader().download(media_info=media,
                                                     download_dir=dl_dir,
                                                     download_setting=dl_setting,
                                                     in_from=SearchType.WEB,
@@ -609,7 +609,7 @@ class WebAction:
         media.download_volume_factor = float(downloadvolumefactor)
         media.seeders = seeders
         # 添加下载
-        _, ret, ret_msg = Downloader().download(media_info=media,
+        _, ret, dir, ret_msg = Downloader().download(media_info=media,
                                                 download_dir=dl_dir,
                                                 download_setting=dl_setting,
                                                 in_from=SearchType.WEB,

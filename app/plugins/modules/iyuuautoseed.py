@@ -668,7 +668,7 @@ class IYUUAutoSeed(_IPluginModule):
         meta_info.set_torrent_info(site=site_info.get("name"),
                                    enclosure=torrent_url)
         # 辅种任务默认暂停
-        _, download_id, retmsg = self.downloader.download(
+        _, download_id, dir, retmsg = self.downloader.download(
             media_info=meta_info,
             is_paused=True,
             tag=deepcopy(self._torrent_tags),

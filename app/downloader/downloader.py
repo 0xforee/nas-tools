@@ -265,6 +265,7 @@ class Downloader:
                  torrent_file=None,
                  in_from=None,
                  user_name=None,
+                 skip_size_check=False,
                  proxy=None):
         """
         添加下载任务，根据当前使用的下载器分别调用不同的客户端处理
@@ -279,6 +280,7 @@ class Downloader:
         :param torrent_file: 种子文件路径
         :param in_from: 来源
         :param user_name: 用户名
+        :param skip_size_check: 跳过尺寸检查，用于刷流部分下载
         :param proxy: 是否使用代理，指定该选项为 True/False 会覆盖 site_info 的设置
         :return: 下载器类型, 种子ID，错误信息
         """
@@ -321,7 +323,7 @@ class Downloader:
             url = media_info.enclosure
             if not url:
                 __download_fail("下载链接为空")
-                return None, None, "下载链接为空"
+                return None, None, None, "下载链接为空"
             # 获取种子内容，磁力链不解析
             if url.startswith("magnet:"):
                 content = url
@@ -343,7 +345,7 @@ class Downloader:
 
         if not content:
             __download_fail(retmsg)
-            return None, None, retmsg
+            return None, None, None, retmsg
 
         # 下载设置
         if not download_setting and media_info.site:
@@ -371,7 +373,7 @@ class Downloader:
 
         if not downloader or not downloader_conf:
             __download_fail("请检查下载设置所选下载器是否有效且启用")
-            return None, None, f"下载设置 {download_setting_name} 所选下载器失效"
+            return None, None, None, f"下载设置 {download_setting_name} 所选下载器失效"
         downloader_name = downloader_conf.get("name")
 
         # 开始添加下载
@@ -418,7 +420,7 @@ class Downloader:
             # 下载目录设置
             if not download_dir:
                 log.info(f"【Downloader】下载器 before, down_dir: {download_dir}, media: {media_info}, down_conf: {downloader_conf}")
-                download_info = self.__get_download_dir_info(media_info, downloader_conf.get("download_dir"))
+                download_info = self.__get_download_dir_info(media_info, downloader_conf.get("download_dir"), skip_size_check)
                 download_dir = download_info.get('path')
                 # 从下载目录中获取分类标签
                 log.info(f"【Downloader】下载器 after, down_dir: {download_dir}")
@@ -522,15 +524,15 @@ class Downloader:
                                                        can_item=media_info,
                                                        download_setting_name=download_setting_name,
                                                        downloader_name=downloader_name)
-                return downloader_id, download_id, ""
+                return downloader_id, download_id, download_dir, ""
             else:
                 __download_fail("请检查下载任务是否已存在")
-                return downloader_id, None, f"下载器 {downloader_name} 添加下载任务失败，请检查下载任务是否已存在"
+                return downloader_id, None, None, f"下载器 {downloader_name} 添加下载任务失败，请检查下载任务是否已存在"
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
             __download_fail(str(e))
             log.error(f"【Downloader】下载器 {downloader_name} 添加任务出错：%s" % str(e))
-            return None, None, str(e)
+            return None, None, None, str(e)
 
     def transfer(self, downloader_id=None):
         """
@@ -728,7 +730,7 @@ class Downloader:
             """
             下载及发送通知
             """
-            _downloader_id, did, msg = self.download(
+            _downloader_id, did, dir, msg = self.download(
                 media_info=download_item,
                 download_dir=download_item.save_path,
                 download_setting=download_item.download_setting,
@@ -1199,7 +1201,7 @@ class Downloader:
         return true_path
 
     @staticmethod
-    def __get_download_dir_info(media, downloaddir):
+    def __get_download_dir_info(media, downloaddir, skip_size_check=False):
         """
         根据媒体信息读取一个下载目录的信息
         """
@@ -1213,16 +1215,18 @@ class Downloader:
                     continue
                 if not attr.get("save_path") and not attr.get("label"):
                     continue
-                if (attr.get("container_path") or attr.get("save_path")) \
-                        and os.path.exists(attr.get("container_path") or attr.get("save_path")) \
-                        and media.size \
-                        and SystemUtils.get_free_space(
-                    attr.get("container_path") or attr.get("save_path")
-                ) < NumberUtils.get_size_gb(
-                    StringUtils.num_filesize(media.size)
-                ):
-                    log.info(f'{attr.get("save_path")} not have enough space')
-                    continue
+                # 刷流的部分下载功能需要跳过目录检查，因为种子文件大小是动态确定的
+                if not skip_size_check:
+                    if (attr.get("container_path") or attr.get("save_path")) \
+                            and os.path.exists(attr.get("container_path") or attr.get("save_path")) \
+                            and media.size \
+                            and SystemUtils.get_free_space(
+                        attr.get("container_path") or attr.get("save_path")
+                    ) < NumberUtils.get_size_gb(
+                        StringUtils.num_filesize(media.size)
+                    ):
+                        log.info(f'{attr.get("save_path")} not have enough space')
+                        continue
                 return {
                     "path": attr.get("save_path"),
                     "category": attr.get("label")
@@ -1490,6 +1494,7 @@ class Downloader:
         )
         self.init_config()
         return ret
+
     def set_downloadspeed_limit(self, downloader_id, torrent_ids, limit):
         """
         设置种子的下载限速 kb/s
@@ -1503,16 +1508,18 @@ class Downloader:
 
         _client.set_downloadspeed_limit(torrent_ids, limit)
 
-    def fraction_download(self, fraction_rule, size, container_path, downloader_id, download_id):
+    def fraction_download(self, fraction_rule, origin_limit, size, download_dir, downloader_id, download_id):
         """
         做种使用文件部分下载，开启最小化文件做种模式后使用
         fraction_rule: 部分下载规则
         size: rss 中种子总大小，后续会给出真实使用的大小
+        :param download_dir: 下载目录
+        :param origin_limit: 还有多少保种的体积没有使用
         return:
         result: 当前种子是否要触发下载
         real_size: 当前种子触发下载后，真实下载多大
         """
-        log.info(f"【Downloader】部分下载开始")
+        log.info(f"【Downloader】部分下载开始, 剩余保种体积:%s " % str(origin_limit))
         _client = self.__get_client(downloader_id)
         torrent_files = self.get_files(tid=download_id, downloader_id=downloader_id)
         downloader_conf = self.get_downloader_conf(downloader_id)
@@ -1573,9 +1580,14 @@ class Downloader:
             log.error("【部分下载】部分下载规则参数出错：%s" % (str(e)))
 
         # 不要超过磁盘剩余空间，如果目录没找到，默认为0
-        free_space = SystemUtils.get_free_space(container_path)
+        if not os.path.exists(download_dir):
+            return False, 0, "下载目录不存在 %s，请检查磁盘空间或者是否挂载正常" %(str(download_dir))
+
+        free_space = SystemUtils.get_free_space(download_dir)
         if free_space == 0:
-            return False, 0, "磁盘空间为 0，请检查磁盘空间或者是否挂载正常"
+            return False, 0, "%s 目录空间为 0，请检查磁盘空间或者是否挂载正常" % (str(download_dir))
+
+        limit_size = min(origin_limit, limit_size)
 
         limit_size = min(limit_size, free_space * gb2bytes)
 

@@ -203,6 +203,10 @@ class BrushTask(object):
 
         log.info("【Brush】开始站点 %s 的刷流任务：%s..." % (site_name, task_name))
         # 检查是否达到保种体积
+        if not self.__is_torrent_size_match(taskinfo):
+            return
+
+        # 检查其他设置
         if not self.__is_allow_new_torrent(taskinfo=taskinfo,
                                            dlcount=rss_rule.get("dlcount"),
                                            current_site_count=rss_rule.get("current_site_count"),
@@ -300,6 +304,9 @@ class BrushTask(object):
                         break
 
                     # 再判断一次
+                    if not self.__is_torrent_size_match(taskinfo):
+                        break
+
                     if not self.__is_allow_new_torrent(taskinfo=taskinfo,
                                                        dlcount=max_dlcount,
                                                        current_site_count=current_site_count,
@@ -599,19 +606,14 @@ class BrushTask(object):
             except Exception as e:
                 ExceptionUtils.exception_traceback(e)
 
-    def __is_allow_new_torrent(self, taskinfo, dlcount, current_site_dlcount, current_site_count, site_info, torrent_size=None):
+    def __is_torrent_size_match(self, taskinfo, torrent_size=None):
         """
-        检查是否还能添加新的下载
+        判断当前空间是否超过保种大小
         """
-        if not taskinfo:
-            return False
         # 判断大小
         seed_size = taskinfo.get("seed_size") or None
         task_name = taskinfo.get("name")
-        up_limit_speed = taskinfo.get("up_limit") or None
-        dl_limit_speed = taskinfo.get("dl_limit") or None
-        downloader_id = taskinfo.get("downloader")
-        downloader_name = taskinfo.get("downloader_name")
+
         total_size = self.dbhelper.get_brushtask_totalsize(taskinfo.get("id"))
         if torrent_size and seed_size:
             if float(torrent_size) + int(total_size) >= (float(seed_size) + 5) * 1024 ** 3:
@@ -624,6 +626,20 @@ class BrushTask(object):
                 log.warn("【Brush】刷流任务 %s 当前保种体积 %sGB，不再新增下载"
                          % (task_name, round(int(total_size) / 1024 / 1024 / 1024, 1)))
                 return False
+
+        return True
+
+    def __is_allow_new_torrent(self, taskinfo, dlcount, current_site_dlcount, current_site_count, site_info, torrent_size=None):
+        """
+        检查是否还能添加新的下载
+        """
+        if not taskinfo:
+            return False
+        up_limit_speed = taskinfo.get("up_limit") or None
+        dl_limit_speed = taskinfo.get("dl_limit") or None
+        downloader_id = taskinfo.get("downloader")
+        downloader_name = taskinfo.get("downloader_name")
+        task_name = taskinfo.get("name")
 
         # 检查下载速度上限、上传速度上限
         if (up_limit_speed and str(up_limit_speed).isdigit()) or (dl_limit_speed and str(dl_limit_speed).isdigit()):
@@ -731,6 +747,11 @@ class BrushTask(object):
         download_dir = taskinfo.get("savepath")
         brushtask_free_limit_speed = taskinfo.get("brushtask_free_limit_speed")
         tag = taskinfo.get("label").split(',') if taskinfo.get("label") else None
+        seed_size = taskinfo.get("seed_size") or None
+        total_size = self.dbhelper.get_brushtask_totalsize(taskinfo.get("id"))
+        origin_limit = size
+        if seed_size:
+            origin_limit = max(0, float(seed_size) * 1024 ** 3 - int(total_size))
         # 标签
         if not transfer:
             if tag:
@@ -743,33 +764,16 @@ class BrushTask(object):
         meta_info.set_torrent_info(site=site_info.get("name"),
                                    enclosure=enclosure,
                                    size=size)
-
-
-        # 获取 download_dir 目录，防止获取目录时候的磁盘检查，将磁盘检查挪到部分下载中
-        downloader_conf = self.downloader.get_downloader_conf(downloader_id)
-        download_dirs = downloader_conf.get("download_dir")
-        save_path = ""
-        container_path = ""
-        if not downloader_conf:
-            log.error("请检查下载设置所选下载器是否有效且启用1")
-            return False
-        if len(download_dirs) > 0:
-            save_path = download_dirs[0].get('save_path')
-            container_path = download_dirs[0].get('container_path')
-        else:
-            log.error("请检查下载设置所选下载器是否有效且启用2")
-            return False
-
-        _, download_id, retmsg = self.downloader.download(
+        _, download_id, dir, retmsg = self.downloader.download(
             media_info=meta_info,
             tag=tag,
             is_paused=True,
-            # download_dir=saved_path,
             downloader_id=downloader_id,
             download_dir=download_dir,
             download_setting="-2",
             download_limit=download_limit,
-            upload_limit=upload_limit
+            upload_limit=upload_limit,
+            skip_size_check=True
         )
 
         if not download_id:
@@ -785,7 +789,7 @@ class BrushTask(object):
             ## 第二种方案：先尝试添加下载任务，（下载后暂停），然后计算文件大小规则，决定是否要开启，还是删除任务
             # 针对原有逻辑改动较少，可移植性大大增加
             # 设置优先级
-            result, real_size, fraction_retmsg = self.downloader.fraction_download(fraction_rule, size, container_path, downloader_id, download_id)
+            result, real_size, fraction_retmsg = self.downloader.fraction_download(fraction_rule, origin_limit, size, dir, downloader_id, download_id)
 
             if result:
                 # 开启下载

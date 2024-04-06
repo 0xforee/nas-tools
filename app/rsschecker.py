@@ -355,7 +355,7 @@ class RssChecker(object):
         # 添加下载
         if rss_download_torrents:
             for media in rss_download_torrents:
-                downloader_id, ret, ret_msg = self.downloader.download(
+                downloader_id, ret, dir, ret_msg = self.downloader.download(
                     media_info=media,
                     download_dir=taskinfo.get("save_path"),
                     download_setting=taskinfo.get("download_setting"),
@@ -688,7 +688,7 @@ class RssChecker(object):
         for article in articles:
             media = self.media.get_media_info(title=article.get("title"))
             media.set_torrent_info(enclosure=article.get("enclosure"))
-            downloader_id, ret, ret_msg = self.downloader.download(
+            downloader_id, ret, dir, ret_msg = self.downloader.download(
                 media_info=media,
                 download_dir=taskinfo.get("save_path"),
                 download_setting=taskinfo.get("download_setting"),
