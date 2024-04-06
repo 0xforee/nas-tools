@@ -245,8 +245,10 @@ class BuiltinIndexer(_IIndexClient):
                                                                    page=page)
         elif indexer.parser == "TorrentLeech":
             error_flag, result_array = TorrentLeech(indexer).search(keyword=keyword,
-                                                                    page=page)
-        else:   
+                                                            page=page)
+        elif indexer.parser == "MTeamSpider":
+            error_flag, result_array = MTeamSpider(indexer=indexer).inner_search(keyword=keyword, page=page)
+        else:
             if PluginsSpider().status(indexer=indexer):
                 error_flag, result_array = PluginsSpider().search(keyword=keyword, 
                                                                   indexer=indexer, 
@@ -278,7 +280,7 @@ class BuiltinIndexer(_IIndexClient):
         :return: 是否发生错误, 种子列表
         """
         log.debug(f"spider search start {indexer.name}")
-        if indexer.name.find("MTeam") != -1:
+        if indexer.parser.find("MTeam") != -1:
             spider = MTeamSpider(indexer)
             flag, torrents = spider.inner_search(keyword)
             log.debug(f"spider search end  {indexer.name}")

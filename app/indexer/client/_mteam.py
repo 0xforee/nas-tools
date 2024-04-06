@@ -45,13 +45,17 @@ class MTeamSpider(object):
         elif discount == "_2X_PERCENT_50":
             return 2.0, 0.5
 
-    def inner_search(self, keyword):
+    def inner_search(self, keyword, page=None):
+        if page:
+            page = int(page) + 1
+        else:
+            page = 1
 
         param = {
             "categories":[],
             "keyword": keyword,
             "mode":"normal",
-            "pageNumber":1,
+            "pageNumber": page,
             "pageSize":100,
             "visible":1
         }
@@ -93,8 +97,8 @@ class MTeamSpider(object):
             return True, []
         return False, torrents
 
-    def search(self, keyword):
+    def search(self, keyword, page=None):
         if not keyword:
             return True, []
 
-        return self.inner_search(keyword)
+        return self.inner_search(keyword, page)
