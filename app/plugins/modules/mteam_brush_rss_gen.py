@@ -5,7 +5,7 @@ from jinja2 import Template
 from flask import Flask, request
 from app.helper import ThreadHelper
 from app.plugins.modules._base import _IPluginModule
-from threading import Event
+from threading import Event, Thread
 from app.sites.sites import Sites
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
@@ -113,14 +113,14 @@ class MteamRssGen(_IPluginModule):
         #
         # 启动服务
         if self.get_state():
-            ThreadHelper().start_thread(self.start_http_server, ())
+            self.start_http_server()
 
     def start_http_server(self):
         # rss_server =
         self._server = HTTPServer(('0.0.0.0', 8001), Request)
+        http_thread = Thread(target=self._server.serve_forever)
+        http_thread.start()
         self.info('Starting mteam rss server, listen at % localhost:' + str(self._server.server_port))
-        self._server.serve_forever()
-
 
     def get_state(self):
         return self._enable
@@ -130,8 +130,10 @@ class MteamRssGen(_IPluginModule):
         停止服务
         """
         try:
+            self.info("stop mt rss server")
             if self._server:
                 self._server.shutdown()
+                self._server = None
         except Exception as e:
             print(str(e))
 
