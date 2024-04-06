@@ -3800,6 +3800,7 @@ class WebAction:
         for torrent in torrents:
             # 先查询下载记录，没有再识别
             name = torrent.get("name")
+            site_url = torrent.get("site_url")
             download_info = DownloaderHandler.get_download_history_by_downloader(
                 downloader=DownloaderHandler.default_downloader_id,
                 download_id=torrent.get("id")
@@ -3810,7 +3811,6 @@ class WebAction:
                 poster_path = download_info.POSTER
                 se = download_info.SE
             else:
-                site_url = torrent.get("site_url")
                 media_info = MediaHander.get_media_info(title=name)
                 if not media_info:
                     torrent.update({
