@@ -80,7 +80,7 @@ class MteamUtils:
 
 
     @staticmethod
-    def buildRequestUtils(cookies, api_key=None, headers=None, proxies=False, content_type=None, accept_type=None, session=None, referer=None, timeout=30):
+    def buildRequestUtils(cookies=None, api_key=None, headers=None, proxies=False, content_type=None, accept_type=None, session=None, referer=None, timeout=30):
         if api_key:
             # use api key
             return RequestUtils(headers=headers, api_key=api_key, timeout=timeout, referer=referer,

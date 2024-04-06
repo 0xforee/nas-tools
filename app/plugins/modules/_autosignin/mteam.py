@@ -3,6 +3,7 @@ import time
 from app.helper import ChromeHelper
 from app.helper.cloudflare_helper import under_challenge
 from app.plugins.modules._autosignin._base import _ISiteSigninHandler
+from app.utils import MteamUtils
 from config import Config
 
 
@@ -32,40 +33,54 @@ class MTeam(_ISiteSigninHandler):
         site_cookie = site_info.get("cookie")
         ua = site_info.get("ua")
         sign_url = site_info.get("signurl")
+        api_key = site_info.get("api_key")
         proxy = Config().get_proxies() if site_info.get("proxy") else None
 
-        # 首页
-        chrome = ChromeHelper()
-        if chrome.get_status():
-            self.info(f"{site} 开始仿真签到")
-            msg, html_text = self.__chrome_visit(chrome=chrome,
-                                                 url=sign_url,
-                                                 ua=ua,
-                                                 site_cookie=site_cookie,
-                                                 proxy=proxy,
-                                                 site=site)
+        render = site_info.get("render")
+        if render:
+            # 首页
+            chrome = ChromeHelper()
+            if chrome.get_status():
+                self.info(f"{site} 开始仿真签到")
+                msg, html_text = self.__chrome_visit(chrome=chrome,
+                                                     url=sign_url,
+                                                     ua=ua,
+                                                     site_cookie=site_cookie,
+                                                     proxy=proxy,
+                                                     site=site)
 
-            time.sleep(3)
-            # 仿真签到
-            msg, html_text = self.__chrome_visit(chrome=chrome,
-                                                 url=sign_url,
-                                                 ua=ua,
-                                                 site_cookie=site_cookie,
-                                                 proxy=proxy,
-                                                 site=site)
-            # 仿真访问失败
-            if msg:
-                return False, msg
+                # 仿真访问失败
+                if msg:
+                    return False, msg
 
-            # 已签到
-            self.info(f"签到成功")
-            return True, f'【{site}】签到成功'
+                # 已签到
+                self.info(f"签到成功")
+                return True, f'【{site}】签到成功'
+            else:
+                self.error(f"chrome 状态异常")
+                return False, f'仿真浏览器异常'
         else:
-            self.error(f"chrome 状态异常")
-            return False, f'仿真浏览器异常'
+            #TODO 官方禁止调用
+            api = "%s/api/member/updateLastBrowse"
+            from urllib.parse import urlparse
+            parse_result = urlparse(sign_url)
+            api = api % (str(parse_result.scheme) + "://" + str(parse_result.hostname))
+            res = MteamUtils.buildRequestUtils(
+                headers=ua,
+                api_key=api_key,
+                proxies=Config().get_proxies() if site_info.get("proxy") else None,
+                timeout=15
+            ).post_res(url=api)
+
+            if res and res.status_code == 200:
+                self.info(f"{site} APIKEY 签到成功")
+                return True, f'【{site}】APIKEY 签到成功'
+            else:
+                self.error(f"{site} APIKEY 签到失败{res} ")
+                return False, f'{site} APIKEY 签到失败'
 
     def __chrome_visit(self, chrome, url, ua, site_cookie, proxy, site):
-        if not chrome.new_tab(url=url, ua=ua, cookie=site_cookie):
+        if not chrome.visit(url=url, ua=ua, cookie=site_cookie, proxy=proxy):
             self.warn("%s 无法打开网站" % site)
             return f"【{site}】仿真签到失败，无法打开网站！", None
         # 检测是否过cf
