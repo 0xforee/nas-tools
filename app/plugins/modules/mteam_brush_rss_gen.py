@@ -58,7 +58,7 @@ class MteamRssGen(_IPluginModule):
     # 主题色
     module_color = "#4179F4"
     # 插件版本
-    module_version = "1.0"
+    module_version = "1.1"
     # 插件作者
     module_author = "0xforee"
     # 作者主页
@@ -204,6 +204,10 @@ class MteamRssGen(_IPluginModule):
                                     'id': 'adult',
                                     'radio': True,
                                     'name': '成人',
+                                },
+                                'normal': {
+                                    'id': 'normal',
+                                    'name': '综合',
                                 },
                                 'movie': {
                                     'id': 'movie',
