@@ -105,7 +105,7 @@ class MteamRssGen(_IPluginModule):
 
         if config:
             self._enable = config.get("enabled")
-            self._torrent_min_size = config.get("torrent_min_size")
+            self._torrent_min_size = config.get("torrent_min_size") or 0
             self._watch_categories = config.get("watch_categories") or ['adult']
 
         # 停止现有任务
