@@ -125,6 +125,7 @@ class SiteConf:
                 elif discount == '_2X_FREE':
                     ret_attr["free"] = True
                     ret_attr["2xfree"] = True
+                ret_attr["free_deadline"] = status.get('toppingEndTime')
             return ret_attr
 
         xpath_strs = self.get_grap_conf(torrent_url)
@@ -190,6 +191,8 @@ class SiteConf:
         返回：转换后时间 20230715_2310
         """
         free_deadline_str = ""
+        if not deadline_str:
+            return free_deadline_str
         try:
             import re
             free_deadline_re_day_pattern = r'(\d+)[天|日]'
