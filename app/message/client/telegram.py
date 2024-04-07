@@ -326,6 +326,8 @@ class Telegram(_IMessageClient):
                 values = {"timeout": long_poll_timeout, "offset": _offset}
                 res = RequestUtils(proxies=_config.get_proxies()).get_res(
                     _sc_url + urlencode(values))
+                log.debug("【Telegram, request: " + (_sc_url + urlencode(values)))
+                log.debug("【Telegram, res: " + (str(res.content)))
                 if res and res.json():
                     for msg in res.json().get("result", []):
                         # 无论本地是否成功，先更新offset，即消息最多成功消费一次
