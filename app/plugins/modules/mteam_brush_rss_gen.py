@@ -117,13 +117,16 @@ class MteamRssGen(_IPluginModule):
 
     def start_http_server(self):
         # rss_server =
-        self._server = HTTPServer(('0.0.0.0', 8001), Request)
-        http_thread = Thread(target=self._server.serve_forever)
-        http_thread.start()
+        try:
+            self._server = HTTPServer(('0.0.0.0', 8001), Request)
+            http_thread = Thread(target=self._server.serve_forever)
+            http_thread.start()
+        except Exception as e:
+            self.error("found some error: " + str(e))
         self.info('Starting mteam rss server, listen at % localhost:' + str(self._server.server_port))
 
     def get_state(self):
-        return False
+        return self._enable
 
     def stop_service(self):
         """
