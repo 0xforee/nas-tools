@@ -773,25 +773,25 @@
                         </div>
                     </div>
                 </div>
-                <div class="hr-text hr-text-center hr-text-spaceless mt-1 mb-3">部分下载规则</div>
+                <div class="hr-text hr-text-center hr-text-spaceless mt-1 mb-3">部分下载（拆包）规则</div>
                 <div class="row">
           <div class="col-lg-4">
             <div class="mb-3">
-              <label class="form-label">计算前范围(GB) <span class="form-help" title="和比例成对出现，例如范围为0,10,100时，将种子大小范围分为三个区间，0-10,10-100,100-无穷大"
+              <label class="form-label">种子大小范围(GB) <span class="form-help" title="和下载比例成对出现，例如范围为0,10,100时，将种子大小范围分为三个区间，0-10,10-100,100-无穷大"
                                                              data-bs-toggle="tooltip">?</span></label>
               <input type="text" id="frac_before_range" class="form-control" placeholder="">
             </div>
           </div>
           <div class="col-lg-4">
             <div class="mb-3">
-              <label class="form-label">计算前比例 <span class="form-help" title="为小于等于1的数，和范围成对出现，例如比例为1,0.5,0.25时，0-10GB下载比例为1，10-100GB下载比例0.5，100GB-无穷大下载比例0.25"
+              <label class="form-label">下载比例 <span class="form-help" title="为小于等于1的数，和范围成对出现，例如比例为1,0.5,0.25时，0-10GB下载比例为1，10-100GB下载比例0.5，100GB-无穷大下载比例0.25"
                                                              data-bs-toggle="tooltip">?</span></label>
                 <input type="text" id="frac_before_percent" class="form-control" placeholder="">
             </div>
           </div>
           <div class="col-lg-4">
             <div class="mb-3">
-              <label class="form-label">计算后范围(GB) <span class="form-help" title="计算后的种子大小，受此约束。例如计算后范围设置10-100GB，说明至少下载10GB，至多下载100GB"
+              <label class="form-label">计算比例后范围(GB) <span class="form-help" title="计算下载比例后的种子大小受此约束。例如计算后范围设置10-100GB，说明至少下载10GB，至多下载100GB"
                                                              data-bs-toggle="tooltip">?</span></label>
               <input type="text" id="frac_after_range" class="form-control" placeholder="">
             </div>
@@ -945,11 +945,11 @@
         $("#brushtask_upspeed").val(ret.task.rss_rule.upspeed);
         //下载限速
         $("#brushtask_downspeed").val(ret.task.rss_rule.downspeed);
-        //计算前范围
+        //种子大小范围
         $("#frac_before_range").val(ret.task.fraction_rule.frac_before_range);
-        //计算前比例
+        //下载比例
         $("#frac_before_percent").val(ret.task.fraction_rule.frac_before_percent);
-        //计算后范围
+        //计算比例后大小约束
         $("#frac_after_range").val(ret.task.fraction_rule.frac_after_range);
         //弹窗
         $("#modal-brushtask").modal('show');
