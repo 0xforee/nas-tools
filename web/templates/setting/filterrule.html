@@ -47,8 +47,8 @@
             <div class="card-header">
               <h3 class="card-title"><strong>{{ RuleGroup.name }}</strong></h3>
               <div class="card-actions btn-actions">
-                <a href="javascript:void(0)" onclick="show_filterrule_detail('{{ RuleGroup.id }}')" class="btn-action ms-1" title="折叠">
-                  {{ SVG.menu_2() }}
+                <a href="javascript:void(0)" id="show_filterrule_detail_{{ RuleGroup.id }}" onclick="show_filterrule_detail('{{ RuleGroup.id }}')" class="btn-action ms-1" title="折叠">
+                  {{ SVG.chevron_up() }}
                 </a>
                 <a href="javascript:share_filtergroup('{{ RuleGroup.id }}')" class="btn-action" title="分享规则组">
                   {{ SVG.share() }}
@@ -547,7 +547,17 @@
     });
   }
   //展开/折叠
-  function show_filterrule_detail(id){
-      $(`#div_group${id}`).slideToggle()
+  function show_filterrule_detail(taskid){
+    let collapse = $(`#div_group${taskid}`).is(":hidden");
+    $(`#div_group${taskid}`).slideToggle();
+    let up_icon = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"> <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>     <path d="M6 15l6 -6l6 6"></path>  </svg>';
+    let down_icon = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-down" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M6 9l6 6l6 -6"></path></svg>';
+    let aid = 'show_filterrule_detail_' + taskid;
+    let detail_btn = document.getElementById(aid);
+    if(collapse) {
+        detail_btn.innerHTML = up_icon;
+    } else {
+        detail_btn.innerHTML = down_icon;
+    }
   }
 </script>

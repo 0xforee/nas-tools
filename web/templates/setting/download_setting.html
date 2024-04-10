@@ -72,9 +72,9 @@
             {% endif %}
           </div>
           <div class="card-actions btn-actions d-none d-sm-block">
-            <a href="javascript:void(0)" onclick="show_download_setting_detail('{{ Attr.id }}')" class="btn-action ms-1"
+            <a href="javascript:void(0)" id="show_download_setting_detail_{{ Attr.id }}"  onclick="show_download_setting_detail('{{ Attr.id }}')" class="btn-action ms-1"
                title="展开/折叠">
-              {{ SVG.menu_2() }}
+               {{ SVG.chevron_up() }}
             </a>
             {% if Attr.id > 0 %}
             <a href="javascript:show_edit_download_setting_modal('{{ Attr.id }}')" class="btn-action ms-1"
@@ -361,8 +361,19 @@
   }
 
   // 展开/收起下载设置
-  function show_download_setting_detail(id){
-    $(`#detail_${id}`).slideToggle()
+  function show_download_setting_detail(taskid){
+    let collapse = $(`#detail_${taskid}`).is(":hidden");
+    $(`#detail_${taskid}`).slideToggle();
+    let up_icon = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"> <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>     <path d="M6 15l6 -6l6 6"></path>  </svg>';
+    let down_icon = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-down" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M6 9l6 6l6 -6"></path></svg>';
+    let aid = 'show_download_setting_detail_' + taskid;
+    let detail_btn = document.getElementById(aid);
+    if(collapse) {
+        detail_btn.innerHTML = up_icon;
+    } else {
+        detail_btn.innerHTML = down_icon;
+    }
+    
   }
 
 </script>

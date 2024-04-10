@@ -67,8 +67,8 @@
               <h3 class="card-title"><strong>{{ Group.name }}</strong></h3>
             </a>
             <div class="card-actions btn-actions">
-              <a href="javascript:void(0)" onclick="show_customwords_detail('{{ Group.id }}')" class="btn-action ms-1" title="折叠">
-                {{ SVG.menu_2() }}
+              <a href="javascript:void(0)" id="show_customwords_detail_{{ Group.id }}" onclick="show_customwords_detail('{{ Group.id }}')" class="btn-action ms-1" title="折叠">
+                {{ SVG.chevron_up() }}
               </a>
               <a href="javascript:show_add_custom_word_modal('{{ Group.id }}', {{ Group.type }}, {{ Group.seasons }})"
                 class="btn-action ms-1" title="增加识别词">
@@ -914,6 +914,16 @@
     }
     // 展开/收起
     function show_customwords_detail(id){
-      $(`#div_group${id}`).slideToggle()
+      let collapse = $(`#div_group${id}`).is(":hidden");
+      $(`#div_group${id}`).slideToggle();
+      let up_icon = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"> <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>     <path d="M6 15l6 -6l6 6"></path>  </svg>';
+      let down_icon = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-down" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M6 9l6 6l6 -6"></path></svg>';
+      let aid = 'show_customwords_detail_' + id;
+      let detail_btn = document.getElementById(aid);
+      if(collapse) {
+          detail_btn.innerHTML = up_icon;
+      } else {
+          detail_btn.innerHTML = down_icon;
+      }
     }
   </script>

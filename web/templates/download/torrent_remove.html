@@ -68,9 +68,9 @@
             </button>
           </div>
           <div class="card-actions btn-actions d-none d-sm-block">
-            <a href="javascript:void(0)" onclick="show_torrentremove_detail({{ Attr.id }})" class="btn-action"
+            <a href="javascript:void(0)" id="show_torrentremove_detail_{{ Attr.id }}" onclick="show_torrentremove_detail({{ Attr.id }})" class="btn-action"
                title="展开/折叠" data-bs-toggle="tooltip">
-              {{ SVG.menu_2() }}
+               {{ SVG.chevron_up() }}
             </a>
             <a href="javascript:show_remove_torrents_modal('{{ Attr.id }}')" class="btn-action"
                title="预览删种" data-bs-toggle="tooltip">
@@ -451,7 +451,18 @@
 
   // 折叠任务详情
   function show_torrentremove_detail(taskid) {
+    let collapse = $(`#detail_${taskid}`).is(":hidden");
     $(`#detail_${taskid}`).slideToggle();
+    let up_icon = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-up" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"> <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>     <path d="M6 15l6 -6l6 6"></path>  </svg>';
+    let down_icon = '<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-down" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M6 9l6 6l6 -6"></path></svg>';
+    let aid = 'show_torrentremove_detail_' + taskid;
+    let detail_btn = document.getElementById(aid);
+    if(collapse) {
+        detail_btn.innerHTML = up_icon;
+    } else {
+        detail_btn.innerHTML = down_icon;
+    }
+    
   }
 
   // 重置删种任务表单
