@@ -161,7 +161,7 @@ class MteamRssGen(_IPluginModule):
                         {
                             'title': '开启',
                             'required': "",
-                            'tooltip': '开启后会启动 RSS 生成服务，将 http://127.0.0.1/rss_pub.xml 填入馒头刷流任务 RSS 地址使用',
+                            'tooltip': '开启后会启动 RSS 生成服务，将 http://127.0.0.1:8001/rss_pub.xml 填入馒头刷流任务 RSS 地址使用',
                             'type': 'switch',
                             'id': 'enabled',
                         },
