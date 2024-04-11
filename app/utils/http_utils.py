@@ -2,6 +2,7 @@ import requests
 import urllib3
 from urllib3.exceptions import InsecureRequestWarning
 from config import Config
+from urllib.parse import urlparse
 
 urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -69,7 +70,7 @@ class RequestUtils:
                                           data=data,
                                           verify=False,
                                           headers=self._headers,
-                                          proxies=self._proxies,
+                                          proxies=self.get_proxy(url),
                                           timeout=self._timeout,
                                           json=json)
             else:
@@ -77,7 +78,7 @@ class RequestUtils:
                                      data=data,
                                      verify=False,
                                      headers=self._headers,
-                                     proxies=self._proxies,
+                                     proxies=self.get_proxy(url),
                                      timeout=self._timeout,
                                      json=json)
         except requests.exceptions.RequestException:
@@ -89,14 +90,14 @@ class RequestUtils:
                 r = self._session.get(url,
                                       verify=False,
                                       headers=self._headers,
-                                      proxies=self._proxies,
+                                      proxies=self.get_proxy(url),
                                       timeout=self._timeout,
                                       params=params)
             else:
                 r = requests.get(url,
                                  verify=False,
                                  headers=self._headers,
-                                 proxies=self._proxies,
+                                 proxies=self.get_proxy(url),
                                  timeout=self._timeout,
                                  params=params)
             return str(r.content, 'utf-8')
@@ -110,7 +111,7 @@ class RequestUtils:
                                          params=params,
                                          verify=False,
                                          headers=self._headers,
-                                         proxies=self._proxies,
+                                         proxies=self.get_proxy(url),
                                          cookies=self._cookies,
                                          timeout=self._timeout,
                                          allow_redirects=allow_redirects)
@@ -119,7 +120,7 @@ class RequestUtils:
                                     params=params,
                                     verify=False,
                                     headers=self._headers,
-                                    proxies=self._proxies,
+                                    proxies=self.get_proxy(url),
                                     cookies=self._cookies,
                                     timeout=self._timeout,
                                     allow_redirects=allow_redirects)
@@ -136,7 +137,7 @@ class RequestUtils:
                                           params=params,
                                           verify=False,
                                           headers=self._headers,
-                                          proxies=self._proxies,
+                                          proxies=self.get_proxy(url),
                                           cookies=self._cookies,
                                           timeout=self._timeout,
                                           allow_redirects=allow_redirects,
@@ -148,7 +149,7 @@ class RequestUtils:
                                      params=params,
                                      verify=False,
                                      headers=self._headers,
-                                     proxies=self._proxies,
+                                     proxies=self.get_proxy(url),
                                      cookies=self._cookies,
                                      timeout=self._timeout,
                                      allow_redirects=allow_redirects,
@@ -156,6 +157,17 @@ class RequestUtils:
                                      json=json)
         except requests.exceptions.RequestException:
             return None
+
+    def get_proxy(self, url):
+        """
+        跳过本地地址
+        """
+        parse_result = urlparse(url)
+        host = parse_result.hostname
+        if "127.0.0.1" == host or "localhost" == host:
+            return None
+        else:
+            return self._proxies
 
     @staticmethod
     def cookie_parse(cookies_str, array=False):
