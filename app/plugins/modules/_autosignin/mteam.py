@@ -1,11 +1,19 @@
+import json
 import time
 
+from app.conf import SystemConfig
 from app.helper import ChromeHelper
 from app.helper.cloudflare_helper import under_challenge
 from app.plugins.modules._autosignin._base import _ISiteSigninHandler
-from app.utils import MteamUtils
+from app.plugins.modules._autosignin.mteam_helper import MteamChromeHelper
+from app.sites import SiteConf
+from app.utils import MteamUtils, ExceptionUtils
+from app.utils.types import SystemConfigKey
 from config import Config
-
+from lxml import etree
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as es
+from selenium.webdriver.support.wait import WebDriverWait
 
 class MTeam(_ISiteSigninHandler):
     """
@@ -23,64 +31,8 @@ class MTeam(_ISiteSigninHandler):
         """
         return url and url.find(cls.site_url) != -1
 
-    def signin(self, site_info: dict):
-        """
-        执行签到操作
-        :param site_info: 站点信息，含有站点Url、站点Cookie、UA等信息
-        :return: 签到结果信息
-        """
-        site = site_info.get("name")
-        site_cookie = site_info.get("cookie")
-        ua = site_info.get("ua")
-        sign_url = site_info.get("signurl")
-        api_key = site_info.get("api_key")
-        proxy = Config().get_proxies() if site_info.get("proxy") else None
-
-        render = site_info.get("render")
-        if render:
-            # 首页
-            chrome = ChromeHelper()
-            if chrome.get_status():
-                self.info(f"{site} 开始仿真签到")
-                msg, html_text = self.__chrome_visit(chrome=chrome,
-                                                     url=sign_url,
-                                                     ua=ua,
-                                                     site_cookie=site_cookie,
-                                                     proxy=proxy,
-                                                     site=site)
-
-                # 仿真访问失败
-                if msg:
-                    return False, msg
-
-                # 已签到
-                self.info(f"签到成功")
-                return True, f'【{site}】签到成功'
-            else:
-                self.error(f"chrome 状态异常")
-                return False, f'仿真浏览器异常'
-        else:
-            #TODO 官方禁止调用
-            api = "%s/api/member/updateLastBrowse"
-            from urllib.parse import urlparse
-            parse_result = urlparse(sign_url)
-            api = api % (str(parse_result.scheme) + "://" + str(parse_result.hostname))
-            res = MteamUtils.buildRequestUtils(
-                headers=ua,
-                api_key=api_key,
-                proxies=Config().get_proxies() if site_info.get("proxy") else None,
-                timeout=15
-            ).post_res(url=api)
-
-            if res and res.status_code == 200:
-                self.info(f"{site} APIKEY 签到成功")
-                return True, f'【{site}】APIKEY 签到成功'
-            else:
-                self.error(f"{site} APIKEY 签到失败{res} ")
-                return False, f'{site} APIKEY 签到失败'
-
-    def __chrome_visit(self, chrome, url, ua, site_cookie, proxy, site):
-        if not chrome.visit(url=url, ua=ua, cookie=site_cookie, proxy=proxy):
+    def __chrome_visit(self, chrome, url, ua, proxy, site):
+        if not chrome.visit(url=url, ua=ua, proxy=proxy):
             self.warn("%s 无法打开网站" % site)
             return f"【{site}】仿真签到失败，无法打开网站！", None
         # 检测是否过cf
@@ -94,11 +46,243 @@ class MTeam(_ISiteSigninHandler):
         # 获取html
         html_text = chrome.get_html()
         if not html_text:
-            self.warn("%s 获取站点源码失败" % site)
+        #     return None, None
+        #     self.warn("%s 获取站点源码失败" % site)
             return f"【{site}】仿真签到失败，获取站点源码失败！", None
-        if "魔力值" not in html_text:
-            self.error(f"签到失败，站点无法访问")
-            return f'【{site}】仿真签到失败，站点无法访问', None
+        # if "魔力值" not in html_text:
+        #     self.error(f"签到失败，站点无法访问")
+        #     return f'【{site}】仿真签到失败，站点无法访问', None
 
         # 站点访问正常，返回html
         return None, html_text
+
+    def signin(self, site_info: dict):
+        """
+        执行签到操作
+        :param site_info: 站点信息，含有站点Url、站点Cookie、UA等信息
+        :return: 签到结果信息
+        """
+        site = site_info.get("name")
+        ua = site_info.get("ua")
+        sign_url = site_info.get("signurl")
+        proxy = Config().get_proxies() if site_info.get("proxy") else None
+
+        chrome = MteamChromeHelper()
+        if chrome.get_status():
+            self.info(f"{site} 开始仿真签到")
+            # first, get html
+            msg, html_text = self.__chrome_visit(chrome=chrome,
+                                                 url=sign_url,
+                                                 ua=ua,
+                                                 proxy=proxy,
+                                                 site=site)
+            if not html_text:
+                return False, f"【{site}】${msg}"
+
+            # second, check if it is home
+            if "魔力值" in html_text:
+                return True, f"【{site}】签到成功"
+
+            # third check if login page and try login
+            value = SystemConfig().get(key=SystemConfigKey.CookieUserInfo)
+            _, html_text, msg = self.try_login(chrome, html_text, value.get("username"), value.get("password"), value.get("two_step_code"))
+
+            if not html_text:
+                return False, f"【{site}】${msg}"
+
+            # second, check if it is home
+            if "魔力值" in html_text:
+                return True, f"【{site}】签到成功"
+
+            if "郵箱驗證碼" in html_text:
+                # loop read config email and code
+                usr_dir = MteamChromeHelper.get_user_data_dir()
+
+                with open(usr_dir + '/config.json') as f:
+                    two_step_config = json.load(f)
+                    email = two_step_config["email"]
+                    code = two_step_config["code"]
+
+                    if email and code:
+                        _, html_text, msg = self.try_verify_email(chrome, html_text, email, code)
+
+
+
+                return False, f"【{site}】触发邮箱登录，无法签到"
+
+    def try_verify_email(self, chrome, html_text, email, cod):
+        html.xpath(xpath)
+
+        # 查找登录按钮
+        submit_xpath = None
+        for xpath in login_conf.get("submit"):
+            if html.xpath(xpath):
+                submit_xpath = xpath
+                break
+        if not submit_xpath:
+            return None, None, "未找到登录按钮"
+        # 点击登录按钮
+        try:
+            submit_obj = WebDriverWait(driver=chrome.browser,
+                                       timeout=6).until(es.element_to_be_clickable((By.XPATH,
+                                                                                    submit_xpath)))
+            if submit_obj:
+                # 输入用户名
+                chrome.browser.find_element(By.XPATH, username_xpath).send_keys(username)
+                # 输入密码
+                chrome.browser.find_element(By.XPATH, password_xpath).send_keys(password)
+
+                submit_obj.click()
+                # 等待页面刷新完毕
+                WebDriverWait(driver=chrome.browser, timeout=5).until(es.staleness_of(submit_obj))
+            else:
+                return None, None, "未找到登录按钮"
+        except Exception as e:
+            ExceptionUtils.exception_traceback(e)
+            return None, None, "仿真登录失败：%s" % str(e)
+        # 登录后的源码
+        html_text = chrome.get_html()
+        if not html_text:
+            return None, None, "获取源码失败"
+
+        return None, html_text, "获取页面成功"
+
+    def try_login(self, chrome,
+                             html_text,
+                             username,
+                             password,
+                             twostepcode=None,):
+        """
+        获取站点cookie和ua
+        :param url: 站点地址
+        :param username: 用户名
+        :param password: 密码
+        :param twostepcode: 两步验证
+        :param ocrflag: 是否开启OCR识别
+        :param proxy: 是否使用内置代理
+        :return: cookie、ua、message
+        """
+        if not chrome or not username or not password:
+            return None, None, "参数错误"
+
+        # 站点配置
+        login_conf = SiteConf().get_login_conf()
+        # 查找用户名输入框
+        html = etree.HTML(html_text)
+        username_xpath = None
+        for xpath in login_conf.get("username"):
+            if html.xpath(xpath):
+                username_xpath = xpath
+                break
+        if not username_xpath:
+            return None, None, "未找到用户名输入框"
+        # 查找密码输入框
+        password_xpath = None
+        for xpath in login_conf.get("password"):
+            if html.xpath(xpath):
+                password_xpath = xpath
+                break
+        if not password_xpath:
+            return None, None, "未找到密码输入框"
+        # 查找两步验证码
+        twostepcode_xpath = None
+        for xpath in login_conf.get("twostep"):
+            if html.xpath(xpath):
+                twostepcode_xpath = xpath
+                break
+        # 查找验证码输入框
+        captcha_xpath = None
+        for xpath in login_conf.get("captcha"):
+            if html.xpath(xpath):
+                captcha_xpath = xpath
+                break
+        # 查找验证码图片
+        captcha_img_url = None
+        if captcha_xpath:
+            for xpath in login_conf.get("captcha_img"):
+                if html.xpath(xpath):
+                    captcha_img_url = html.xpath(xpath)[0]
+                    break
+            if not captcha_img_url:
+                return None, None, "未找到验证码图片"
+        # 查找登录按钮
+        submit_xpath = None
+        for xpath in login_conf.get("submit"):
+            if html.xpath(xpath):
+                submit_xpath = xpath
+                break
+        if not submit_xpath:
+            return None, None, "未找到登录按钮"
+        # 点击登录按钮
+        try:
+            submit_obj = WebDriverWait(driver=chrome.browser,
+                                       timeout=6).until(es.element_to_be_clickable((By.XPATH,
+                                                                                    submit_xpath)))
+            if submit_obj:
+                # 输入用户名
+                chrome.browser.find_element(By.XPATH, username_xpath).send_keys(username)
+                # 输入密码
+                chrome.browser.find_element(By.XPATH, password_xpath).send_keys(password)
+                # 输入两步验证码
+                if twostepcode and twostepcode_xpath:
+                    twostepcode_element = chrome.browser.find_element(By.XPATH, twostepcode_xpath)
+                    if twostepcode_element.is_displayed():
+                        twostepcode_element.send_keys(twostepcode)
+                # 识别验证码
+                # if captcha_xpath:
+                #     captcha_element = chrome.browser.find_element(By.XPATH, captcha_xpath)
+                #     if captcha_element.is_displayed():
+                #         code_url = self.__get_captcha_url(url, captcha_img_url)
+                #         if ocrflag:
+                #             # 自动OCR识别验证码
+                #             captcha = self.get_captcha_text(chrome, code_url)
+                #             if captcha:
+                #                 log.info("【Sites】验证码地址为：%s，识别结果：%s" % (code_url, captcha))
+                #             else:
+                #                 return None, None, "验证码识别失败"
+                #         else:
+                #             # 等待用户输入
+                #             captcha = None
+                #             code_key = StringUtils.generate_random_str(5)
+                #             for sec in range(30, 0, -1):
+                #                 if self.get_code(code_key):
+                #                     # 用户输入了
+                #                     captcha = self.get_code(code_key)
+                #                     log.info("【Sites】接收到验证码：%s" % captcha)
+                #                     self.progress.update(ptype=ProgressKey.SiteCookie,
+                #                                          text="接收到验证码：%s" % captcha)
+                #                     break
+                #                 else:
+                #                     # 获取验证码图片base64
+                #                     code_bin = self.get_captcha_base64(chrome, code_url)
+                #                     if not code_bin:
+                #                         return None, None, "获取验证码图片数据失败"
+                #                     else:
+                #                         code_bin = f"data:image/png;base64,{code_bin}"
+                #                     # 推送到前端
+                #                     self.progress.update(ptype=ProgressKey.SiteCookie,
+                #                                          text=f"{code_bin}|{code_key}")
+                #                     time.sleep(1)
+                #             if not captcha:
+                #                 return None, None, "验证码输入超时"
+                #         # 输入验证码
+                #         captcha_element.send_keys(captcha)
+                #     else:
+                #         # 不可见元素不处理
+                #         pass
+                # 提交登录
+                submit_obj.click()
+                # 等待页面刷新完毕
+                WebDriverWait(driver=chrome.browser, timeout=5).until(es.staleness_of(submit_obj))
+            else:
+                return None, None, "未找到登录按钮"
+        except Exception as e:
+            ExceptionUtils.exception_traceback(e)
+            return None, None, "仿真登录失败：%s" % str(e)
+        # 登录后的源码
+        html_text = chrome.get_html()
+        if not html_text:
+            return None, None, "获取源码失败"
+
+        return None, html_text, "获取页面成功"
+
