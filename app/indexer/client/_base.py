@@ -119,9 +119,9 @@ class _IIndexClient(metaclass=ABCMeta):
                     torrent_name = torrent_name if torrent_name else ""
                     imdbid_match = imdbid and match_media.imdb_id and str(imdbid) == str(match_media.imdb_id)
                     name_match = match_media.org_string in torrent_name or \
-                                 match_media.original_title in torrent_name or \
-                                 match_media.org_string in description or \
-                                 match_media.original_title in description
+                                match_media.original_title in torrent_name or \
+                                match_media.org_string in description or \
+                                match_media.original_title in description
                     year_match = (not match_media.year) or match_media.year in torrent_name or \
                                  match_media.year in description
                 if (imdbid_match or name_match) and year_match and self.recognize_enhance_enable:
@@ -133,8 +133,8 @@ class _IIndexClient(metaclass=ABCMeta):
                                          tmdb_id=match_media.tmdb_id,
                                          imdb_id=match_media.imdb_id)
                     meta_info.set_tmdb_info(self.media.get_tmdb_info(mtype=match_media.media_type,
-                                                                     tmdbid=match_media.tmdb_id,
-                                                                     append_to_response="all"))
+                                                             tmdbid=match_media.tmdb_id,
+                                                             append_to_response="all"))
                 else:
                     meta_info = MetaInfo(title=torrent_name, subtitle=f"{labels} {description}")
 
@@ -179,34 +179,33 @@ class _IIndexClient(metaclass=ABCMeta):
                         media_info = self.media.merge_media_info(meta_info, match_media)
                     else:
                         # 查询缓存
-                        media_info = meta_info
-                        # cache_info = self.media.get_cache_info(meta_info)
-                        # if match_media \
-                        #         and str(cache_info.get("id")) == str(match_media.tmdb_id):
-                        #     # 缓存匹配，合并媒体数据
-                        #     media_info = self.media.merge_media_info(meta_info, match_media)
-                        # else:
-                        #     # 重新识别
-                        #     media_info = self.media.get_media_info(title=torrent_name, subtitle=description, chinese=False)
-                        #     if not media_info:
-                        #         log.warn(f"【{self.client_name}】{torrent_name} 识别媒体信息出错！")
-                        #         index_error += 1
-                        #         continue
-                        #     elif not media_info.tmdb_info:
-                        #         log.info(
-                        #             f"【{self.client_name}】{torrent_name} 识别为 {media_info.get_name()} 未匹配到媒体信息")
-                        #         index_match_fail += 1
-                        #         continue
-                        #     # TMDBID是否匹配
-                        #     if str(media_info.tmdb_id) != str(match_media.tmdb_id):
-                        #         log.info(
-                        #             f"【{self.client_name}】{torrent_name} 识别为 "
-                        #             f"{media_info.type.value}/{media_info.get_title_string()}/{media_info.tmdb_id} "
-                        #             f"与 {match_media.type.value}/{match_media.get_title_string()}/{match_media.tmdb_id} 不匹配")
-                        #         index_match_fail += 1
-                        #         continue
-                        #     # 合并媒体数据
-                        #     media_info = self.media.merge_media_info(media_info, match_media)
+                        cache_info = self.media.get_cache_info(meta_info)
+                        if match_media \
+                                and str(cache_info.get("id")) == str(match_media.tmdb_id):
+                            # 缓存匹配，合并媒体数据
+                            media_info = self.media.merge_media_info(meta_info, match_media)
+                        else:
+                            # 重新识别
+                            media_info = self.media.get_media_info(title=torrent_name, subtitle=description, chinese=False)
+                            if not media_info:
+                                log.warn(f"【{self.client_name}】{torrent_name} 识别媒体信息出错！")
+                                index_error += 1
+                                continue
+                            elif not media_info.tmdb_info:
+                                log.info(
+                                    f"【{self.client_name}】{torrent_name} 识别为 {media_info.get_name()} 未匹配到媒体信息")
+                                index_match_fail += 1
+                                continue
+                            # TMDBID是否匹配
+                            if str(media_info.tmdb_id) != str(match_media.tmdb_id):
+                                log.info(
+                                    f"【{self.client_name}】{torrent_name} 识别为 "
+                                    f"{media_info.type.value}/{media_info.get_title_string()}/{media_info.tmdb_id} "
+                                    f"与 {match_media.type.value}/{match_media.get_title_string()}/{match_media.tmdb_id} 不匹配")
+                                index_match_fail += 1
+                                continue
+                            # 合并媒体数据
+                            media_info = self.media.merge_media_info(media_info, match_media)
                     # 过滤类型
                     if filter_args.get("type"):
                         if (filter_args.get("type") == MediaType.TV and media_info.type == MediaType.MOVIE) \
@@ -251,9 +250,6 @@ class _IIndexClient(metaclass=ABCMeta):
                 log.info(
                     f"【{self.client_name}】{torrent_name} {description} 识别为 {media_info.get_title_string()} "
                     f"{media_info.get_season_episode_string()} 匹配成功")
-                # add extra media info
-                media_info = self.media.merge_media_info(meta_info, match_media)
-
                 media_info.set_torrent_info(site=indexer.name,
                                             site_order=order_seq,
                                             enclosure=enclosure,
