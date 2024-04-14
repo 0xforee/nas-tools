@@ -811,6 +811,16 @@
           let code_key = ret.text.split("|")[1]
           show_captcha_code_modal(code_img, code_key, siteid);
         }
+        else if (ret.text.startsWith("data:email")){
+          // email
+          let code_img = ret.text.split("|")[0]
+          let code_key = ret.text.split("|")[1]
+          show_captcha_code_modal(code_img, code_key, siteid);
+        }else if (ret.text.startsWith("data:email_verify_code")){
+          let code_img = ret.text.split("|")[0]
+          let code_key = ret.text.split("|")[1]
+          show_captcha_code_modal(code_img, code_key, siteid);
+        }
       }
       if ($("#modal-update-site-cookie").is(":hidden")) {
         stop_sitecookie_progress();
@@ -843,7 +853,11 @@
     $("#modal-update-site-cookie").modal("hide");
     // 显示新框
     $("#captcha_key").val(code_key);
-    $("#captcha_code_img").attr("src", code_img);
+    if(code_img instanceof String){
+      //
+    }else{
+      $("#captcha_code_img").attr("src", code_img);
+    }
     $("#captcha_code").val("");
     $("#modal-captcha-code").modal("show");
     // 超时关闭

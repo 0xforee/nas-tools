@@ -201,6 +201,74 @@ class SiteCookie(object):
         if SiteHelper.is_logged_in(html_text):
             return chrome.get_cookies(), chrome.get_ua(), ""
         else:
+            if url.find("m-team") != -1:
+                if "邮箱" in html_text:
+                    # email handler
+                    email_xpath = ""
+                    email_send_xpath = None
+                    code_xpath = ""
+                    login_submit_xpath = ""
+
+                    # get user input email
+                    email = None
+                    code_key = StringUtils.generate_random_str(5)
+                    for sec in range(30, 0, -1):
+                        if self.get_code(code_key):
+                            # 用户输入了
+                            email = self.get_code(code_key)
+                            log.info("【Sites】接收到 email：%s" % email)
+                            self.progress.update(ptype=ProgressKey.SiteCookie,
+                                                 text="接收到 email：%s" % email)
+                            break
+                        else:
+                            # get email
+                            code_bin = f"data:email"
+                            # 推送到前端
+                            self.progress.update(ptype=ProgressKey.SiteCookie,
+                                                 text=f"{code_bin}|{code_key}")
+                            time.sleep(1)
+                    if not email:
+                        return None, None, "email 输入超时"
+                    chrome.browser.find_element(By.XPATH, email_xpath).send_keys(email)
+
+                    # click send email
+                    email_send_obj = WebDriverWait(driver=chrome.browser,
+                                               timeout=6).until(es.element_to_be_clickable((By.XPATH,
+                                                                                            email_send_xpath)))
+                    email_send_obj.click()
+
+                    # get user input code
+                    email_verify_code = None
+                    code_key = StringUtils.generate_random_str(5)
+                    for sec in range(30, 0, -1):
+                        if self.get_code(code_key):
+                            # 用户输入了
+                            email_verify_code = self.get_code(code_key)
+                            log.info("【Sites】接收到邮箱验证码：%s" % email_verify_code)
+                            self.progress.update(ptype=ProgressKey.SiteCookie,
+                                                 text="接收到邮箱验证码：%s" % email_verify_code)
+                            break
+                        else:
+                            code_bin = f"data:email_verify_code"
+                            # 推送到前端
+                            self.progress.update(ptype=ProgressKey.SiteCookie,
+                                                 text=f"{code_bin}|{code_key}")
+                            time.sleep(1)
+                    if not email_verify_code:
+                        return None, None, "email 验证码输入超时"
+                    chrome.browser.find_element(By.XPATH, code_xpath).send_keys(email_verify_code)
+
+                    #submit again try refresh, check agin
+                    login_submit_obj = WebDriverWait(driver=chrome.browser,
+                                               timeout=6).until(es.element_to_be_clickable((By.XPATH,
+                                                                                            login_submit_xpath)))
+                    login_submit_obj.click()
+                    # 等待页面刷新完毕
+                    WebDriverWait(driver=chrome.browser, timeout=5).until(es.staleness_of(login_submit_obj))
+
+                    if SiteHelper.is_logged_in(html_text):
+                        return chrome.get_cookies(), chrome.get_ua(), ""
+
             # 读取错误信息
             error_xpath = None
             for xpath in login_conf.get("error"):

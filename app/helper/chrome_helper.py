@@ -15,7 +15,7 @@ from config import Config
 
 lock = Lock()
 
-driver_executable_path = None
+driver_executable_path = '/usr/local/bin/chromedriver'
 
 
 class ChromeHelper(object):
