@@ -94,57 +94,7 @@ class MTeam(_ISiteSigninHandler):
                 return True, f"【{site}】签到成功"
 
             if "郵箱驗證碼" in html_text:
-                # loop read config email and code
-                usr_dir = SignChromeHelper.get_user_data_dir()
-
-                with open(usr_dir + '/config.json') as f:
-                    two_step_config = json.load(f)
-                    email = two_step_config["email"]
-                    code = two_step_config["code"]
-
-                    if email and code:
-                        _, html_text, msg = self.try_verify_email(chrome, html_text, email, code)
-
-
-
-                return False, f"【{site}】触发邮箱登录，无法签到"
-
-    def try_verify_email(self, chrome, html_text, email, cod):
-        html.xpath(xpath)
-
-        # 查找登录按钮
-        submit_xpath = None
-        for xpath in login_conf.get("submit"):
-            if html.xpath(xpath):
-                submit_xpath = xpath
-                break
-        if not submit_xpath:
-            return None, None, "未找到登录按钮"
-        # 点击登录按钮
-        try:
-            submit_obj = WebDriverWait(driver=chrome.browser,
-                                       timeout=6).until(es.element_to_be_clickable((By.XPATH,
-                                                                                    submit_xpath)))
-            if submit_obj:
-                # 输入用户名
-                chrome.browser.find_element(By.XPATH, username_xpath).send_keys(username)
-                # 输入密码
-                chrome.browser.find_element(By.XPATH, password_xpath).send_keys(password)
-
-                submit_obj.click()
-                # 等待页面刷新完毕
-                WebDriverWait(driver=chrome.browser, timeout=5).until(es.staleness_of(submit_obj))
-            else:
-                return None, None, "未找到登录按钮"
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            return None, None, "仿真登录失败：%s" % str(e)
-        # 登录后的源码
-        html_text = chrome.get_html()
-        if not html_text:
-            return None, None, "获取源码失败"
-
-        return None, html_text, "获取页面成功"
+                return False, f"【{site}】触发邮箱登录，无法签到，请在站点管理处更新站点信息"
 
     def try_login(self, chrome,
                              html_text,
