@@ -9,31 +9,24 @@
 [![Docker pulls](https://img.shields.io/docker/pulls/0xforee/nas-tools?style=plastic)](https://hub.docker.com/r/0xforee/nas-tools)
 [![Platform](https://img.shields.io/badge/platform-amd64/arm64-pink?style=plastic)](https://hub.docker.com/r/0xforee/nas-tools)
 
-Docker：https://hub.docker.com/repository/docker/0xforee/nas-tools
+Docker：https://hub.docker.com/repository/docker/0xforee/nas-tools  
 
-API: http://localhost:3000/api/v1/
-
-## 写在开头
-1. 感谢原作者提供的工具。
-1. 这个项目是在自己使用过程中发现的一些改进点而诞生的，欢迎大家交流。
-4. 每次版本更新内容请看 Releases 发布页面。  
-5. 喜欢请点个星吧，我会加快更新进度，感谢~  
+TG 交流群：https://t.me/nastoolsolder  
+TG 通知频道：https://t.me/ntolder_notify
 
 
-## 功能：
+## 功能： 
 
-NAS媒体库管理工具。  
-
-1. 优化首次使用用户认证
+1. 优化用户认证
 2. 优化新手刷流体验
 1. 刷流任务优化：
    * 增加部分下载能力（拆包），最大效益提升刷流能力
    * 增加限免到期检测能力
    * 刷流界面增加详细信息展示
-3. 支持 BT 能力和内置 BT 站点，可以继续索引和下载 BT 磁链和种子文件
+3. 支持 BT 能力和内置 BT 站点，可以索引和下载 BT 磁链和种子文件
 4. 支持 jackett 和 prowlarr 索引器
 5. 增加一些入口的快捷跳转能力
-6. 支持 Mteam 新架构
+6. 完美支持 Mteam 新架构
 
 详细参考 [这里](diff.md)。  
 
