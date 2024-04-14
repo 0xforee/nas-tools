@@ -869,12 +869,10 @@
     $("#modal-update-site-cookie").modal("hide");
     // 显示新框
     $("#captcha_key").val(code_key);
-    if(code_img instanceof String){
-      if(code_img === "data:email"){
-        $("#captcha_code_title").text("请在 60s 内输入邮箱")
-      }else if(code_img === "data:email_verify_code"){
-        $("#captcha_code_title").text("请在 60s 内输入邮箱验证码")
-      }
+    if(code_img === "data:email"){
+      $("#captcha_code_title").text("请在 60s 内输入邮箱")
+    }else if(code_img === "data:email_verify_code"){
+      $("#captcha_code_title").text("请在 60s 内输入邮箱验证码")
     }else{
       $("#captcha_code_img").attr("src", code_img);
       $("#captcha_code_title").text("请在 60s 内输入验证码")
