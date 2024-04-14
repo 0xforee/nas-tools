@@ -116,7 +116,7 @@ class SiteConf:
             return ret_attr
 
         if torrent_url.find('m-team') != -1:
-            info = MteamUtils.get_mteam_torrent_info(torrent_url, cookie, ua, proxy)
+            info = MteamUtils.get_mteam_torrent_info(torrent_url, ua, proxy)
             if info:
                 status = info.get('status')
                 discount = status.get('discount')

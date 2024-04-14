@@ -240,17 +240,9 @@ class MteamRssGen(_IPluginModule):
             }
 
             proxy = Config().get_proxies() if self._site_conf.get("proxy") else None
-            # api_key = self._site_conf.get("api_key")
-            api_key = self._site_conf.get("cookie")
+            api_key = self._site_conf.get("api_key")
             ua = self._site_conf.get("ua")
-            if api_key.find('=') != -1:
-                rss_request = RequestUtils(cookies=api_key,
-                                   headers=ua,
-                                   content_type="application/json",
-                                   proxies=proxy
-                                   )
-            else:
-                rss_request = RequestUtils(api_key=api_key,
+            rss_request = RequestUtils(api_key=api_key,
                                    headers=ua,
                                    content_type="application/json",
                                    proxies=proxy

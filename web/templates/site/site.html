@@ -462,7 +462,7 @@
     <div class="modal-content">
       <div class="modal-body">
         <div class="row">
-          <label class="form-label required">请在 30秒 内输入验证码</label>
+          <label id="captcha_code_title" class="form-label required">请在 30秒 内输入验证码</label>
           <div class="row mb-3">
             <div class="col-auto">
               <input type="hidden" id="captcha_key" value="">
@@ -870,14 +870,19 @@
     // 显示新框
     $("#captcha_key").val(code_key);
     if(code_img instanceof String){
-      //
+      if(code_img === "data:email"){
+        $("#captcha_code_title").text("请在 60s 内输入邮箱")
+      }else if(code_img === "data:email_verify_code"){
+        $("#captcha_code_title").text("请在 60s 内输入邮箱验证码")
+      }
     }else{
       $("#captcha_code_img").attr("src", code_img);
+      $("#captcha_code_title").text("请在 60s 内输入验证码")
     }
     $("#captcha_code").val("");
     $("#modal-captcha-code").modal("show");
     // 超时关闭
-    setTimeout(`sitecookie_captcha_timeout('${siteid}')`, 30000);
+    setTimeout(`sitecookie_captcha_timeout('${siteid}')`, 60000);
   }
 
   // 输入验证码

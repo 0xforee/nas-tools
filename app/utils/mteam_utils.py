@@ -6,13 +6,13 @@ from config import Config
 
 class MteamUtils:
     @staticmethod
-    def get_mteam_torrent_info(torrent_url, cookie, ua=None, proxy=False):
+    def get_mteam_torrent_info(torrent_url, ua=None, proxy=False):
         api = "%s/api/torrent/detail"
         from urllib.parse import urlparse
         parse_result = urlparse(torrent_url)
         api = api % (str(parse_result.scheme) + "://" + str(parse_result.hostname))
         torrent_id = torrent_url.split('/')[-1]
-        req = MteamUtils.buildRequestUtils(api_key=MteamUtils.get_api_key(torrent_url), cookies=cookie, headers=ua, proxies=proxy).post_res(url=api, params={"id": torrent_id})
+        req = MteamUtils.buildRequestUtils(api_key=MteamUtils.get_api_key(torrent_url), headers=ua, proxies=proxy).post_res(url=api, params={"id": torrent_id})
 
         if req and req.status_code == 200:
             return req.json().get("data")
@@ -20,14 +20,14 @@ class MteamUtils:
         return None
 
     @staticmethod
-    def mteam_sign(site_info):
+    def test_connection(site_info):
         site_url = site_info.get("signurl")
-        site_cookie = site_info.get("cookie")
+        site_api_key = site_info.get("api_key")
         ua = site_info.get("ua")
         url = f"{site_url}api/member/profile"
         res = MteamUtils.buildRequestUtils(
             headers=ua,
-            cookies=site_cookie,
+            api_key=site_api_key,
             proxies=Config().get_proxies() if site_info.get("proxy") else None,
             timeout=15
         ).post_res(url=url)
@@ -41,7 +41,7 @@ class MteamUtils:
         return False, "连接失败"
 
     @staticmethod
-    def get_mteam_torrent_url(url, cookie=None, ua=None, referer=None, proxy=False):
+    def get_mteam_torrent_url(url, ua=None, referer=None, proxy=False):
         if url.find('api/rss/dl') != -1:
             return url
         api = "%s/api/torrent/genDlToken"
@@ -52,7 +52,6 @@ class MteamUtils:
         req = MteamUtils.buildRequestUtils(
             headers=ua,
             api_key=MteamUtils.get_api_key(url),
-            cookies=cookie,
             referer=referer,
             proxies=Config().get_proxies() if proxy else None
         ).post_res(url=api, params={"id": torrent_id})
@@ -63,12 +62,23 @@ class MteamUtils:
         return None
 
     @staticmethod
+    def get_mteam_torrent_req(url, ua=None, referer=None, proxy=False):
+        req = MteamUtils.buildRequestUtils(
+            api_key=MteamUtils.get_api_key(url),
+            headers=ua,
+            referer=referer,
+            proxies=Config().get_proxies() if proxy else None
+        ).get_res(url=url, allow_redirects=True)
+
+        return req
+
+
+    @staticmethod
     def get_api_key(url):
+        from app.sites import Sites
         sites = Sites()
-        site_info = sites.get_sites(url)
+        site_info = sites.get_sites(siteurl=url)
         if site_info:
-            site_cookie = site_info.get("cookie")
-            ua = site_info.get("ua")
             site_base_url = site_info.get("signurl")
             api_key= site_info.get("api_key")
             proxy = site_info.get("proxy")

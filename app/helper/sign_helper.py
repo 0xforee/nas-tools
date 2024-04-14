@@ -16,10 +16,10 @@ from config import Config
 
 lock = Lock()
 
-driver_executable_path = '/usr/local/bin/chromedriver'
+driver_executable_path = None
 
 
-class MteamChromeHelper(object):
+class SignChromeHelper(object):
     _executable_path = None
 
     _chrome = None
@@ -113,7 +113,7 @@ class MteamChromeHelper(object):
                 })
             if timeout:
                 self._chrome.implicitly_wait(timeout)
-            time.sleep(3)
+            time.sleep(2)
             self._chrome.get(url)
             return True
         except Exception as err:
@@ -239,7 +239,7 @@ class ChromeWithPrefs(uc.Chrome):
             # create a user_data_dir and add its path to the options
             # get from config, if not exist, create and save
 
-            user_data_dir = os.path.normpath(MteamChromeHelper.get_user_data_dir())
+            user_data_dir = os.path.normpath(SignChromeHelper.get_user_data_dir())
             options.add_argument(f"--user-data-dir={user_data_dir}")
             if not os.path.exists(user_data_dir):
                 os.mkdir(user_data_dir)

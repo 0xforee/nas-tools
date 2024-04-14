@@ -7,7 +7,8 @@ from selenium.webdriver.support import expected_conditions as es
 from selenium.webdriver.support.wait import WebDriverWait
 
 import log
-from app.helper import ChromeHelper, ProgressHelper, OcrHelper, SiteHelper
+from app.helper import ProgressHelper, OcrHelper, SiteHelper
+from app.helper.sign_helper import SignChromeHelper
 from app.sites.siteconf import SiteConf
 from app.sites.sites import Sites
 from app.utils import StringUtils, RequestUtils, ExceptionUtils
@@ -65,7 +66,7 @@ class SiteCookie(object):
         if not url or not username or not password:
             return None, None, "参数错误"
         # 全局锁
-        chrome = ChromeHelper()
+        chrome = SignChromeHelper()
         if not chrome.get_status():
             return None, None, "需要浏览器内核环境才能更新站点信息"
         if not chrome.visit(url=url, proxy=proxy):
@@ -159,7 +160,7 @@ class SiteCookie(object):
                             # 等待用户输入
                             captcha = None
                             code_key = StringUtils.generate_random_str(5)
-                            for sec in range(30, 0, -1):
+                            for sec in range(60, 0, -1):
                                 if self.get_code(code_key):
                                     # 用户输入了
                                     captcha = self.get_code(code_key)
@@ -188,7 +189,7 @@ class SiteCookie(object):
                 # 提交登录
                 submit_obj.click()
                 # 等待页面刷新完毕
-                WebDriverWait(driver=chrome.browser, timeout=5).until(es.staleness_of(submit_obj))
+                WebDriverWait(driver=chrome.browser, timeout=10).until(es.staleness_of(submit_obj))
             else:
                 return None, None, "未找到登录按钮"
         except Exception as e:
@@ -202,17 +203,18 @@ class SiteCookie(object):
             return chrome.get_cookies(), chrome.get_ua(), ""
         else:
             if url.find("m-team") != -1:
-                if "邮箱" in html_text:
+                if "郵箱驗證碼" in html_text:
+                    time.sleep(5)
                     # email handler
-                    email_xpath = ""
-                    email_send_xpath = None
-                    code_xpath = ""
-                    login_submit_xpath = ""
+                    email_xpath = '//input[@id="email"]'
+                    email_send_xpath = '//*[@id="code"]/button'
+                    code_xpath = '//*[@id="code"]/input'
+                    login_submit_xpath = '//*[@id="root"]/div/div/div[1]/div/div/div/div/form/button'
 
                     # get user input email
                     email = None
                     code_key = StringUtils.generate_random_str(5)
-                    for sec in range(30, 0, -1):
+                    for sec in range(60, 0, -1):
                         if self.get_code(code_key):
                             # 用户输入了
                             email = self.get_code(code_key)
@@ -230,17 +232,17 @@ class SiteCookie(object):
                     if not email:
                         return None, None, "email 输入超时"
                     chrome.browser.find_element(By.XPATH, email_xpath).send_keys(email)
-
+                    time.sleep(1)
                     # click send email
                     email_send_obj = WebDriverWait(driver=chrome.browser,
                                                timeout=6).until(es.element_to_be_clickable((By.XPATH,
                                                                                             email_send_xpath)))
                     email_send_obj.click()
-
+                    time.sleep(1)
                     # get user input code
                     email_verify_code = None
                     code_key = StringUtils.generate_random_str(5)
-                    for sec in range(30, 0, -1):
+                    for sec in range(60, 0, -1):
                         if self.get_code(code_key):
                             # 用户输入了
                             email_verify_code = self.get_code(code_key)
@@ -258,14 +260,17 @@ class SiteCookie(object):
                         return None, None, "email 验证码输入超时"
                     chrome.browser.find_element(By.XPATH, code_xpath).send_keys(email_verify_code)
 
-                    #submit again try refresh, check agin
+                    # submit again try refresh, check again
                     login_submit_obj = WebDriverWait(driver=chrome.browser,
                                                timeout=6).until(es.element_to_be_clickable((By.XPATH,
                                                                                             login_submit_xpath)))
                     login_submit_obj.click()
                     # 等待页面刷新完毕
-                    WebDriverWait(driver=chrome.browser, timeout=5).until(es.staleness_of(login_submit_obj))
+                    WebDriverWait(driver=chrome.browser, timeout=10).until(es.staleness_of(login_submit_obj))
+                    time.sleep(1)
 
+                    # check again
+                    html_text = chrome.get_html()
                     if SiteHelper.is_logged_in(html_text):
                         return chrome.get_cookies(), chrome.get_ua(), ""
 

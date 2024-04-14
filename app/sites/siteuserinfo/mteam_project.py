@@ -71,20 +71,24 @@ class MteamSiteUserInfo(_ISiteUserInfo):
         url = f"{self.site_url}api/member/profile"
         res = MteamUtils.buildRequestUtils(
             headers=self._ua,
-            cookies=self._site_cookie,
+            api_key=MteamUtils.get_api_key(url),
             timeout=15
         ).post_res(url=url)
-        if res and res.status_code == 200:
-            user_info = res.json()
-            if user_info and user_info.get("data"):
-                return True, "连接成功"
-        return False, "Cookie已失效"
+        if res:
+            if res.status_code == 200:
+                user_info = res.json()
+                if user_info and user_info.get("data"):
+                    return True, "获取用户信息成功"
+            else:
+                return False, f"获取用户信息失败：{res.status_code}"
+
+        return False, "连接馒头失败"
 
     def get_user_profile(self):
         url = f"{self.site_url}/api/member/profile"
         res = MteamUtils.buildRequestUtils(
             headers=self._ua,
-            cookies=self._site_cookie,
+            api_key=MteamUtils.get_api_key(url),
             session=self._session,
             timeout=15
         ).post_res(url=url)
@@ -143,7 +147,7 @@ class MteamSiteUserInfo(_ISiteUserInfo):
             headers=self._ua,
             content_type="application/json",
             accept_type="application/json",
-            cookies=self._site_cookie,
+            api_key=MteamUtils.get_api_key(url),
             session=self._session,
             timeout=15
         ).post_res(url, json=params)

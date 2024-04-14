@@ -331,7 +331,7 @@ class Sites:
 
     def mteam_test_connection(self, site_info):
         start_time = datetime.now()
-        result, reason = MteamUtils.mteam_sign(site_info)
+        result, reason = MteamUtils.test_connection(site_info)
         seconds = int((datetime.now() - start_time).microseconds / 1000)
         return result, reason, seconds
 

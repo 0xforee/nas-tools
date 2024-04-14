@@ -21,13 +21,13 @@ class MTeamSpider(object):
                 self._proxy = Config().get_proxies()
             self._cookie = indexer.cookie
             self._ua = indexer.ua
-        self.init_config()
         self._api_url = self._api_url % self._domain
+        self.init_config()
 
     def init_config(self):
         session = requests.session()
         self._req = MteamUtils.buildRequestUtils(proxies=Config().get_proxies(), session=session, content_type="application/json",
-            accept_type="application/json", cookies=self._cookie, headers=self._ua, timeout=10)
+            accept_type="application/json", api_key=MteamUtils.get_api_key(self._api_url), headers=self._ua, timeout=10)
 
     def get_discount(self, discount):
         if discount == "PERCENT_50":
