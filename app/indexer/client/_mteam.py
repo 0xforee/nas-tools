@@ -93,7 +93,7 @@ class MTeamSpider(object):
             log.warn(f"【INDEXER】{self._name} 搜索失败，错误码：{res.status_code}")
             return True, []
         else:
-            log.warn(f"【INDEXER】{self._name} 搜索失败，无法连接 torrentapi.org")
+            log.warn(f"【INDEXER】{self._name} 搜索失败，无法连接 {self._api_url}")
             return True, []
         return False, torrents
 
