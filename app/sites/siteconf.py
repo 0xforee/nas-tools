@@ -126,7 +126,7 @@ class SiteConf:
                     ret_attr["free"] = True
                     ret_attr["2xfree"] = True
                 ret_attr["free_deadline"] = status.get('toppingEndTime')
-                ret_attr["peer_count"] = status.get("seeders")
+                ret_attr["peer_count"] = int(status.get("seeders"))
             return ret_attr
 
         xpath_strs = self.get_grap_conf(torrent_url)
