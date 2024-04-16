@@ -45,13 +45,13 @@ class RenderSpider(object):
         if not chrome.get_status():
             return True, []
         # 请求路径
-        torrentspath = self._indexer.search.get('paths', [{}])[0].get('path', '') or ''
+        torrentspath = self._indexer.search_config.get('paths', [{}])[0].get('path', '') or ''
         search_url = self._indexer.domain + torrentspath.replace("{keyword}", quote(keyword))
         # 请求方式，支持GET和浏览仿真
-        method = self._indexer.search.get('paths', [{}])[0].get('method', '')
+        method = self._indexer.search_config.get('paths', [{}])[0].get('method', '')
         if method == "chrome":
             # 请求参数
-            params = self._indexer.search.get('paths', [{}])[0].get('params', {})
+            params = self._indexer.search_config.get('paths', [{}])[0].get('params', {})
             # 搜索框
             search_input = params.get('keyword')
             # 搜索按钮

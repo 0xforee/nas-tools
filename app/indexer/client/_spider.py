@@ -69,7 +69,7 @@ class TorrentSpider(feapder.AirSpider):
     # 媒体类型
     mtype = None
     # 搜索路径、方式配置
-    search = {}
+    search_config = {}
     # 批量搜索配置
     batch = {}
     # 浏览配置
@@ -108,7 +108,7 @@ class TorrentSpider(feapder.AirSpider):
         self.mtype = mtype
         self.indexerid = indexer.id
         self.indexername = indexer.name
-        self.search = indexer.search
+        self.search_config = indexer.search_config
         self.batch = indexer.batch
         self.browse = indexer.browse
         self.category = indexer.category
@@ -137,12 +137,12 @@ class TorrentSpider(feapder.AirSpider):
         开始请求
         """
 
-        if not self.search or not self.domain:
+        if not self.search_config or not self.domain:
             self.is_complete = True
             return
 
         # 种子搜索相对路径
-        paths = self.search.get('paths', [])
+        paths = self.search_config.get('paths', [])
         torrentspath = ""
         if len(paths) == 1:
             torrentspath = paths[0].get('path', '')
@@ -181,7 +181,7 @@ class TorrentSpider(feapder.AirSpider):
                 search_mode = "0"
 
             # 搜索URL
-            if self.search.get("params"):
+            if self.search_config.get("params"):
                 # 变量字典
                 inputs_dict = {
                     "keyword": search_word
@@ -193,7 +193,7 @@ class TorrentSpider(feapder.AirSpider):
                     "notnewword": 1
                 }
                 # 额外参数
-                for key, value in self.search.get("params").items():
+                for key, value in self.search_config.get("params").items():
                     params.update({
                         "%s" % key: str(value).format(**inputs_dict)
                     })

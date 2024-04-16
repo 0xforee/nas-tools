@@ -29,9 +29,9 @@ class IndexerConf(object):
         # 域名
         self.domain = datas.get('domain')
         # 搜索
-        self.search = datas.get('search', {})
+        self.search_config = datas.get('search', {})
         # 批量搜索，如果为空对象则表示不支持批量搜索
-        self.batch = self.search.get("batch", {}) if builtin else {}
+        self.batch = self.search_config.get("batch", {}) if builtin else {}
         # 解析器
         self.parser = parser if parser is not None else datas.get('parser')
         # 是否启用渲染
@@ -64,7 +64,7 @@ class IndexerConf(object):
             "name": self.name or "",
             "builtin": self.builtin or True,
             "domain": self.domain or "",
-            "search": self.search or "",
+            "search": self.search_config or "",
             "batch": self.batch or {},
             "parser": self.parser or "",
             "render": self.render or False,
