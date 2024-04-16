@@ -69,6 +69,7 @@ class Torrent:
         else:
             req = RequestUtils(
                 headers=ua,
+                cookies=cookie,
                 referer=referer,
                 proxies=Config().get_proxies() if proxy else None
             ).get_res(url=url, allow_redirects=False)
