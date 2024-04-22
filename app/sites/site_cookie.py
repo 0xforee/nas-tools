@@ -75,7 +75,8 @@ class SiteCookie(object):
         cloudflare = chrome.pass_cloudflare()
         if not cloudflare:
             return None, None, "跳转站点失败，无法通过Cloudflare验证"
-        # 登录页面代码
+        # 登录页面代码，try sleep 3s
+        time.sleep(3)
         html_text = chrome.get_html()
         if not html_text:
             return None, None, "获取源码失败"
