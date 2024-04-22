@@ -191,7 +191,7 @@ class SiteCookie(object):
                 # 提交登录
                 submit_obj.click()
                 # 等待页面刷新完毕
-                WebDriverWait(driver=chrome.browser, timeout=10).until(es.staleness_of(submit_obj))
+                WebDriverWait(driver=chrome.browser, timeout=20).until(es.staleness_of(submit_obj))
             else:
                 return None, None, "未找到登录按钮"
         except Exception as e:
@@ -251,7 +251,7 @@ class SiteCookie(object):
                     time.sleep(1)
                     # click send email
                     email_send_obj = WebDriverWait(driver=chrome.browser,
-                                               timeout=6).until(es.element_to_be_clickable((By.XPATH,
+                                               timeout=10).until(es.element_to_be_clickable((By.XPATH,
                                                                                             email_send_xpath)))
                     email_send_obj.click()
                     time.sleep(1)
@@ -278,11 +278,11 @@ class SiteCookie(object):
 
                     # submit again try refresh, check again
                     login_submit_obj = WebDriverWait(driver=chrome.browser,
-                                               timeout=6).until(es.element_to_be_clickable((By.XPATH,
+                                               timeout=10).until(es.element_to_be_clickable((By.XPATH,
                                                                                             login_submit_xpath)))
                     login_submit_obj.click()
                     # 等待页面刷新完毕
-                    WebDriverWait(driver=chrome.browser, timeout=10).until(es.staleness_of(login_submit_obj))
+                    WebDriverWait(driver=chrome.browser, timeout=20).until(es.staleness_of(login_submit_obj))
                     time.sleep(1)
 
                     # check again
