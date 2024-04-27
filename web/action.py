@@ -1231,11 +1231,14 @@ class WebAction:
             os.system("sudo git clean -dffx")
             # 升级
             branch = os.getenv("NASTOOL_VERSION", "master")
-            os.system(f"sudo git fetch --depth 1 origin {branch}")
+            if SystemUtils.execute(f"sudo git fetch --depth 1 origin {branch}") != '0':
+                return {"code": -1}
             os.system(f"sudo git reset --hard origin/{branch}")
-            os.system("sudo git submodule update --init --recursive")
+            if SystemUtils.execute("sudo git submodule update --init --recursive") != '0':
+                return {"code": -2}
             # 安装依赖
-            os.system('sudo pip install -r /nas-tools/requirements.txt')
+            if SystemUtils.execute('sudo pip install -r /nas-tools/requirements.txt') != '0':
+                return {"code": -3}
             # 修复权限
             os.system('sudo chown -R nt:nt /nas-tools')
             # 重启
