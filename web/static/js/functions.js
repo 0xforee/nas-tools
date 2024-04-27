@@ -355,7 +355,8 @@ function update(version) {
       if(ret.code === 0){
         back_to_login_page("update_system");
       }else{
-        show_fail_modal("拉取代码或依赖失败，请检查网络连通性后重试")
+        hide_wait_modal();
+        show_fail_modal("拉取代码或依赖失败，请检查网络连通性后重试");
       }
     }, true, false)
     show_wait_modal(true);
