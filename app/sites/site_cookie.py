@@ -196,20 +196,6 @@ class SiteCookie(object):
                 return None, None, "未找到登录按钮"
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
-            import traceback
-            import os
-            from config import Config
-            s = f"\nException: {str(e)}\nCallstack:\n{traceback.format_exc()}\n"
-            tmpdir = os.path.join(Config().get_config_path(), "temp")
-            if not os.path.exists(tmpdir):
-                os.mkdir(tmpdir)
-            tmpfile = os.path.join(tmpdir, "traceback.txt")
-            with open(tmpfile, "w") as f:
-                f.write(s)
-            tmp_html_file = os.path.join(tmpdir, "traceback.html")
-            with open(tmp_html_file, "w") as f:
-                f.write(html_text)
-
             return None, None, "仿真登录失败：%s" % str(e)
         # 登录后的源码
         html_text = chrome.get_html()
