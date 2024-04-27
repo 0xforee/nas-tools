@@ -322,7 +322,7 @@ function logout() {
 
 //返回到登录页
 function back_to_login_page(type) {
-  timeout = (type === "restart") ? 6000 : 9000;
+  timeout = (type === "restart") ? 6000 : 6000;
   setTimeout(logout, timeout);
   setTimeout(function() {
     hide_wait_modal();
@@ -352,7 +352,7 @@ function update(version) {
   show_confirm_modal(title, function () {
     hide_confirm_modal();
     ajax_post("update_system", {}, function (ret) {
-      if(ret.code === '0'){
+      if(ret.code === 0){
         back_to_login_page("update_system");
       }else{
         show_fail_modal("拉取代码或依赖失败，请检查网络连通性后重试")
