@@ -1521,14 +1521,14 @@ class Downloader:
         result: 当前种子是否要触发下载
         real_size: 当前种子触发下载后，真实下载多大
         """
-        log.info(f"【Downloader】部分下载开始, 剩余保种体积:%s " % str(origin_limit))
+        gb2bytes = 1024*1024*1024
+        log.info(f"【Downloader】部分下载开始, 剩余保种体积:%s GB" % str(round(origin_limit / gb2bytes, 2)))
         _client = self.__get_client(downloader_id)
         torrent_files = self.get_files(tid=download_id, downloader_id=downloader_id)
         downloader_conf = self.get_downloader_conf(downloader_id)
         if not torrent_files:
             return False, 0, "torrent content files get error"
 
-        gb2bytes = 1024*1024*1024
         limit_size = size
         percent = 1
         # 根据规则挑选合适的文件
@@ -1630,7 +1630,7 @@ class Downloader:
                 priority_info['normal'].append(file_id)
                 transmission_priority_info[file_id] = {'priority': 'low', 'selected': True}
 
-        log.info(f"【Downloader】部分下载添加文件: {priority_info}, 限制大小: {limit_size}, 磁盘剩余空间: {free_space} ")
+        log.info(f"【Downloader】部分下载添加文件: {priority_info}, 限制大小: {round(limit_size/gb2bytes, 2)}GB, 磁盘剩余空间: {round(free_space, 2)}GB")
 
         if downloader_conf.get("type") == "transmission":
             _client.set_files(file_info={download_id: transmission_priority_info})
@@ -1642,6 +1642,6 @@ class Downloader:
 
         # 如果没有找到合适的文件，删除这个任务
         if cur_size == 0:
-            return False, 0, "torrent match file size is 0"
+            return False, 0, "didn't find property files in torrent matched rule"
 
         return True, cur_size, "success"
