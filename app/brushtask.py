@@ -538,7 +538,11 @@ class BrushTask(object):
                                 log.debug("【Brush】%s 限时为 %s: " % (torrent.get("name"), ddl))
                                 if ddl:
                                     pattern = "%Y%m%d_%H%M"
-                                    ddl_time = datetime.strptime(ddl, pattern)
+                                    pattern2 = "%Y-%m-%d %H:%M:%S"
+                                    try:
+                                        ddl_time = datetime.strptime(ddl, pattern)
+                                    except ValueError as e:
+                                        ddl_time = datetime.strptime(ddl, pattern2)
                                     # 删种检查间隔为5分钟，如果5分钟内限免结束了，提早结束下载，防止流量偷跑
                                     if (datetime.now() + timedelta(minutes=BRUSH_REMOVE_TORRENTS_INTERVAL/60)) >= ddl_time:
                                         # 限免限速的处理只一次
@@ -559,7 +563,7 @@ class BrushTask(object):
                                         # 设置下载限速为1kb
                                         self.downloader.set_downloadspeed_limit(downloader_id, torrent_id, 1)
                             except Exception as e:
-                                log.error("【Brush】，限时限免检查出了点问题")
+                                log.error(f"【Brush】，限免限时检测出了点问题：{str(e)}")
                                 ExceptionUtils.exception_traceback(e)
 
 
