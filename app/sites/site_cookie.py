@@ -86,7 +86,6 @@ class SiteCookie(object):
         login_conf = self.siteconf.get_login_conf()
         # 查找用户名输入框
         html = etree.HTML(html_text)
-        log.info(f'siginhtml: {html_text}')
         username_xpath = None
         for xpath in login_conf.get("username"):
             if html.xpath(xpath):

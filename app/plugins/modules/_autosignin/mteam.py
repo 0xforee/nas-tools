@@ -118,7 +118,6 @@ class MTeam(_ISiteSigninHandler):
         login_conf = SiteConf().get_login_conf()
         # 查找用户名输入框
         html = etree.HTML(html_text)
-        self.info(f'autosign, html: {html_text}')
         username_xpath = None
         for xpath in login_conf.get("username"):
             if html.xpath(xpath):
