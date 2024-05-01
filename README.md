@@ -47,7 +47,8 @@ python3 -m pip install -r requirements.txt
 export NASTOOL_CONFIG="/xxx/config/config.yaml"
 nohup python3 run.py & 
 ```
-
+## 常见问题
+请参考 [常见问题](Q&A.md)
 
 ## 免责声明
 1) 本软件不提供任何内容，仅作为辅助工具简化用户手工操作，对用户的行为及内容毫不知情，使用本软件产生的任何责任需由使用者本人承担。
