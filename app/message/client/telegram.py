@@ -1,3 +1,4 @@
+import time
 from threading import Event, Lock
 from urllib.parse import urlencode
 
@@ -327,16 +328,17 @@ class Telegram(_IMessageClient):
                 res = RequestUtils(proxies=_config.get_proxies()).get_res(
                     _sc_url + urlencode(values))
                 log.debug("【Telegram, request: " + (_sc_url + urlencode(values)))
-                log.debug("【Telegram, res: " + (str(res.content)))
-                if res and res.json():
-                    for msg in res.json().get("result", []):
-                        # 无论本地是否成功，先更新offset，即消息最多成功消费一次
-                        _offset = msg["update_id"] + 1
-                        log.debug("【Telegram】接收到消息: %s" % msg)
-                        local_res = requests.post(
-                            _ds_url, json=msg, timeout=10)
-                        log.debug("【Telegram】message: %s processed, response is: %s" % (
-                            msg, local_res.text))
+                if res:
+                    log.debug("【Telegram, res: " + (str(res.content)))
+                    if res.json():
+                        for msg in res.json().get("result", []):
+                            # 无论本地是否成功，先更新offset，即消息最多成功消费一次
+                            _offset = msg["update_id"] + 1
+                            log.debug("【Telegram】接收到消息: %s" % msg)
+                            local_res = requests.post(
+                                _ds_url, json=msg, timeout=10)
+                            log.debug("【Telegram】message: %s processed, response is: %s" % (
+                                msg, local_res.text))
             except Exception as e:
                 ExceptionUtils.exception_traceback(e)
                 log.error("【Telegram】消息接收出现错误: %s" % e)
