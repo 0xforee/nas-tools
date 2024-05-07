@@ -11,6 +11,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 from app.utils import RequestUtils
 from config import Config
+import html
 
 
 _plugin = None
@@ -319,7 +320,7 @@ class MteamRssGen(_IPluginModule):
             discount_end_time = status.get('discountEndTime')
             torrent_info = RssTorrent()
             torrent_info.id = tr.get('id')
-            torrent_info.title = tr.get('name')
+            torrent_info.title = html.escape(tr.get('name'))
             # pubdate
             pubdate = tr.get('createdDate')
             import time
