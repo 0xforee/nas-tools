@@ -1975,7 +1975,7 @@ class WebAction:
         brushtask_exclude = data.get("brushtask_exclude")
         brushtask_dlcount = data.get("brushtask_dlcount")
         brushtask_current_site_count = data.get("brushtask_current_site_count")
-        brushtask_current_site_dlcount = data.get("dl")
+        brushtask_current_site_dlcount = data.get("brushtask_current_site_dlcount")
         brushtask_peercount = data.get("brushtask_peercount")
         brushtask_seedtime = data.get("brushtask_seedtime")
         brushtask_seedratio = data.get("brushtask_seedratio")
