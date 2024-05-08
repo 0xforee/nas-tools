@@ -14,7 +14,7 @@ from app.indexer.client._plugins import PluginsSpider
 from app.indexer.client._mteam import MTeamSpider
 from app.sites import Sites
 from app.utils import StringUtils
-from app.utils.types import SearchType, IndexerType, ProgressKey, SystemConfigKey
+from app.utils.types import SearchType, IndexerType, ProgressKey, SystemConfigKey, MediaType
 from config import Config
 from web.backend.pro_user import ProUser
 
@@ -217,6 +217,17 @@ class BuiltinIndexer(_IIndexClient):
             # 更新进度
             self.progress.update(ptype=ProgressKey.Search, text=f"{indexer.name} 返回 {len(result_array)} 条数据")
             # 过滤
+            if match_media and match_media.type == MediaType.MOVIE:
+            # return
+                self.filter_search_results_local(
+                    result_array=result_array,
+                    order_seq=order_seq,
+                    indexer=indexer,
+                    filter_args=_filter_args,
+                    match_media=match_media,
+                    start_time=start_time
+                )
+
             return self.filter_search_results(result_array=result_array,
                                               order_seq=order_seq,
                                               indexer=indexer,

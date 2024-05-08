@@ -2191,6 +2191,25 @@ class Media:
                     return title
         return tmdbinfo.get("title") if tmdbinfo.get("media_type") == MediaType.MOVIE else tmdbinfo.get("name")
 
+    @staticmethod
+    def __get_tmdb_us_title(tmdbinfo):
+        """
+        从别名中获取中文标题
+        """
+        if not tmdbinfo:
+            return None
+        if tmdbinfo.get("media_type") == MediaType.MOVIE:
+            alternative_titles = tmdbinfo.get("alternative_titles", {}).get("titles", [])
+        else:
+            alternative_titles = tmdbinfo.get("alternative_titles", {}).get("results", [])
+        for alternative_title in alternative_titles:
+            iso_3166_1 = alternative_title.get("iso_3166_1")
+            if iso_3166_1 == "US":
+                title = alternative_title.get("title")
+                if title:
+                    return title
+        return tmdbinfo.get("title") if tmdbinfo.get("media_type") == MediaType.MOVIE else tmdbinfo.get("name")
+
     def get_tmdbperson_chinese_name(self, person_id=None, person_info=None):
         """
         查询TMDB人物中文名称

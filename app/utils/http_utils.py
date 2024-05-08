@@ -124,7 +124,7 @@ class RequestUtils:
                                     cookies=self._cookies,
                                     timeout=self._timeout,
                                     allow_redirects=allow_redirects)
-        except requests.exceptions.RequestException:
+        except requests.exceptions.RequestException as e:
             if raise_exception:
                 raise requests.exceptions.RequestException
             return None
