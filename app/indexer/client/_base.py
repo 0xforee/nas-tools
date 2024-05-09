@@ -71,6 +71,13 @@ class _IIndexClient(metaclass=ABCMeta):
         """
         pass
 
+    def check_if_alpha(self, s):
+        if s.isalpha():
+            return True
+        if s.isdigit():
+            return True
+        return False
+
     def filter_search_results_local(self, result_array: list,
                               order_seq,
                               indexer,
@@ -80,6 +87,7 @@ class _IIndexClient(metaclass=ABCMeta):
         """
         从搜索结果中匹配符合资源条件的记录
         """
+        starttime = datetime.datetime.now()
         ret_array = []
         index_sucess = 0
         index_rule_fail = 0
@@ -118,53 +126,116 @@ class _IIndexClient(metaclass=ABCMeta):
                     index_rule_fail += 1
                     continue
                 # 识别种子名称
-                imdbid_match = False
-                name_match = False
-                year_match = False
-                if match_media:
-                    description = description if description else ""
-                    torrent_name = torrent_name if torrent_name else ""
-                    imdbid_match = imdbid and match_media.imdb_id and str(imdbid) == str(match_media.imdb_id)
-                    name_match = match_media.org_string in torrent_name or \
-                                match_media.original_title in torrent_name or \
-                                match_media.org_string in description or \
-                                match_media.original_title in description
-                    year_match = (not match_media.year) or match_media.year in torrent_name or \
-                                 match_media.year in description
-                if (imdbid_match or name_match) and year_match:
-                    meta_info = MetaInfo(title=torrent_name,
-                                         subtitle=f"{labels} {description}",
-                                         mtype=match_media.media_type,
-                                         cn_name=match_media.org_string,
-                                         en_name=match_media.original_title,
-                                         tmdb_id=match_media.tmdb_id,
-                                         imdb_id=match_media.imdb_id)
-                    # meta_info.set_tmdb_info(self.media.get_tmdb_info(mtype=match_media.media_type,
-                    #                                          tmdbid=match_media.tmdb_id,
-                    #                                          append_to_response="all"))
-                else:
-                    meta_info = MetaInfo(title=torrent_name, subtitle=f"{labels} {description}")
-                    # search tmdb same name，and filter again
-                    if not cached_tmdb_infos:
-                        log.info(f"search tmdb for filter")
-                        en_title = self.media.__get_tmdb_us_title(match_media.tmdb_info)
-                        cached_tmdb_infos = self.media.get_tmdb_infos(title=en_title,
-                                                   mtype=match_media.media_type,
-                                                   page=1)
-
-                        # generate the name map TODO, chinese, pinyin
-
-                    # filter
-                    # if year
-                    for info in cached_tmdb_infos:
-
-                        if en_title:
-                            pass
+                meta_info = MetaInfo(title=torrent_name, subtitle=f"{labels} {description}")
+                en_title = self.media.get_tmdb_us_title(match_media.tmdb_info)
 
                 if not meta_info.get_name():
                     log.info(f"【{self.client_name}】{torrent_name} 无法识别到名称")
                     index_match_fail += 1
                     continue
+
+                if meta_info.year:
+                    if match_media.original_title in torrent_name or \
+                            match_media.org_string in torrent_name or \
+                            en_title in torrent_name:
+                        if meta_info.year == match_media.year:
+                            # mathc
+                            pass
+                        else:
+                            log.info(f"【{self.client_name}】{torrent_name} 与 {match_media.year} 年份不匹配")
+                            index_match_fail += 1
+                            continue
+                    else:
+                        log.info(f"【{self.client_name}】{torrent_name}，解析到年份 {meta_info.year}, 但 {match_media.original_title} 或{match_media.org_string} 或{en_title} 与种子名称不匹配")
+                        index_match_fail += 1
+                        continue
+                else:
+                    if match_media.original_title in torrent_name or \
+                            match_media.org_string in torrent_name or \
+                            en_title in torrent_name:
+                        log.info(f"【{self.client_name}】{torrent_name}，未解析到年份, 开始重名检测")
+                        # search tmdb same name，and filter again
+                        if not cached_tmdb_infos:
+                            log.info(f"search tmdb for filter")
+                            en_title = self.media.get_tmdb_us_title(match_media.tmdb_info)
+                            cached_tmdb_infos = self.media.get_tmdb_infos(title=en_title,
+                                                                          mtype=match_media.type,
+                                                                          page=1)
+                            if not cached_tmdb_infos:
+                                log.info(
+                                    f"【{self.client_name}】{torrent_name} 未在 tmdb 中发现匹配 {en_title} 信息")
+                        max_length_tmdb_info = []
+                        max_length = 0
+
+                        for info in cached_tmdb_infos:
+                            title = info.get('title')
+                            # release_date 2016-01-01
+                            release_year = info.get('release_date').split('-')[0]
+                            tmdb_id = info.get('id')
+
+                            if title in torrent_name:
+                                # 英文 title 在种子名中，应该要与其他字母隔开，否则会误识别，比如 Prstas 2060p 不能识别为 Prstas 2
+                                if self.check_if_alpha(torrent_name[torrent_name.index(title)+len(title)]):
+                                    log.debug(
+                                        f"【{self.client_name}】{torrent_name} 识别 {title} 失败 ")
+                                    continue
+                                # 可能有多个同样的名称可以命中，都要找出来
+                                if len(title) > max_length:
+                                    max_length_tmdb_info.clear()
+                                    max_length_tmdb_info.append(info)
+                                    max_length = len(title)
+                                elif len(title) == max_length:
+                                    max_length_tmdb_info.append(info)
+
+                        found_matched = False
+                        for matched_tmdb_info in max_length_tmdb_info:
+                            title = matched_tmdb_info.get('title')
+                            tmdb_id = matched_tmdb_info.get('id')
+                            if matched_tmdb_info["id"] == match_media.tmdb_info['id']:
+                                log.info(
+                                    f"【{self.client_name}】{torrent_name} 与 {title} 名称匹配，tmdbid 匹配: ${tmdb_id}， 匹配成功")
+                                found_matched = True
+                                break
+                            else:
+                                log.info(f"【{self.client_name}】{torrent_name} 与 {title} 名称匹配，但 tmdbid 为: ${tmdb_id}， 匹配失败")
+                                index_match_fail += 1
+
+                        if not found_matched:
+                            index_match_fail += 1
+                            continue
+
+                    else:
+                        log.info(f"【{self.client_name}】{torrent_name}，未解析到年份，且{match_media.original_title} 或者{match_media.org_string}或{en_title} 与种子名称不匹配")
+                        index_match_fail += 1
+                        continue
+
+
+                imdbid_match = False
+                name_match = False
+                year_match = False
+                # if match_media:
+                #     description = description if description else ""
+                #     torrent_name = torrent_name if torrent_name else ""
+                #     imdbid_match = imdbid and match_media.imdb_id and str(imdbid) == str(match_media.imdb_id)
+                #     name_match = match_media.org_string in torrent_name or \
+                #                 match_media.original_title in torrent_name or \
+                #                 match_media.org_string in description or \
+                #                 match_media.original_title in description
+                #     year_match = (not match_media.year) or match_media.year in torrent_name or \
+                #                  match_media.year in description
+                # if (imdbid_match or name_match) and year_match:
+                #     meta_info = MetaInfo(title=torrent_name,
+                #                          subtitle=f"{labels} {description}",
+                #                          mtype=match_media.media_type,
+                #                          cn_name=match_media.org_string,
+                #                          en_name=match_media.original_title,
+                #                          tmdb_id=match_media.tmdb_id,
+                #                          imdb_id=match_media.imdb_id)
+                    # meta_info.set_tmdb_info(self.media.get_tmdb_info(mtype=match_media.media_type,
+                    #                                          tmdbid=match_media.tmdb_id,
+                    #                                          append_to_response="all"))
+                # else:
+
                 # 大小及促销等
                 meta_info.set_torrent_info(size=size,
                                            imdbid=imdbid,
@@ -194,8 +265,7 @@ class _IIndexClient(metaclass=ABCMeta):
                     # 不过滤
                     media_info = meta_info
                 else:
-                    media_info = meta_info
-                    media_info = self.media.merge_media_info(media_info, match_media)
+                    media_info = self.media.merge_media_info(meta_info, match_media)
 
                     # # 0-识别并模糊匹配；1-识别并精确匹配
                     # if meta_info.imdb_id \
@@ -300,19 +370,23 @@ class _IIndexClient(metaclass=ABCMeta):
         # 计算耗时
         end_time = datetime.datetime.now()
         log.info(
-            f"【{self.client_name}】{indexer.name} {len(result_array)} 条数据中，"
+            f"Local:【{self.client_name}】{indexer.name} {len(result_array)} 条数据中，"
             f"过滤 {index_rule_fail}，"
             f"不匹配 {index_match_fail}，"
             f"错误 {index_error}，"
             f"有效 {index_sucess}，"
-            f"耗时 {(end_time - start_time).seconds} 秒")
+            f"耗时 {(end_time - start_time).seconds} 秒"
+            f"匹配耗时 {(end_time - starttime).seconds} 秒"
+        )
         self.progress.update(ptype=ProgressKey.Search,
                              text=f"{indexer.name} {len(result_array)} 条数据中，"
                                   f"过滤 {index_rule_fail}，"
                                   f"不匹配 {index_match_fail}，"
                                   f"错误 {index_error}，"
                                   f"有效 {index_sucess}，"
-                                  f"耗时 {(end_time - start_time).seconds} 秒")
+                                  f"耗时 {(end_time - start_time).seconds} 秒"
+                                  f"匹配耗时 {(end_time - starttime).seconds} 秒"
+                             )
 
         log.info(f"ret_array local")
         self.print_ret_array(matched_torrent)
@@ -335,7 +409,7 @@ class _IIndexClient(metaclass=ABCMeta):
         """
         从搜索结果中匹配符合资源条件的记录
         """
-        print("result_array")
+        starttime = datetime.datetime.now()
         ret_array = []
         index_sucess = 0
         index_rule_fail = 0
@@ -533,19 +607,23 @@ class _IIndexClient(metaclass=ABCMeta):
         # 计算耗时
         end_time = datetime.datetime.now()
         log.info(
-            f"【{self.client_name}】{indexer.name} {len(result_array)} 条数据中，"
+            f"Online:【{self.client_name}】{indexer.name} {len(result_array)} 条数据中，"
             f"过滤 {index_rule_fail}，"
             f"不匹配 {index_match_fail}，"
             f"错误 {index_error}，"
             f"有效 {index_sucess}，"
-            f"耗时 {(end_time - start_time).seconds} 秒")
+            f"耗时 {(end_time - start_time).seconds} 秒"
+            f"匹配耗时 {(end_time - starttime).seconds} 秒"
+        )
         self.progress.update(ptype=ProgressKey.Search,
                              text=f"{indexer.name} {len(result_array)} 条数据中，"
                                   f"过滤 {index_rule_fail}，"
                                   f"不匹配 {index_match_fail}，"
                                   f"错误 {index_error}，"
                                   f"有效 {index_sucess}，"
-                                  f"耗时 {(end_time - start_time).seconds} 秒")
+                                  f"耗时 {(end_time - start_time).seconds} 秒"
+                                  f"匹配耗时 {(end_time - starttime).seconds} 秒"
+                             )
         log.info(f"ret_array")
         self.print_ret_array(matched_torrent)
 

@@ -2191,8 +2191,7 @@ class Media:
                     return title
         return tmdbinfo.get("title") if tmdbinfo.get("media_type") == MediaType.MOVIE else tmdbinfo.get("name")
 
-    @staticmethod
-    def __get_tmdb_us_title(tmdbinfo):
+    def get_tmdb_us_title(self, tmdbinfo):
         """
         从别名中获取中文标题
         """
