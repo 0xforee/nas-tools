@@ -1120,6 +1120,11 @@
       $("#brushtask_current_site_dlcount").addClass("is-invalid");
       return;
     } else {
+        // 需要搭配站点任务总数一起使用
+        if(!brushtask_current_site_count){
+            $("#brushtask_current_site_count").addClass("is-invalid");
+            return;
+        }
       $("#brushtask_current_site_dlcount").removeClass("is-invalid");
     }
     //上传限速
