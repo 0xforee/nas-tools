@@ -1121,7 +1121,7 @@
       return;
     } else {
         // 需要搭配站点任务总数一起使用
-        if(!brushtask_current_site_count){
+        if(brushtask_current_site_dlcount && !brushtask_current_site_count){
             $("#brushtask_current_site_count").addClass("is-invalid");
             return;
         }
