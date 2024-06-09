@@ -790,10 +790,24 @@ class BrushTask(object):
             # 下载种子文件成功，开始部分下载功能
             log.info("【Brush】成功添加下载：%s" % title)
 
+            # 检查部分规则是否配置
+            if self.__is_fraction_rule_set(fraction_rule):
             ## 第二种方案：先尝试添加下载任务，（下载后暂停），然后计算文件大小规则，决定是否要开启，还是删除任务
             # 针对原有逻辑改动较少，可移植性大大增加
             # 设置优先级
-            result, real_size, fraction_retmsg = self.downloader.fraction_download(fraction_rule, origin_limit, size, dir, downloader_id, download_id)
+                result, real_size, fraction_retmsg = self.downloader.fraction_download(fraction_rule, origin_limit, size, dir, downloader_id, download_id)
+            else:
+                # 检查是否种子是否过限制大小
+                seed_size = taskinfo.get("seed_size")
+                task_name = taskinfo.get("name")
+                downloader_id = taskinfo.get("downloader")
+                total_size = self.dbhelper.get_brushtask_totalsize(taskinfo.get("id"))
+                result, fraction_retmsg = True, ""
+                if seed_size:
+                    if float(seed_size) * 1024 ** 3 <= int(total_size):
+                        msg = ("Brush】刷流任务 %s 当前保种体积 %sGB，不再新增下载" % (task_name, round(int(total_size) / 1024 / 1024 / 1024, 1)))
+                        log.warn(msg)
+                        result, fraction_retmsg = False, msg
 
             if result:
                 # 开启下载
@@ -837,6 +851,17 @@ class BrushTask(object):
             log.info("【Brush】%s 已下载过" % title)
 
         return True
+
+    def __is_fraction_rule_set(self, fraction_rule):
+        if fraction_rule:
+            before_range = fraction_rule.get("frac_before_range")
+            before_percent = fraction_rule.get("frac_before_percent")
+            after_range = fraction_rule.get("frac_after_range")
+
+            if before_range or before_percent or after_range:
+                return True
+
+        return False
 
     def __check_rss_rule(self,
                          rss_rule,
