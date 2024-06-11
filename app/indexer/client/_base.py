@@ -8,7 +8,7 @@ from app.media import Media
 from app.media.meta import MetaInfo
 from app.utils.types import MediaType, SearchType, ProgressKey
 from config import Config
-
+import jellyfish
 
 class _IIndexClient(metaclass=ABCMeta):
     # 索引器ID
@@ -78,6 +78,21 @@ class _IIndexClient(metaclass=ABCMeta):
             return True
         return False
 
+    def get_similarity(self,meta_name, match_media, torrent_name):
+        en_title = self.media.get_tmdb_us_title(match_media.tmdb_info)
+        if match_media.original_title in torrent_name or \
+                match_media.org_string in torrent_name or \
+                en_title in torrent_name:
+            return 1
+        ratio = jellyfish.jaro_similarity(meta_name, en_title)
+        log.info(f"【{meta_name}】{en_title} 相似度为 {ratio}")
+        if ratio > 0.85:
+            return 1
+        elif ratio > 0.35:
+            return 0
+        elif ratio > 0:
+            return -1
+
     def filter_search_results_local(self, result_array: list,
                               order_seq,
                               indexer,
@@ -135,25 +150,25 @@ class _IIndexClient(metaclass=ABCMeta):
                     continue
 
                 if meta_info.year:
-                    if match_media.original_title in torrent_name or \
-                            match_media.org_string in torrent_name or \
-                            en_title in torrent_name:
-                        if meta_info.year == match_media.year:
-                            # mathc
+                    if meta_info.year == match_media.year:
+                        ratio =  self.get_similarity(meta_info.get_name(), match_media, torrent_name)
+                        # 年份相同，相似度，中，高，都认为通过
+                        if ratio >= 0:
                             pass
                         else:
-                            log.info(f"【{self.client_name}】{torrent_name} 与 {match_media.year} 年份不匹配")
+                            log.info(f"【{self.client_name}】{torrent_name} 与 {match_media.original_title} 相似度太低，忽略")
                             index_match_fail += 1
                             continue
                     else:
-                        log.info(f"【{self.client_name}】{torrent_name}，解析到年份 {meta_info.year}, 但 {match_media.original_title} 或{match_media.org_string} 或{en_title} 与种子名称不匹配")
+                        log.info(f"【{self.client_name}】{torrent_name} 与 {match_media.year} 年份不匹配")
                         index_match_fail += 1
                         continue
                 else:
-                    if match_media.original_title in torrent_name or \
-                            match_media.org_string in torrent_name or \
-                            en_title in torrent_name:
-                        log.info(f"【{self.client_name}】{torrent_name}，未解析到年份, 开始重名检测")
+                    ratio = self.get_similarity(meta_info.get_name(), match_media, torrent_name)
+                    if ratio >= 1:
+                        pass
+                    elif ratio >= 0:
+                        # 在线匹配
                         # search tmdb same name，and filter again
                         if not cached_tmdb_infos:
                             log.info(f"search tmdb for filter")
@@ -164,9 +179,9 @@ class _IIndexClient(metaclass=ABCMeta):
                             if not cached_tmdb_infos:
                                 log.info(
                                     f"【{self.client_name}】{torrent_name} 未在 tmdb 中发现匹配 {en_title} 信息")
-                        max_length_tmdb_info = []
-                        max_length = 0
 
+                        max_length_tmdb_info = []
+                        max_ratio = 0.0
                         for info in cached_tmdb_infos:
                             title = info.get('title')
                             # release_date 2016-01-01
@@ -175,16 +190,17 @@ class _IIndexClient(metaclass=ABCMeta):
 
                             if title in torrent_name:
                                 # 英文 title 在种子名中，应该要与其他字母隔开，否则会误识别，比如 Prstas 2060p 不能识别为 Prstas 2
-                                if self.check_if_alpha(torrent_name[torrent_name.index(title)+len(title)]):
+                                if self.check_if_alpha(torrent_name[torrent_name.index(title) + len(title)]):
                                     log.debug(
                                         f"【{self.client_name}】{torrent_name} 识别 {title} 失败 ")
                                     continue
-                                # 可能有多个同样的名称可以命中，都要找出来
-                                if len(title) > max_length:
+
+                                ratio = self.get_similarity(title, match_media, torrent_name)
+                                if ratio > max_ratio:
                                     max_length_tmdb_info.clear()
                                     max_length_tmdb_info.append(info)
-                                    max_length = len(title)
-                                elif len(title) == max_length:
+                                    max_ratio = ratio
+                                elif ratio == max_ratio:
                                     max_length_tmdb_info.append(info)
 
                         found_matched = False
@@ -197,17 +213,18 @@ class _IIndexClient(metaclass=ABCMeta):
                                 found_matched = True
                                 break
                             else:
-                                log.info(f"【{self.client_name}】{torrent_name} 与 {title} 名称匹配，但 tmdbid 为: ${tmdb_id}， 匹配失败")
+                                log.info(
+                                    f"【{self.client_name}】{torrent_name} 与 {title} 名称匹配，但 tmdbid 为: ${tmdb_id}， 匹配失败")
                                 index_match_fail += 1
 
                         if not found_matched:
                             index_match_fail += 1
                             continue
+                        else:
+                            log.info(f"【{self.client_name}】{torrent_name} 与 {match_media.original_title} 相似度太低，忽略")
+                            index_match_fail += 1
+                            continue
 
-                    else:
-                        log.info(f"【{self.client_name}】{torrent_name}，未解析到年份，且{match_media.original_title} 或者{match_media.org_string}或{en_title} 与种子名称不匹配")
-                        index_match_fail += 1
-                        continue
 
 
                 imdbid_match = False
