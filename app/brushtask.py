@@ -802,12 +802,12 @@ class BrushTask(object):
                 task_name = taskinfo.get("name")
                 downloader_id = taskinfo.get("downloader")
                 total_size = self.dbhelper.get_brushtask_totalsize(taskinfo.get("id"))
-                result, real_size, fraction_retmsg = True, seed_size, ""
+                result, real_size, fraction_retmsg = True, size, ""
                 if seed_size:
                     if float(seed_size) * 1024 ** 3 <= int(total_size):
                         msg = ("Brush】刷流任务 %s 当前保种体积 %sGB，不再新增下载" % (task_name, round(int(total_size) / 1024 / 1024 / 1024, 1)))
                         log.warn(msg)
-                        result, real_size, fraction_retmsg = False, seed_size, msg
+                        result, real_size, fraction_retmsg = False, size, msg
 
             if result:
                 # 开启下载
