@@ -78,7 +78,7 @@ class _IIndexClient(metaclass=ABCMeta):
             return True
         return False
 
-    def get_similarity(self,meta_name, match_media, torrent_name):
+    def get_similarity(self, meta_name, match_media, torrent_name):
         en_title = self.media.get_tmdb_us_title(match_media.tmdb_info)
         if match_media.original_title in torrent_name or \
                 match_media.org_string in torrent_name or \
@@ -86,7 +86,10 @@ class _IIndexClient(metaclass=ABCMeta):
             return 1
         ratio = jellyfish.jaro_similarity(meta_name, en_title)
         log.info(f"【{meta_name}】{en_title} 相似度为 {ratio}")
-        if ratio > 0.85:
+        ratio2 = jellyfish.jaro_similarity(meta_name, match_media.original_title)
+        ratio = max(ratio2, ratio)
+        log.info(f"【{meta_name}】{match_media.original_title} 相似度为 {ratio2}")
+        if ratio > 0.95:
             return 1
         elif ratio > 0.35:
             return 0
@@ -195,7 +198,12 @@ class _IIndexClient(metaclass=ABCMeta):
                                         f"【{self.client_name}】{torrent_name} 识别 {title} 失败 ")
                                     continue
 
-                                ratio = self.get_similarity(title, match_media, torrent_name)
+                                ratio = jellyfish.jaro_similarity(meta_info.get_name(), title)
+                                if ratio <= 0.95:
+                                    # 在线匹配使用高精度匹配，如果不满足，直接跳过（因为本身搜索是模糊的，所以匹配要精确才行）
+                                    log.debug(
+                                        f"【{self.client_name}】{meta_info.get_name()} 与 {title} 相似度太低，跳过")
+                                    continue
                                 if ratio > max_ratio:
                                     max_length_tmdb_info.clear()
                                     max_length_tmdb_info.append(info)
@@ -221,37 +229,7 @@ class _IIndexClient(metaclass=ABCMeta):
                             index_match_fail += 1
                             continue
                         else:
-                            log.info(f"【{self.client_name}】{torrent_name} 与 {match_media.original_title} 相似度太低，忽略")
-                            index_match_fail += 1
                             continue
-
-
-
-                imdbid_match = False
-                name_match = False
-                year_match = False
-                # if match_media:
-                #     description = description if description else ""
-                #     torrent_name = torrent_name if torrent_name else ""
-                #     imdbid_match = imdbid and match_media.imdb_id and str(imdbid) == str(match_media.imdb_id)
-                #     name_match = match_media.org_string in torrent_name or \
-                #                 match_media.original_title in torrent_name or \
-                #                 match_media.org_string in description or \
-                #                 match_media.original_title in description
-                #     year_match = (not match_media.year) or match_media.year in torrent_name or \
-                #                  match_media.year in description
-                # if (imdbid_match or name_match) and year_match:
-                #     meta_info = MetaInfo(title=torrent_name,
-                #                          subtitle=f"{labels} {description}",
-                #                          mtype=match_media.media_type,
-                #                          cn_name=match_media.org_string,
-                #                          en_name=match_media.original_title,
-                #                          tmdb_id=match_media.tmdb_id,
-                #                          imdb_id=match_media.imdb_id)
-                    # meta_info.set_tmdb_info(self.media.get_tmdb_info(mtype=match_media.media_type,
-                    #                                          tmdbid=match_media.tmdb_id,
-                    #                                          append_to_response="all"))
-                # else:
 
                 # 大小及促销等
                 meta_info.set_torrent_info(size=size,
@@ -284,41 +262,6 @@ class _IIndexClient(metaclass=ABCMeta):
                 else:
                     media_info = self.media.merge_media_info(meta_info, match_media)
 
-                    # # 0-识别并模糊匹配；1-识别并精确匹配
-                    # if meta_info.imdb_id \
-                    #         and match_media.imdb_id \
-                    #         and str(meta_info.imdb_id) == str(match_media.imdb_id):
-                    #     # IMDBID匹配，合并媒体数据
-                    #     media_info = self.media.merge_media_info(meta_info, match_media)
-                    # else:
-                    #     # 查询缓存
-                    #     cache_info = self.media.get_cache_info(meta_info)
-                    #     if match_media \
-                    #             and str(cache_info.get("id")) == str(match_media.tmdb_id):
-                    #         # 缓存匹配，合并媒体数据
-                    #         media_info = self.media.merge_media_info(meta_info, match_media)
-                    #     else:
-                    #         # 重新识别
-                    #         media_info = self.media.get_media_info(title=torrent_name, subtitle=description, chinese=False)
-                    #         if not media_info:
-                    #             log.warn(f"【{self.client_name}】{torrent_name} 识别媒体信息出错！")
-                    #             index_error += 1
-                    #             continue
-                    #         elif not media_info.tmdb_info:
-                    #             log.info(
-                    #                 f"【{self.client_name}】{torrent_name} 识别为 {media_info.get_name()} 未匹配到媒体信息")
-                    #             index_match_fail += 1
-                    #             continue
-                    #         # TMDBID是否匹配
-                    #         if str(media_info.tmdb_id) != str(match_media.tmdb_id):
-                    #             log.info(
-                    #                 f"【{self.client_name}】{torrent_name} 识别为 "
-                    #                 f"{media_info.type.value}/{media_info.get_title_string()}/{media_info.tmdb_id} "
-                    #                 f"与 {match_media.type.value}/{match_media.get_title_string()}/{match_media.tmdb_id} 不匹配")
-                    #             index_match_fail += 1
-                    #             continue
-                    #         # 合并媒体数据
-                    #         media_info = self.media.merge_media_info(media_info, match_media)
                     # 过滤类型
                     if filter_args.get("type"):
                         if (filter_args.get("type") == MediaType.TV and media_info.type == MediaType.MOVIE) \

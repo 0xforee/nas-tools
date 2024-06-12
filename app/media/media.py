@@ -670,9 +670,8 @@ class Media:
         else:
             movies = self.search.movies({"query": title}) or []
         for movie in movies:
-            if title in movie.get("title"):
-                movie['media_type'] = MediaType.MOVIE
-                ret_infos.append(movie)
+            movie['media_type'] = MediaType.MOVIE
+            ret_infos.append(movie)
         return ret_infos
 
     def __search_tv_tmdbinfos(self, title, year):
