@@ -38,6 +38,7 @@ class BuiltinIndexer(_IIndexClient):
 
     def __init__(self, config=None):
         super().__init__()
+        self.quick_search = False
         self._client_config = config or {}
         self.init_config()
 
@@ -49,6 +50,7 @@ class BuiltinIndexer(_IIndexClient):
         self.chromehelper = ChromeHelper()
         self.systemconfig = SystemConfig()
         self._show_more_sites = Config().get_config("laboratory").get('show_more_sites')
+        self.quick_search = Config().get_config("laboratory").get('quick_search')
 
     @classmethod
     def match(cls, ctype):
@@ -217,16 +219,16 @@ class BuiltinIndexer(_IIndexClient):
             # 更新进度
             self.progress.update(ptype=ProgressKey.Search, text=f"{indexer.name} 返回 {len(result_array)} 条数据")
             # 过滤
-            # if match_media and match_media.type == MediaType.MOVIE:
-            # return
-            #     self.filter_search_results_local(
-            #         result_array=result_array,
-            #         order_seq=order_seq,
-            #         indexer=indexer,
-            #         filter_args=_filter_args,
-            #         match_media=match_media,
-            #         start_time=start_time
-            #     )
+            if self.quick_search:
+                if match_media and match_media.type == MediaType.MOVIE:
+                    return self.filter_search_results_local(
+                        result_array=result_array,
+                        order_seq=order_seq,
+                        indexer=indexer,
+                        filter_args=_filter_args,
+                        match_media=match_media,
+                        start_time=start_time
+                    )
 
             return self.filter_search_results(result_array=result_array,
                                               order_seq=order_seq,

@@ -773,6 +773,18 @@
               <div class="col-12 col-xl-3">
                 <div class="mb-3">
                   <label class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="laboratory.quick_search" {% if
+                      Config.laboratory and Config.laboratory.quick_search %}checked{% endif %}>
+                    <span class="form-check-label">极速搜索 <span class="form-help"
+                                                                  title="开启后搜索过程会加入本地算法协助识别匹配资源，优化搜索体验"
+                                                                  data-bs-toggle="tooltip">?</span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+              <div class="col-12 col-xl-3">
+                <div class="mb-3">
+                  <label class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="laboratory.tmdb_cache_expire" {% if
                       Config.laboratory and Config.laboratory.tmdb_cache_expire %}checked{% endif %}>
                     <span class="form-check-label">TMDB缓存过期策略 <span class="form-help"

@@ -348,8 +348,8 @@ class _IIndexClient(metaclass=ABCMeta):
                                   f"匹配耗时 {(end_time - starttime).seconds} 秒"
                              )
 
-        log.info(f"ret_array local")
-        self.print_ret_array(matched_torrent)
+        # log.info(f"ret_array local")
+        # self.print_ret_array(matched_torrent)
         return ret_array
 
     def print_result_array(self, result_array):
@@ -584,7 +584,7 @@ class _IIndexClient(metaclass=ABCMeta):
                                   f"耗时 {(end_time - start_time).seconds} 秒"
                                   f"匹配耗时 {(end_time - starttime).seconds} 秒"
                              )
-        log.info(f"ret_array")
-        self.print_ret_array(matched_torrent)
+        # log.info(f"ret_array")
+        # self.print_ret_array(matched_torrent)
 
         return ret_array
