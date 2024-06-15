@@ -117,7 +117,8 @@ class _IIndexClient(metaclass=ABCMeta):
         cached_cn_info = None
         cached_pinyin_info = None
 
-        self.print_result_array(result_array)
+        # self.print_result_array(result_array)
+        log.debug(f"match start")
         for item in result_array:
             try:
                 # 名称
@@ -145,7 +146,7 @@ class _IIndexClient(metaclass=ABCMeta):
                     continue
                 # 识别种子名称
                 meta_info = MetaInfo(title=torrent_name, subtitle=f"{labels} {description}")
-                en_title = self.media.get_tmdb_us_title(match_media.tmdb_info)
+                # en_title = self.media.get_tmdb_us_title(match_media.tmdb_info)
 
                 if not meta_info.get_name():
                     log.info(f"【{self.client_name}】{torrent_name} 无法识别到名称")
@@ -154,7 +155,7 @@ class _IIndexClient(metaclass=ABCMeta):
 
                 if meta_info.year:
                     if meta_info.year == match_media.year:
-                        ratio =  self.get_similarity(meta_info.get_name(), match_media, torrent_name)
+                        ratio = self.get_similarity(meta_info.get_name(), match_media, torrent_name)
                         # 年份相同，相似度，中，高，都认为通过
                         if ratio >= 0:
                             pass
@@ -188,8 +189,8 @@ class _IIndexClient(metaclass=ABCMeta):
                         for info in cached_tmdb_infos:
                             title = info.get('title')
                             # release_date 2016-01-01
-                            release_year = info.get('release_date').split('-')[0]
-                            tmdb_id = info.get('id')
+                            # release_year = info.get('release_date').split('-')[0]
+                            # tmdb_id = info.get('id')
 
                             if title in torrent_name:
                                 # 英文 title 在种子名中，应该要与其他字母隔开，否则会误识别，比如 Prstas 2060p 不能识别为 Prstas 2

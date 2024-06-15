@@ -8,6 +8,7 @@ from app.helper import ProgressHelper, ChromeHelper, DbHelper
 from app.indexer.client._base import _IIndexClient
 from app.indexer.client._render_spider import RenderSpider
 from app.indexer.client._spider import TorrentSpider
+from app.indexer.client._spider_new import DefaultSpider
 from app.indexer.client._tnode import TNodeSpider
 from app.indexer.client._torrentleech import TorrentLeech
 from app.indexer.client._plugins import PluginsSpider
@@ -219,7 +220,8 @@ class BuiltinIndexer(_IIndexClient):
             # 更新进度
             self.progress.update(ptype=ProgressKey.Search, text=f"{indexer.name} 返回 {len(result_array)} 条数据")
             # 过滤
-            if self.quick_search:
+            if self.quick_search and in_from == SearchType.WEB:
+                log.debug(f"quick search start")
                 if match_media and match_media.type == MediaType.MOVIE:
                     return self.filter_search_results_local(
                         result_array=result_array,
@@ -300,11 +302,19 @@ class BuiltinIndexer(_IIndexClient):
                         page=page,
                         mtype=mtype)
         spider.start()
+
+        # spider = DefaultSpider()
+        # spider.setparam(indexer=indexer,
+        #                 keyword=keyword,
+        #                 page=page,
+        #                 mtype=mtype)
+        # spider.start_requests()
+
         # 循环判断是否获取到数据
         sleep_count = 0
         while not spider.is_complete:
             sleep_count += 1
-            time.sleep(1)
+            time.sleep(0.5)
             if sleep_count > timeout:
                 break
         # 是否发生错误

@@ -54,9 +54,10 @@ class Searcher:
         if not self.indexer:
             return []
         # 触发事件
+        media_info_dict = {"id": match_media.tmdb_id} if match_media else {}
         self.eventmanager.send_event(EventType.SearchStart, {
             "key_word": key_word,
-            "media_info": match_media.to_dict() if match_media else None,
+            "media_info": media_info_dict,
             "filter_args": filter_args,
             "search_type": in_from.value if in_from else None
         })
