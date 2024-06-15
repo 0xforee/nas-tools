@@ -78,23 +78,28 @@ class _IIndexClient(metaclass=ABCMeta):
             return True
         return False
 
-    def get_similarity(self, meta_name, match_media, torrent_name):
+    def get_similarity(self, meta_name, match_media, torrent_name, description):
         en_title = self.media.get_tmdb_us_title(match_media.tmdb_info)
         if match_media.original_title in torrent_name or \
                 match_media.org_string in torrent_name or \
                 en_title in torrent_name:
             return 1
         ratio = jellyfish.jaro_similarity(meta_name, en_title)
-        log.info(f"【{meta_name}】{en_title} 相似度为 {ratio}")
+        log.debug(f"【{self.client_name}】{meta_name} {en_title} 相似度为 {ratio}")
         ratio2 = jellyfish.jaro_similarity(meta_name, match_media.original_title)
         ratio = max(ratio2, ratio)
-        log.info(f"【{meta_name}】{match_media.original_title} 相似度为 {ratio2}")
+        log.debug(f"【{self.client_name}】{meta_name} {match_media.original_title} 相似度为 {ratio2}")
         if ratio > 0.95:
             return 1
-        elif ratio > 0.35:
-            return 0
-        elif ratio > 0:
-            return -1
+        else:
+            if match_media.original_title in description or \
+                    match_media.org_string in description or \
+                    en_title in description:
+                return 1
+            elif ratio > 0.35:
+                return 0
+            elif ratio > 0:
+                return -1
 
     def filter_search_results_local(self, result_array: list,
                               order_seq,
@@ -155,7 +160,7 @@ class _IIndexClient(metaclass=ABCMeta):
 
                 if meta_info.year:
                     if meta_info.year == match_media.year:
-                        ratio = self.get_similarity(meta_info.get_name(), match_media, torrent_name)
+                        ratio = self.get_similarity(meta_info.get_name(), match_media, torrent_name, description)
                         # 年份相同，相似度，中，高，都认为通过
                         if ratio >= 0:
                             pass
@@ -168,7 +173,7 @@ class _IIndexClient(metaclass=ABCMeta):
                         index_match_fail += 1
                         continue
                 else:
-                    ratio = self.get_similarity(meta_info.get_name(), match_media, torrent_name)
+                    ratio = self.get_similarity(meta_info.get_name(), match_media, torrent_name, description)
                     if ratio >= 1:
                         pass
                     elif ratio >= 0:
