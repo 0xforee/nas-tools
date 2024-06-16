@@ -176,7 +176,7 @@ jobs:
   Create-release_Send-message:
     permissions: write-all
     runs-on: ubuntu-latest
-    needs: [Windows-build, Linux-build-amd64, Linux-build-arm64, Linux-build-amd64-musl, Linux-build-arm64-musl, Mac-build]
+    needs: [Windows-build, Linux-build-amd64, Linux-build-arm64, Linux-build-amd64-musl, Linux-build-arm64-musl]
     steps:
     - uses: actions/checkout@v3
 
@@ -198,7 +198,6 @@ jobs:
         mv ./linux-arm64/nas-tools.linux.arm64 /home/runner/work/nas-tools/nas-tools/releases/nastool_linux_arm64_v${{ env.app_version }}
         mv ./linux-musl-amd64/nas-tools.linux.musl.amd64 /home/runner/work/nas-tools/nas-tools/releases/nastool_linux_musl_amd64_v${{ env.app_version }}
         mv ./linux-musl-arm64/nas-tools.linux.musl.arm64 /home/runner/work/nas-tools/nas-tools/releases/nastool_linux_musl_arm64_v${{ env.app_version }}
-        mv ./macos/nas-tools.macos /home/runner/work/nas-tools/nas-tools/releases/nastool_macos_v${{ env.app_version }}
         pwd
         ls -all
     - name: Create release
