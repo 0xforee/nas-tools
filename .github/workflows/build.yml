@@ -1,6 +1,9 @@
 name: NAStool Docker
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - v*
 
 jobs:
   alpine:

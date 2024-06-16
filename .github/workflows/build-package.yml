@@ -1,6 +1,9 @@
 name: NAStool Package
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - v*
 
 jobs:
   Windows-build:
