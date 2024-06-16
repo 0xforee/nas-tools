@@ -2,8 +2,8 @@ name: NAStool Docker
 on:
   workflow_dispatch:
   push:
-    tags:
-      - v*
+    paths:
+      - version.py
 
 jobs:
   alpine:
