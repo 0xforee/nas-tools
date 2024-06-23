@@ -82,7 +82,7 @@ class MTeamSpider(object):
                            'enclosure': self._pageurl % (self._domain, result.get('id')),
                            'size': result.get('size'),
                            'seeders': status.get('seeders'),
-                           'peers': result.get('leechers'),
+                           'peers': status.get('leechers'),
                            # 'freeleech': result.get('discount'),
                            'downloadvolumefactor': down_discount,
                            'uploadvolumefactor': up_discount,
