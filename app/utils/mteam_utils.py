@@ -5,12 +5,19 @@ from config import Config
 
 
 class MteamUtils:
+
+    @staticmethod
+    def get_api_url(url):
+        from urllib.parse import urlparse
+        parsed_url = urlparse(url)
+        index = parsed_url.hostname.index('m-team')
+        last_domain = parsed_url.hostname[index:]
+        return str(parsed_url.scheme) + "://" + 'api.' + last_domain
+
     @staticmethod
     def get_mteam_torrent_info(torrent_url, ua=None, proxy=False):
         api = "%s/api/torrent/detail"
-        from urllib.parse import urlparse
-        parse_result = urlparse(torrent_url)
-        api = api % (str(parse_result.scheme) + "://" + str(parse_result.hostname))
+        api = api % MteamUtils.get_api_url(torrent_url)
         torrent_id = torrent_url.split('/')[-1]
         req = MteamUtils.buildRequestUtils(api_key=MteamUtils.get_api_key(torrent_url), headers=ua, proxies=proxy).post_res(url=api, params={"id": torrent_id})
 
@@ -21,16 +28,17 @@ class MteamUtils:
 
     @staticmethod
     def test_connection(site_info):
+        api = "%s/api/member/profile"
         site_url = site_info.get("signurl")
+        api = api % MteamUtils.get_api_url(site_url)
         site_api_key = site_info.get("api_key")
         ua = site_info.get("ua")
-        url = f"{site_url}api/member/profile"
         res = MteamUtils.buildRequestUtils(
             headers=ua,
             api_key=site_api_key,
             proxies=Config().get_proxies() if site_info.get("proxy") else None,
             timeout=15
-        ).post_res(url=url)
+        ).post_res(url=api)
         if res:
             if res.status_code == 200:
                 user_info = res.json()
@@ -45,8 +53,7 @@ class MteamUtils:
         if url.find('api/rss/dl') != -1:
             return url
         api = "%s/api/torrent/genDlToken"
-        parse_result = urlparse(url)
-        api = api % (str(parse_result.scheme) + "://" + str(parse_result.hostname))
+        api = api % MteamUtils.get_api_url(url)
         torrent_id = url.split('/')[-1]
 
         req = MteamUtils.buildRequestUtils(
@@ -72,22 +79,18 @@ class MteamUtils:
 
         return req
 
-
     @staticmethod
     def get_api_key(url):
         from app.sites import Sites
         sites = Sites()
         site_info = sites.get_sites(siteurl=url)
         if site_info:
-            site_base_url = site_info.get("signurl")
-            api_key= site_info.get("api_key")
-            proxy = site_info.get("proxy")
+            api_key = site_info.get("api_key")
 
             if api_key:
                 return api_key
 
         return None
-
 
     @staticmethod
     def buildRequestUtils(cookies=None, api_key=None, headers=None, proxies=False, content_type=None, accept_type=None, session=None, referer=None, timeout=30):

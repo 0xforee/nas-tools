@@ -9,7 +9,7 @@ from threading import Event, Thread
 from app.sites.sites import Sites
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-from app.utils import RequestUtils
+from app.utils import RequestUtils, MteamUtils
 from config import Config
 import html
 
@@ -85,7 +85,7 @@ class MteamRssGen(_IPluginModule):
     _site_ua = ""
     _site_api_key = ""
     _site_conf = None
-    _search_api = "api/torrent/search"
+    _search_api = "%s/api/torrent/search"
     _torrent_min_size = None
     _watch_categories = None
     _last_rss_torrents = None
@@ -227,7 +227,7 @@ class MteamRssGen(_IPluginModule):
 
     def fetch_new_item(self):
         self.info('fetch new torrents start')
-        search_url = self._site_base_url + self._search_api
+        search_url = self._search_api % MteamUtils.get_api_url(self._site_base_url)
         # 所有需要刷流的种子
         torrents_info_array = []
 

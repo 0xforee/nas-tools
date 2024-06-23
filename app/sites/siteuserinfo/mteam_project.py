@@ -68,12 +68,13 @@ class MteamSiteUserInfo(_ISiteUserInfo):
         return "M-Team" in html_text
 
     def _parse_logged_in(self, html_text):
-        url = f"{self.site_url}api/member/profile"
+        api = "%s/api/member/profile"
+        api = api % MteamUtils.get_api_url(self.site_url)
         res = MteamUtils.buildRequestUtils(
             headers=self._ua,
-            api_key=MteamUtils.get_api_key(url),
+            api_key=MteamUtils.get_api_key(self.site_url),
             timeout=15
-        ).post_res(url=url)
+        ).post_res(url=api)
         if res:
             if res.status_code == 200:
                 user_info = res.json()
@@ -85,13 +86,14 @@ class MteamSiteUserInfo(_ISiteUserInfo):
         return False, "连接馒头失败"
 
     def get_user_profile(self):
-        url = f"{self.site_url}/api/member/profile"
+        api = "%s/api/member/profile"
+        api = api % MteamUtils.get_api_url(self.site_url)
         res = MteamUtils.buildRequestUtils(
             headers=self._ua,
-            api_key=MteamUtils.get_api_key(url),
+            api_key=MteamUtils.get_api_key(self.site_url),
             session=self._session,
             timeout=15
-        ).post_res(url=url)
+        ).post_res(url=api)
         if res and res.status_code == 200:
             user_info = res.json()
             if user_info and user_info.get("data"):
@@ -135,7 +137,8 @@ class MteamSiteUserInfo(_ISiteUserInfo):
         self.seeding_info = json.dumps(all_seeding_info)
 
     def getSeedingPage(self, user_id, page_num, page_size):
-        url = f"{self.site_url}/api/member/getUserTorrentList"
+        api = "%s/api/member/getUserTorrentList"
+        api = api % MteamUtils.get_api_url(self.site_url)
         params = {
             "pageNumber": page_num,
             "pageSize": page_size,
@@ -147,10 +150,10 @@ class MteamSiteUserInfo(_ISiteUserInfo):
             headers=self._ua,
             content_type="application/json",
             accept_type="application/json",
-            api_key=MteamUtils.get_api_key(url),
+            api_key=MteamUtils.get_api_key(self.site_url),
             session=self._session,
             timeout=15
-        ).post_res(url, json=params)
+        ).post_res(api, json=params)
 
         if res and res.status_code == 200:
             result = res.json()
