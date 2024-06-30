@@ -138,7 +138,11 @@ class BuiltinIndexer(_IIndexClient):
                         _indexer_domains.append(indexer.domain)
                         ret_indexers.append(indexer)
         return ret_indexers
-
+    def is_indebug(self):
+        loglevel = Config().get_config('app').get('loglevel') or "info"
+        if loglevel == "debug":
+            return True
+        return False
     def search(self, order_seq,
                indexer,
                key_word,
@@ -222,8 +226,9 @@ class BuiltinIndexer(_IIndexClient):
             # 过滤
             if self.quick_search and in_from == SearchType.WEB:
                 log.debug(f"quick search start")
-                if match_media and match_media.type == MediaType.MOVIE:
-                    return self.filter_search_results_local(
+                if match_media:
+                    if match_media.type == MediaType.MOVIE:
+                        result = self.filter_search_results_local(
                         result_array=result_array,
                         order_seq=order_seq,
                         indexer=indexer,
@@ -231,13 +236,32 @@ class BuiltinIndexer(_IIndexClient):
                         match_media=match_media,
                         start_time=start_time
                     )
+                    else:
+                        result = self.filter_search_results_local_for_tv(
+                            result_array=result_array,
+                            order_seq=order_seq,
+                            indexer=indexer,
+                            filter_args=_filter_args,
+                            match_media=match_media,
+                            start_time=start_time
+                        )
+                    # debug mode, compare with online search
+                    # if self.is_indebug():
+                    #     self.filter_search_results(result_array=result_array,
+                    #                                order_seq=order_seq,
+                    #                                indexer=indexer,
+                    #                                filter_args=_filter_args,
+                    #                                match_media=match_media,
+                    #                                start_time=start_time)
+
+                    return result
 
             return self.filter_search_results(result_array=result_array,
-                                              order_seq=order_seq,
-                                              indexer=indexer,
-                                              filter_args=_filter_args,
-                                              match_media=match_media,
-                                              start_time=start_time)
+                                       order_seq=order_seq,
+                                       indexer=indexer,
+                                       filter_args=_filter_args,
+                                       match_media=match_media,
+                                       start_time=start_time)
 
     def list(self, url, page=0, keyword=None):
         """
