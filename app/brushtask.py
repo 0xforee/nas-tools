@@ -683,7 +683,7 @@ class BrushTask(object):
             if current_site_count_downloading is None:
                 log.error("【Brush】任务 %s 下载器 %s 无法连接" % (task_name, downloader_name))
                 return False
-            if int(current_site_count_downloading) >= int(current_site_count):
+            if int(current_site_count_downloading) >= int(current_site_dlcount):
                 log.warn("【Brush】站点 %s 正在下载任务数：%s，超过设定上限，暂不添加下载" % (
                     site_name, current_site_count_downloading))
                 return False
