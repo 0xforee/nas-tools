@@ -773,6 +773,8 @@ class IYUUAutoSeed(_IPluginModule):
                 return True
             if "totheglory.im" in url:
                 return True
+            if "m-team" in url:
+                return True
             return False
 
         try:
@@ -814,6 +816,11 @@ class IYUUAutoSeed(_IPluginModule):
         从详情页面获取下载链接
         """
         try:
+            site_url = site.get('strict_url')
+            if 'm-team' in site_url:
+                page_url = f"{site.get('strict_url')}/detail/{seed.get('torrent_id')}"
+                return page_url
+
             page_url = f"{site.get('strict_url')}/details.php?id={seed.get('torrent_id')}&hit=1"
             self.info(f"正在获取种子下载链接：{page_url} ...")
             res = RequestUtils(

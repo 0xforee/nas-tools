@@ -54,7 +54,9 @@ class MteamUtils:
             return url
         api = "%s/api/torrent/genDlToken"
         api = api % MteamUtils.get_api_url(url)
-        torrent_id = url.split('/')[-1]
+        from urllib.parse import urlparse
+        parsed_url = urlparse(url)
+        torrent_id = parsed_url.path.split('/')[-1]
 
         req = MteamUtils.buildRequestUtils(
             headers=ua,
