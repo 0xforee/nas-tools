@@ -17,14 +17,15 @@
         bottom: 0;
         overflow: hidden;
         background-image: url(data:image/jpg;base64,{{ image_code|safe }});
+        background-color: #222222;
         background-size: cover;
         background-position: center;
         background-repeat: repeat;
     }
     .login_window {
-        background-color: rgba(255,255,255,0.5);
+        background-color: rgba(255,255,255);
         -webkit-backdrop-filter: blur(1rem);
-        backdrop-filter: blur(1rem)
+        /*backdrop-filter: blur(1rem)*/
     }
     .image-desc {
         background-color: rgba(34,34,34,.8);
@@ -59,7 +60,10 @@
       <div class="card-body">
         <div class="text-center mb-3">
           <a href="/" class="navbar-brand navbar-brand-autodark">
-            <img src="../static/img/logo/logo-blue.png" height="60" alt="">
+            <h1 class="mt-3" style="text-align:center;">
+                <img src="../static/img/logo/logo.png" alt="NAStool" class="lit-navbar-logo" style="height: 30px;">
+                    <span class="logo">NASTools</span>
+              </h1>
           </a>
         </div>
         <label class="form-label">用户名</label>
