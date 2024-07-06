@@ -32,7 +32,6 @@ def collect_pkg_data(package, include_py_files=False, subdir=None):
 pkg_data1 = collect_pkg_data('web')
 pkg_data2 = collect_pkg_data('config')
 pkg_data3 = collect_pkg_data('scripts', include_py_files=True)  # <<< Put the name of your package here
-pkg_data4 = collect_pkg_data('cn2an')
 # <<< END ADDED PART
 
 
@@ -129,7 +128,6 @@ exe = EXE(
     pkg_data1,
     pkg_data2,
     pkg_data3,
-    pkg_data4,
     [],
     name='nas-tools',
     debug=False,
