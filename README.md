@@ -1,4 +1,3 @@
-![logo-blue](https://user-images.githubusercontent.com/51039935/197520391-f35db354-6071-4c12-86ea-fc450f04bc85.png)
 # NAS媒体库管理工具
 
 

@@ -150,7 +150,7 @@ class Indexer(object):
             "rule": search_rule
         };
         """
-        # FIXME: 需要根据filters里site是否None，如果不为None，需要找出指定的indexer进行搜索匹配 @hsuyelin@163.com
+        # FIXME: 需要根据filters里site是否None，如果不为None，需要找出指定的indexer进行搜索匹配
         if not indexers:
             log.error("没有配置索引器，无法搜索！")
             return []
