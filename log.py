@@ -45,22 +45,26 @@ class Logger:
                                                                     logging.handlers.SysLogHandler.LOG_USER)
                 log_server_handler.setFormatter(logging.Formatter('%(filename)s: %(message)s'))
                 self.logger.addHandler(log_server_handler)
-        elif logtype == "file":
-            # 记录日志到文件
-            logpath = os.environ.get('NASTOOL_LOG') or self.__config.get_config('app').get('logpath') or ""
-            if logpath:
-                if not os.path.exists(logpath):
-                    os.makedirs(logpath, exist_ok=True)
-                log_file_handler = RotatingFileHandler(filename=os.path.join(logpath, module + ".txt"),
-                                                       maxBytes=5 * 1024 * 1024,
-                                                       backupCount=3,
-                                                       encoding='utf-8')
-                log_file_handler.setFormatter(logging.Formatter('%(asctime)s\t%(levelname)s: %(message)s'))
-                self.logger.addHandler(log_file_handler)
+
+        # 记录日志到文件
+        logpath = os.environ.get('NASTOOL_LOG') or Config().get_config_path() + "/logs"
+        if logpath:
+            if not os.path.exists(logpath):
+                os.makedirs(logpath, exist_ok=True)
+            log_file_handler = RotatingFileHandler(filename=os.path.join(logpath, module + "_log.txt"),
+                                                   maxBytes=5 * 1024 * 1024,
+                                                   backupCount=3,
+                                                   encoding='utf-8')
+            log_file_handler.setFormatter(logging.Formatter('%(asctime)s\t%(levelname)s: %(message)s'))
+            self.logger.addHandler(log_file_handler)
         # 记录日志到终端
         log_console_handler = logging.StreamHandler()
         log_console_handler.setFormatter(logging.Formatter('%(asctime)s\t%(levelname)s: %(message)s'))
         self.logger.addHandler(log_console_handler)
+
+    def refresh_loglevel(self):
+        loglevel = self.__config.get_config('app').get('loglevel') or "info"
+        self.logger.setLevel(level=self.__loglevels.get(loglevel))
 
     @staticmethod
     def get_instance(module):
@@ -107,6 +111,10 @@ def error(text, module=None):
 def warn(text, module=None):
     __append_log_queue("WARN", text)
     return Logger.get_instance(module).logger.warning(text)
+
+
+def refresh_loglevel(module=None):
+    Logger.get_instance(module).refresh_loglevel()
 
 
 def console(text):

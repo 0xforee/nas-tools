@@ -35,12 +35,6 @@ def check_config():
                 log.warn("【Config】日志中心地址未配置，无法正常输出日志")
             else:
                 log.info("日志将上送到服务器：{logserver}")
-        elif logtype == "file":
-            logpath = Config().get_config('app').get('logpath')
-            if not logpath:
-                log.warn("【Config】日志文件路径未配置，无法正常输出日志")
-            else:
-                log.info(f"日志将写入文件：{logpath}")
 
         # 检查WEB端口
         web_port = Config().get_config('app').get('web_port')
@@ -396,6 +390,9 @@ class ConfigMonitor(FileSystemEventHandler):
             for instance in INSTANCES.values():
                 if hasattr(instance, "init_config"):
                     instance.init_config()
+
+            # 重新应用日志等级
+            log.refresh_loglevel()
         # 正在使用的二级分类策略文件3秒内只能加载一次，配置文件加载时，二级分类策略文件不加载
         elif file_name == os.path.basename(Config().category_path) \
                 and not CategoryLoadCache.get(src_path) \
