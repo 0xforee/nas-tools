@@ -1152,8 +1152,8 @@ class WebAction:
         site_hr = False
         if tid:
             ret = Sites().get_sites(siteid=tid)
-            if ret.get("rssurl"):
-                site_attr = SiteConf().get_grap_conf(ret.get("rssurl"))
+            if ret.get("signurl"):
+                site_attr = SiteConf().get_grap_conf(ret.get("signurl"))
                 if site_attr.get("FREE"):
                     site_free = True
                 if site_attr.get("2XFREE"):
