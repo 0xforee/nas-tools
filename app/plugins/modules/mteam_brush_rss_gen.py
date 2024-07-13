@@ -254,12 +254,13 @@ class MteamRssGen(_IPluginModule):
                 if res.status_code == 200:
                     # fetch success, parse
                     res_torrents = self.parse_response(res.json())
+                    self.info(f"MT RSS Generator:{mode}, found {len(res_torrents)} torrents")
                     # res_torrents = parse_html(res.text)
                     torrents_info_array.extend(res_torrents)
                 else:
-                    self.info(str(res.status_code) + f', get rss from mteam {file_id}' + str(res))
+                    self.info(f"MT RSS Generator:{mode}," + str(res.status_code) + f', get rss from mteam {file_id}' + str(res))
             else:
-                self.info("response: " + str(res) + " is None")
+                self.info(f"MT RSS Generator:{mode}, response: " + str(res) + " is None")
 
         # 过滤非刷流的种子
         brush_torrents = []
