@@ -1650,6 +1650,7 @@ class DbHelper:
                 SAVEPATH=item.get('savepath'),
                 TRANSFER=item.get('transfer'),
                 BRUSHTASK_FREE_LIMIT_SPEED=item.get('brushtask_free_limit_speed'),
+                BRUSHTASK_FREE_DDL_DELETE=item.get('brushtask_free_ddl_delete'),
                 DOWNLOAD_COUNT=0,
                 REMOVE_COUNT=0,
                 DOWNLOAD_SIZE=0,
@@ -1677,6 +1678,7 @@ class DbHelper:
                     "SAVEPATH": item.get('savepath'),
                     "TRANSFER": item.get('transfer'),
                     "BRUSHTASK_FREE_LIMIT_SPEED": item.get('brushtask_free_limit_speed'),
+                    "BRUSHTASK_FREE_DDL_DELETE": item.get('brushtask_free_ddl_delete'),
                     "STATE": item.get('state'),
                     "LST_MOD_DATE": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())),
                     "SENDMESSAGE": item.get('sendmessage')

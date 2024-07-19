@@ -381,6 +381,7 @@ class SITEBRUSHTASK(Base):
     DOWNLOADER = Column(Text)
     TRANSFER = Column(Text)
     BRUSHTASK_FREE_LIMIT_SPEED = Column(Text)
+    BRUSHTASK_FREE_DDL_DELETE = Column(Text)
     DOWNLOAD_COUNT = Column(Integer)
     REMOVE_COUNT = Column(Integer)
     DOWNLOAD_SIZE = Column(Integer)

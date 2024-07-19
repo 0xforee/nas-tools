@@ -122,6 +122,7 @@ class BrushTask(object):
                 "downloader_name": downloader_info.get("name") if downloader_info else None,
                 "transfer": True if task.TRANSFER == "Y" else False,
                 "brushtask_free_limit_speed": True if task.BRUSHTASK_FREE_LIMIT_SPEED == "Y" else False,
+                "brushtask_free_ddl_delete": True if task.BRUSHTASK_FREE_DDL_DELETE == "Y" else False,
                 "sendmessage": True if task.SENDMESSAGE == "Y" else False,
                 "free": task.FREELEECH,
                 "rss_rule": eval(task.RSS_RULE),
@@ -362,6 +363,7 @@ class BrushTask(object):
                 remove_rule = taskinfo.get("remove_rule")
                 sendmessage = taskinfo.get("sendmessage")
                 brushtask_free_limit_speed = taskinfo.get("brushtask_free_limit_speed")
+                brushtask_free_ddl_delete = taskinfo.get("brushtask_free_ddl_delete")
 
                 # 当前任务种子详情
                 task_torrents = self.get_brushtask_torrents(taskid)
@@ -525,7 +527,7 @@ class BrushTask(object):
                                                     torrent_id))
                     # 不删种的情况下处理限速
                     else:
-                        if brushtask_free_limit_speed:
+                        if brushtask_free_limit_speed or brushtask_free_ddl_delete:
                             try:
                                 log.debug("【Brush】%s 检查限免限速" % torrent.get("name"))
                                 # 判断是否超过免费截止
@@ -545,7 +547,26 @@ class BrushTask(object):
                                         ddl_time = datetime.strptime(ddl, pattern2)
                                     # 删种检查间隔为5分钟，如果5分钟内限免结束了，提早结束下载，防止流量偷跑
                                     if (datetime.now() + timedelta(minutes=BRUSH_REMOVE_TORRENTS_INTERVAL/60)) >= ddl_time:
-                                        # 限免限速的处理只一次
+                                        # 到期删除
+                                        if brushtask_free_ddl_delete:
+                                            if torrent_id not in delete_ids:
+                                                delete_ids.append(torrent_id)
+                                                update_torrents.append(("%s,%s" % (uploaded, downloaded),
+                                                                        taskid,
+                                                                        torrent_id))
+
+                                                # reach ddl
+                                                log.info(
+                                                    "【Brush】%s 已达到限免时间：删种 " % (
+                                                        torrent.get('name')))
+                                                if sendmessage:
+                                                    title = "【刷流任务 {} 限免结束】".format(task_name)
+                                                    msg = "限免即将结束，删除种子\n种子名称：{}".format(
+                                                        ddl, torrent.get('name'))
+                                                    self.message.send_brushtask_remove_message(title, msg)
+                                                continue
+
+                                        # 到期限速，只处理一次
                                         if torrent_id not in self._torrents_free_limit_cache:
                                             self._torrents_free_limit_cache.append(torrent_id)
                                         else:
@@ -753,6 +774,7 @@ class BrushTask(object):
         upload_limit = rss_rule.get("upspeed")
         download_dir = taskinfo.get("savepath")
         brushtask_free_limit_speed = taskinfo.get("brushtask_free_limit_speed")
+        brushtask_free_ddl_delete = taskinfo.get("brushtask_free_ddl_delete")
         tag = taskinfo.get("label").split(',') if taskinfo.get("label") else None
         seed_size = taskinfo.get("seed_size") or None
         total_size = self.dbhelper.get_brushtask_totalsize(taskinfo.get("id"))
@@ -837,7 +859,7 @@ class BrushTask(object):
 
         # free deadline
         free_deadline = ""
-        if brushtask_free_limit_speed:
+        if brushtask_free_limit_speed or brushtask_free_ddl_delete:
             free_deadline = torrent_attr.get("free_deadline")
 
         # 插入种子数据

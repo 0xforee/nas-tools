@@ -428,6 +428,16 @@
                             </label>
                         </div>
                     </div>
+                    <div class="col-lg-4">
+                        <div class="mb-3">
+                            <label class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="brushtask_free_ddl_delete">
+                                <span class="form-check-label">限免到期删种 <span class="form-help"
+                                                                  title="开启后，限免到期后删种，优先级高于限免到期下载限速"
+                                                                  data-bs-toggle="tooltip">?</span></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div class="hr-text hr-text-center hr-text-spaceless mt-1 mb-3">选种规则（与）</div>
                 <div class="row">
@@ -885,6 +895,12 @@
         } else {
           $("#brushtask_free_limit_speed").prop("checked", false);
         }
+        // 限免到期删种
+        if (ret.task.brushtask_free_ddl_delete) {
+          $("#brushtask_free_ddl_delete").prop("checked", true);
+        } else {
+          $("#brushtask_free_ddl_delete").prop("checked", false);
+        }
         if (ret.task.sendmessage) {
           $("#brushtask_sendmessage").prop("checked", true);
         } else {
@@ -1075,6 +1091,7 @@
     let brushtask_state = $("#brushtask_state").val();
     let brushtask_transfer = $("#brushtask_transfer").prop('checked');
     let brushtask_free_limit_speed = $("#brushtask_free_limit_speed").prop('checked');
+    let brushtask_free_ddl_delete = $("#brushtask_free_ddl_delete").prop('checked');
     let brushtask_sendmessage = $("#brushtask_sendmessage").prop('checked');
     let brushtask_free = $("#brushtask_free").val();
     let brushtask_hr = $("#brushtask_hr").val();
@@ -1337,6 +1354,7 @@
       brushtask_state: brushtask_state,
       brushtask_transfer: brushtask_transfer,
       brushtask_free_limit_speed: brushtask_free_limit_speed,
+      brushtask_free_ddl_delete: brushtask_free_ddl_delete,
       brushtask_sendmessage: brushtask_sendmessage,
       brushtask_free: brushtask_free,
       brushtask_hr: brushtask_hr,
