@@ -53,5 +53,5 @@ body:
     id: logs
     attributes:
       label: 发生问题时系统日志和配置文件
-      description: 问题出现时，程序运行日志请复制到这里。
+      description: 问题出现时，程序运行日志请复制到这里。抓取日志参考：https://github.com/0xforee/nas-tools/wiki/%E5%A6%82%E4%BD%95%E6%8A%93%E5%8F%96%E6%97%A5%E5%BF%97%EF%BC%9F
       render: bash
