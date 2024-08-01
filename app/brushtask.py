@@ -508,7 +508,7 @@ class BrushTask(object):
                                                                         iatime=iatime)
                     if need_delete:
                         log.info(
-                            "【Brush】%s 达到删种条件：%s，删除下载任务..." % (torrent_name, delete_type.value))
+                            "【Brush】%s 任务，%s 达到删种条件：%s，删除下载任务..." % (task_name, torrent_name, delete_type.value))
                         if sendmessage:
                             __send_message(_task_name=task_name,
                                            _delete_type=delete_type,
@@ -529,7 +529,6 @@ class BrushTask(object):
                     else:
                         if brushtask_free_limit_speed or brushtask_free_ddl_delete:
                             try:
-                                log.debug("【Brush】%s 检查限免限速" % torrent.get("name"))
                                 # 判断是否超过免费截止
                                 ddl = ""
                                 # 遍历 task_torrents
@@ -537,7 +536,7 @@ class BrushTask(object):
                                     if item.DOWNLOAD_ID == torrent_id and item.FREE_DEADLINE:
                                         ddl = item.FREE_DEADLINE
 
-                                log.debug("【Brush】%s 限时为 %s: " % (torrent.get("name"), ddl))
+                                log.debug("【Brush】任务 %s 检查限免限速, %s 限时为 %s: " % (task_name, torrent.get("name"), ddl))
                                 if ddl:
                                     pattern = "%Y%m%d_%H%M"
                                     pattern2 = "%Y-%m-%d %H:%M:%S"
