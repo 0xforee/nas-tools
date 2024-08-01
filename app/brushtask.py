@@ -793,16 +793,19 @@ class BrushTask(object):
         meta_info.set_torrent_info(site=site_info.get("name"),
                                    enclosure=enclosure,
                                    size=size)
+
+        fraction_rule_exits = self.__is_fraction_rule_set(fraction_rule)
+
         _, download_id, dir, retmsg = self.downloader.download(
             media_info=meta_info,
             tag=tag,
-            is_paused=True,
+            is_paused=(True if fraction_rule_exits else False),
             downloader_id=downloader_id,
             download_dir=download_dir,
             download_setting="-2",
             download_limit=download_limit,
             upload_limit=upload_limit,
-            skip_size_check=True
+            skip_size_check=(True if fraction_rule_exits else False)
         )
 
         if not download_id:
@@ -813,37 +816,22 @@ class BrushTask(object):
             return False
         else:
             # 下载种子文件成功，开始部分下载功能
-            log.info("【Brush】成功添加下载：%s" % title)
+            log.info("【Brush】成功添加下载：id: %s, title: %s" % (download_id, title))
+            real_size = size
 
-            # 检查部分规则是否配置
-            if self.__is_fraction_rule_set(fraction_rule):
-            ## 第二种方案：先尝试添加下载任务，（下载后暂停），然后计算文件大小规则，决定是否要开启，还是删除任务
-            # 针对原有逻辑改动较少，可移植性大大增加
-            # 设置优先级
+            # 部分下载开启
+            if fraction_rule_exits:
                 result, real_size, fraction_retmsg = self.downloader.fraction_download(fraction_rule, origin_limit, size, dir, downloader_id, download_id)
-            else:
-                # 检查是否种子是否过限制大小
-                seed_size = taskinfo.get("seed_size")
-                task_name = taskinfo.get("name")
-                downloader_id = taskinfo.get("downloader")
-                total_size = self.dbhelper.get_brushtask_totalsize(taskinfo.get("id"))
-                result, real_size, fraction_retmsg = True, size, ""
-                if seed_size:
-                    if float(seed_size) * 1024 ** 3 <= int(total_size):
-                        msg = ("Brush】刷流任务 %s 当前保种体积 %sGB，不再新增下载" % (task_name, round(int(total_size) / 1024 / 1024 / 1024, 1)))
-                        log.warn(msg)
-                        result, real_size, fraction_retmsg = False, size, msg
-
-            if result:
-                # 开启下载
-                self.downloader.start_torrents(downloader_id, download_id)
-            else:
-                # 部分下载出现异常：获取文件列表失败或者没有找到合适 size 的文件，删除种子以及文件
-                self.downloader.delete_torrents(downloader_id, download_id, delete_file=True)
-                log.warn(f"【Brush】{taskname} 添加下载任务出错：{title}，"
-                         f"错误原因：'部分下载：{fraction_retmsg}，"
-                         f"种子链接：{enclosure}")
-                return False
+                if result:
+                    # 正式启动下载
+                    self.downloader.start_torrents(downloader_id, download_id)
+                else:
+                    # 部分下载出现异常：获取文件列表失败或者没有找到合适 size 的文件，删除种子以及文件
+                    self.downloader.delete_torrents(downloader_id, download_id, delete_file=True)
+                    log.warn(f"【Brush】{taskname} 添加下载任务出错：{title}，"
+                             f"错误原因：'部分下载：{fraction_retmsg}，"
+                             f"种子链接：{enclosure}")
+                    return False
 
             if sendmessage:
                 # 下载器参数
