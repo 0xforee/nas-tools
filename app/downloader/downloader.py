@@ -588,10 +588,12 @@ class Downloader:
             downloader_id = self.default_downloader_id
         _client = self.__get_client(downloader_id)
         if not _client:
+            log.error(f"【Downloader】为获取到对应的 client, {downloader_id}")
             return None
         try:
             torrents, error_flag = _client.get_torrents(tag=tag, ids=ids)
             if error_flag:
+                log.error(f"【Downloader】获取种子列表异常 {tag}, ${ids}")
                 return None
             return torrents
         except Exception as err:

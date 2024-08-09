@@ -603,6 +603,7 @@ class BrushTask(object):
                     time.sleep(5)
                     torrents = self.downloader.get_torrents(downloader_id=downloader_id, ids=delete_ids)
                     if torrents is None:
+                        log.debug("【Brush】任务 %s 从下载器获取种子为 None" % task_name)
                         delete_ids = []
                         update_torrents = []
                     else:
