@@ -586,13 +586,13 @@ class BrushTask(object):
                                 log.error(f"【Brush】，限免限时检测出了点问题：{str(e)}")
                                 ExceptionUtils.exception_traceback(e)
 
-                # 手工删除的种子或者异常的种子，删除种子以及状态
+
+                # 手工删除的种子，清除对应记录
                 if remove_torrent_ids:
-                    log.info("【Brush】任务 %s 的这些下载任务在下载器中不存在 或者处于异常状态，将删除下载任务：%s" % (
+                    log.info("【Brush】任务 %s 的这些下载任务在下载器中不存在，将删除任务记录：%s" % (
                         task_name, remove_torrent_ids))
-                    # for remove_torrent_id in remove_torrent_ids:
-                    #     self.dbhelper.delete_brushtask_torrent(taskid, remove_torrent_id)
-                    delete_ids.extend(remove_torrent_ids)
+                    for remove_torrent_id in remove_torrent_ids:
+                        self.dbhelper.delete_brushtask_torrent(taskid, remove_torrent_id)
 
                 # 删除下载器种子
                 if delete_ids:
