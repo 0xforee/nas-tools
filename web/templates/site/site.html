@@ -50,7 +50,8 @@
               {{ SVG.edit() }}
             </a>
             {% if ChromeOk %}
-            <a href="javascript:show_site_cookie_ua_modal('{{ Site.id }}', '{{ Site.name }}')" class="btn-action ms-1" title="更新站点Cookie和User-Agent">
+            <a href="javascript:show_site_cookie_ua_modal('{{ Site.id }}', '{{ Site.name }}', '{{ Site.username }}', '{{ Site.password }}', '{{ Site.two_step_code }}')"
+               class="btn-action ms-1" title="更新站点Cookie和User-Agent">
               {{ SVG.refresh_dot() }}
             </a>
             {% endif %}
@@ -407,19 +408,19 @@
           <div class="col-lg">
             <div class="mb-3">
               <label class="form-label required">用户名</label>
-              <input type="text" value="{{ CookieUserInfoCfg.username }}" id="cookieua_username" class="form-control" placeholder="站点登录用户名">
+              <input type="text" id="cookieua_username" class="form-control" placeholder="站点登录用户名">
             </div>
           </div>
           <div class="col-lg">
             <div class="mb-3">
               <label class="form-label required">密码</label>
-              <input type="password" value="{{ CookieUserInfoCfg.password }}" id="cookieua_password" class="form-control" placeholder="登录密码">
+              <input type="password" id="cookieua_password" class="form-control" placeholder="登录密码">
             </div>
           </div>
           <div class="col-lg">
             <div class="mb-3">
               <label class="form-label">两步验证</label>
-              <input type="text" value="{{ CookieUserInfoCfg.two_step_code }}" id="cookieua_two_step_code" class="form-control" placeholder="如有设置必须填写">
+              <input type="text" id="cookieua_two_step_code" class="form-control" placeholder="如有设置必须填写">
             </div>
           </div>
         </div>
@@ -745,9 +746,12 @@
   }
 
   // 显示更新站点Cookie和UA对话框
-  function show_site_cookie_ua_modal(siteid, sitename){
+  function show_site_cookie_ua_modal(siteid, sitename, username, password, two_step_code){
     $("#cookieua_siteid").val(siteid);
     $("#cookieua_modal_title").text("更新站点Cookie - " + sitename);
+    $("#cookieua_username").val(username);
+    $("#cookieua_password").val(password);
+    $("#cookieua_two_step_code").val(two_step_code);
     $("#cookieua_result_div").hide();
     $("#sitecookie_process_bar").attr("style", "width: 0").attr("aria-valuenow", 0);
     $("#sitecookie_process_bar_div").hide();
