@@ -1170,6 +1170,7 @@ class DbHelper:
             username = site_user_info.username
             user_level = site_user_info.user_level
             join_at = site_user_info.join_at
+            last_seen = site_user_info.last_seen
             upload = site_user_info.upload
             download = site_user_info.download
             ratio = site_user_info.ratio
@@ -1185,6 +1186,7 @@ class DbHelper:
                     USERNAME=username,
                     USER_LEVEL=user_level,
                     JOIN_AT=join_at,
+                    LAST_SEEN=last_seen,
                     UPDATE_AT=update_at,
                     UPLOAD=upload,
                     DOWNLOAD=download,
@@ -1203,6 +1205,7 @@ class DbHelper:
                         "USERNAME": username,
                         "USER_LEVEL": user_level,
                         "JOIN_AT": join_at,
+                        "LAST_SEEN": last_seen,
                         "UPDATE_AT": update_at,
                         "UPLOAD": upload,
                         "DOWNLOAD": download,

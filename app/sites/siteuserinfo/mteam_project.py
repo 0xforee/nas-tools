@@ -177,6 +177,9 @@ class MteamSiteUserInfo(_ISiteUserInfo):
             self.user_level = self._roleToLevelMap.get(user_info.get("role"))
             self.join_at = user_info.get("createdDate")
 
+            memberStatus = user_info.get("memberStatus")
+            self.last_seen = memberStatus.get('lastBrowse')
+
             self.parse_seeding()
         else:
             self.seeding_info = ''

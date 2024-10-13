@@ -201,6 +201,8 @@
                   <th><span class="d-none d-lg-block"><button class="table-sort"
                                                               data-sort="sort-jtime">加入时间</button></span></th>
                   <th><span class="d-none d-lg-block"><button class="table-sort"
+                                                              data-sort="sort-ltime">最近动向</button></span></th>
+                  <th><span class="d-none d-lg-block"><button class="table-sort"
                                                               data-sort="sort-rtime">更新时间</button></span></th>
                   <th></th>
                 </tr>
@@ -256,6 +258,9 @@
                       <td class="sort-bonus" data-bouns="{{ item.bonus }}">{{ item.bonus }}</td>
                       <td class="sort-jtime">
                         <span class="d-none d-lg-block">{{ item.join_at | string | truncate(10, True, '') }}</span>
+                      </td>
+                      <td class="sort-ltime">
+                        <span class="d-none d-lg-block">{{ item.last_seen }}</span>
                       </td>
                       <td class="sort-rtime">
                         <span class="d-none d-lg-block">{{ item.update_at }}</span>
@@ -906,7 +911,7 @@
     tableDataList = new List('table-site-user-data', {
       sortClass: 'table-sort',
       listClass: 'table-tbody',
-      valueNames: ['sort-name', 'sort-bonus', 'sort-jtime', 'sort-rtime',
+      valueNames: ['sort-name', 'sort-bonus', 'sort-jtime', 'sort-ltime', 'sort-rtime',
         {attr: 'data-size', name: 'sort-size'},
         {attr: 'data-seeding', name: 'sort-seeding'},
         {attr: 'data-data', name: 'sort-data'},

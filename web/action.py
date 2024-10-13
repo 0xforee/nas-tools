@@ -44,6 +44,7 @@ from app.sync import Sync
 from app.torrentremover import TorrentRemover
 from app.utils import StringUtils, EpisodeFormat, RequestUtils, PathUtils, \
     SystemUtils, ExceptionUtils, Torrent
+from app.utils.time_utils import TimeUtils
 from app.utils.types import RmtMode, OsType, SearchType, SyncType, MediaType, MovieTypes, TvTypes, \
     EventType, SystemConfigKey, RssType
 from config import RMT_MEDIAEXT, RMT_SUBEXT, RMT_AUDIO_TRACK_EXT, Config
@@ -4677,6 +4678,9 @@ class WebAction:
         if site_hash == "Y":
             for item in statistics:
                 item["site_hash"] = StringUtils.md5_hash(item.get("site"))
+        for item in statistics:
+            item['last_seen'] = TimeUtils.time_difference(item['last_seen'])
+            item['update_at'] = TimeUtils.time_difference(item['update_at'])
         return {"code": 0, "data": statistics}
 
     @staticmethod

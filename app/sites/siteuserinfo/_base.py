@@ -59,6 +59,7 @@ class _ISiteUserInfo(metaclass=ABCMeta):
         # 用户详细信息
         self.user_level = None
         self.join_at = None
+        self.last_seen = None
         self.bonus = 0.0
 
         # 错误信息

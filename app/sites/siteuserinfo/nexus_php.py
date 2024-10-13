@@ -260,6 +260,14 @@ class NexusPhpSiteUserInfo(_ISiteUserInfo):
         if join_at_text:
             self.join_at = StringUtils.unify_datetime_str(join_at_text[0].split(' (')[0].strip())
 
+        # 最近动向
+        last_seen_text = html.xpath(
+            '//tr/td[text()="最近动向" or text()="最近動向"]/following-sibling::td[1]//text()'
+            '|//div/b[text()="最近动向"]/../text()|//span[text()="最近動向："]/following-sibling::span[1]/text()'
+        )
+        if last_seen_text:
+            self.last_seen = StringUtils.unify_datetime_str(last_seen_text[0].split(' (')[0].strip())
+
         upload_match = re.search(r"[^总]上[传傳]量?[:：_<>/a-zA-Z-=\"'\s#;]+([\d,.\s]+[KMGTPI]*B)", html_text,
                                  re.IGNORECASE)
         if not upload_match:
