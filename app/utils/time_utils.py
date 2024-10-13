@@ -33,3 +33,31 @@ class TimeUtils:
             return ''.join(result_parts) + "前"
         except:
             return ''
+
+    @staticmethod
+    def less_than_days(date_str, target_days):
+        """
+        小于三十天
+        """
+        try:
+            if not date_str:
+                return False
+            if not isinstance(date_str, str):
+                return False
+            # 将时间字符串解析为 datetime 对象
+            last_seen = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+            current_time = datetime.now()
+
+            # 计算时间差
+            time_diff = current_time - last_seen
+
+            # 获取天、小时和分钟
+            days = time_diff.days
+
+            if days > target_days:
+                return False
+            else:
+                return True
+        except:
+            return False
+

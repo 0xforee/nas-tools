@@ -4681,6 +4681,10 @@ class WebAction:
         for item in statistics:
             item['last_seen'] = TimeUtils.time_difference(item['last_seen'])
             item['update_at'] = TimeUtils.time_difference(item['update_at'])
+            if TimeUtils.less_than_days(item['join_at'], 31):
+                item['level_description'] = "新手"
+            else:
+                item['level_description'] = ""
         return {"code": 0, "data": statistics}
 
     @staticmethod

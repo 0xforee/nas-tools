@@ -232,7 +232,13 @@
                         </div>
                       </td>
                       <td>
-                        <span class="d-none d-lg-block">{{ item.user_level }}</span>
+                        <span class="d-none d-lg-block position-relative">{{ item.user_level }}
+                          {% if item.level_description %}
+                          <span class="position-absolute badge bottom-50 p-0 bg-yellow ">
+                              <span class="fs-6">{{item.level_description}}</span>
+                          </span>
+                          {% endif %}
+                        </span>
                       </td>
                       <td class="sort-data" data-data="{{ item.upload }}">
                         <div class="flex-fill">
