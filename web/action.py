@@ -3571,23 +3571,6 @@ class WebAction:
                 respix = ""
                 reseffect = ""
                 video_encode = ""
-            # 分组标识 (来源，分辨率)
-            group_key = re.sub(r"[-.\s@|]", "", f"{respix}_{restype}").lower()
-            # 分组信息
-            group_info = {
-                "respix": respix,
-                "restype": restype,
-            }
-            # 种子唯一标识 （大小，质量(来源、效果)，制作组组成）
-            unique_key = re.sub(r"[-.\s@|]", "",
-                                f"{respix}_{restype}_{video_encode}_{reseffect}_{item.SIZE}_{item.OTHERINFO}").lower()
-            # 标识信息
-            unique_info = {
-                "video_encode": video_encode,
-                "size": item.SIZE,
-                "reseffect": reseffect,
-                "releasegroup": item.OTHERINFO
-            }
             # 结果
             title_string = f"{item.TITLE}"
             if item.YEAR:
@@ -3626,6 +3609,8 @@ class WebAction:
             #分辨率
             if respix == "":
                 respix = "未知分辨率"
+            if restype == "":
+                restype = "未知媒介"
             # 制作组、字幕组
             if item.OTHERINFO is None:
                 releasegroup = "未知"
@@ -3641,41 +3626,15 @@ class WebAction:
                 torrent_dict = SearchResults[title_string].get("torrent_dict")
                 SE_dict = torrent_dict.get(SE_key)
                 if SE_dict:
-                    group = SE_dict.get(group_key)
-                    if group:
-                        unique = group.get("group_torrents").get(unique_key)
-                        if unique:
-                            unique["torrent_list"].append(torrent_item)
-                            group["group_total"] += 1
-                        else:
-                            group["group_total"] += 1
-                            group.get("group_torrents")[unique_key] = {
-                                "unique_info": unique_info,
-                                "torrent_list": [torrent_item]
-                            }
+                    torrent_list = SE_dict.get("torrent_list")
+                    if torrent_list:
+                        torrent_list.append(torrent_item)
                     else:
-                        SE_dict[group_key] = {
-                            "group_info": group_info,
-                            "group_total": 1,
-                            "group_torrents": {
-                                unique_key: {
-                                    "unique_info": unique_info,
-                                    "torrent_list": [torrent_item]
-                                }
-                            }
-                        }
+                        torrent_list = [torrent_item]
+                    SE_dict["torrent_list"] = torrent_list
                 else:
                     torrent_dict[SE_key] = {
-                        group_key: {
-                            "group_info": group_info,
-                            "group_total": 1,
-                            "group_torrents": {
-                                unique_key: {
-                                    "unique_info": unique_info,
-                                    "torrent_list": [torrent_item]
-                                }
-                            }
-                        }
+                        "torrent_list": [torrent_item]
                     }
                 # 过滤条件
                 torrent_filter = dict(result_item.get("filter"))
@@ -3685,6 +3644,8 @@ class WebAction:
                     torrent_filter["releasegroup"].append(releasegroup)
                 if respix not in torrent_filter.get("respix"):
                     torrent_filter["respix"].append(respix)
+                if restype not in torrent_filter.get("restype"):
+                    torrent_filter["restype"].append(restype)
                 if item.SITE not in torrent_filter.get("site"):
                     torrent_filter["site"].append(item.SITE)
                 if video_encode \
@@ -3719,16 +3680,7 @@ class WebAction:
                     "rssid": rssid,
                     "torrent_dict": {
                         SE_key: {
-                            group_key: {
-                                "group_info": group_info,
-                                "group_total": 1,
-                                "group_torrents": {
-                                    unique_key: {
-                                        "unique_info": unique_info,
-                                        "torrent_list": [torrent_item]
-                                    }
-                                }
-                            }
+                            "torrent_list": [torrent_item],
                         }
                     },
                     "filter": {
@@ -3736,6 +3688,7 @@ class WebAction:
                         "free": [free_item],
                         "releasegroup": [releasegroup],
                         "respix": [respix],
+                        "restype": [restype],
                         "video": [video_encode] if video_encode else [],
                         "season": [filter_season] if filter_season else []
                     }
@@ -3757,6 +3710,12 @@ class WebAction:
             item["torrent_dict"] = sorted(item["torrent_dict"].items(),
                                           key=se_sort,
                                           reverse=True)
+            # 种子内部排列（种子数量，资源分辨率之类的）
+            # for se in item["torrent_dict"].items():
+            #     se["torrent_list"] = sorted(se["torrent_list"]
+            #                                 key=
+            #                                 )
+
         return {"code": 0, "total": total, "result": SearchResults}
 
     @staticmethod
