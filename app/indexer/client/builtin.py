@@ -6,6 +6,7 @@ import log
 from app.conf import SystemConfig
 from app.helper import ProgressHelper, ChromeHelper, DbHelper
 from app.indexer.client._base import _IIndexClient
+from app.indexer.client._haidan import HaiDanSpider
 from app.indexer.client._render_spider import RenderSpider
 from app.indexer.client._spider import TorrentSpider
 from app.indexer.client._spider_new import DefaultSpider
@@ -194,11 +195,18 @@ class BuiltinIndexer(_IIndexClient):
                 error_flag, result_array = TorrentLeech(indexer).search(keyword=search_word)
             elif indexer.parser == "MTeamSpider":
                 error_flag, result_array = MTeamSpider(indexer=indexer).search(keyword=search_word)
+            elif indexer.parser == "HaiDanSpider":
+                error_flag, result_array = self.__spider_search(
+                    spider=HaiDanSpider(),
+                    keyword=search_word,
+                    indexer=indexer,
+                    mtype=match_media.type if match_media and match_media.tmdb_info else None)
             else:
                 if PluginsSpider().status(indexer=indexer):
                     error_flag, result_array = PluginsSpider().search(keyword=search_word, indexer=indexer)
                 else:
                     error_flag, result_array = self.__spider_search(
+                        spider=TorrentSpider(),
                         keyword=search_word,
                         indexer=indexer,
                         mtype=match_media.type if match_media and match_media.tmdb_info else None)
@@ -287,6 +295,16 @@ class BuiltinIndexer(_IIndexClient):
                                                             page=page)
         elif indexer.parser == "MTeamSpider":
             error_flag, result_array = MTeamSpider(indexer=indexer).inner_search(keyword=keyword, page=page)
+        elif indexer.parser == "HaiDanSpider":
+            error_flag, result_array = self.__spider_search(spider=HaiDanSpider(),
+                                                            indexer=indexer,
+                                                            page=page,
+                                                            keyword=keyword)
+            # spider = HaiDanSpider()
+            # spider.setparam(indexer=indexer,
+            #                 keyword=keyword,
+            #                 page=page)
+            # error_flag, result_array = spider.search()
         else:
             if PluginsSpider().status(indexer=indexer):
                 error_flag, result_array = PluginsSpider().search(keyword=keyword, 
@@ -294,7 +312,8 @@ class BuiltinIndexer(_IIndexClient):
                                                                   page=page)
 
             else:
-                error_flag, result_array = self.__spider_search(indexer=indexer,
+                error_flag, result_array = self.__spider_search(spider=TorrentSpider(),
+                                                                indexer=indexer,
                                                                 page=page,
                                                                 keyword=keyword)
         # 索引花费的时间
@@ -308,7 +327,7 @@ class BuiltinIndexer(_IIndexClient):
         return result_array
 
     @staticmethod
-    def __spider_search(indexer, keyword=None, page=None, mtype=None, timeout=30):
+    def __spider_search(spider, indexer, keyword=None, page=None, mtype=None, timeout=30):
         """
         根据关键字搜索单个站点
         :param: indexer: 站点配置
@@ -320,7 +339,6 @@ class BuiltinIndexer(_IIndexClient):
         """
         log.debug(f"spider search start {indexer.name}")
 
-        spider = TorrentSpider()
         spider.setparam(indexer=indexer,
                         keyword=keyword,
                         page=page,

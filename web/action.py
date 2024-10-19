@@ -562,7 +562,7 @@ class WebAction:
         for res in results:
             dl_enclosure = res.ENCLOSURE if Sites().get_sites_by_url_domain(res.ENCLOSURE) else Torrent.format_enclosure(res.ENCLOSURE)
             if not dl_enclosure:
-                continue
+                return {"retcode": -1, "retmsg": "未发现当前种子下载链接，请前往站点下载"}
             media = Media().get_media_info(title=res.TORRENT_NAME, subtitle=res.DESCRIPTION)
             if not media:
                 continue
