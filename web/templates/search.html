@@ -1,25 +1,10 @@
 {% import 'macro/svg.html' as SVG %}
 {% import 'macro/oops.html' as OOPS %}
-<div class="container-xl">
-  <!-- Page title -->
-  <div class="page-header d-print-none d-none d-md-block">
-    <div class="row align-items-center">
-      <div class="col">
-        <h2 class="page-title text-nowrap">
-          资源搜索
-        </h2>
-        {% if Results|length > 0 %}
-        <div class="text-muted mt-1">共搜索到 {{ Count }} 条记录</div>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
 <!-- 业务页面代码 -->
 {% if Count > 0 and Results|length > 0 %}
   <div class="page-body">
-    <div class="container-xl">
-      <div class="d-grid gap-3" id="media_cards">
+    <div class="container-sm" >
+      <div class="d-grid" id="media_cards">
         {% for Title, Item in Results.items() %}
           <div class="card bg-transparent border-0">
             <div class="ribbon g-cyan d-md-none">
@@ -50,88 +35,6 @@
                         card-restype="{{ Item.type }}"
                       ></normal-card>
                   {% endif %}
-                  <!-- 过滤条件 -->
-                  {% if Item.filter.season %}
-                  <div class="subheader mb-2 mt-2">季</div>
-                  <div class="form-selectgroup form-selectgroup-pills">
-                    {% for filter_season in Item.filter.season %}
-                    <label class="form-selectgroup-item">
-                      <input type="checkbox" name="filter_season" value="{{ filter_season }}" class="form-selectgroup-input"
-                        onclick="filter_medias(this, '{{ Item.key }}')">
-                      <span class="form-selectgroup-label">{{ filter_season }}</span>
-                    </label>
-                    {% endfor %}
-                  </div>
-                  {% endif %}
-                  <div class="subheader mb-2 mt-3">站点</div>
-                  <div class="form-selectgroup form-selectgroup-pills">
-                    {% for filter_site in Item.filter.site %}
-                    <label class="form-selectgroup-item">
-                      <input type="checkbox" name="filter_site" value="{{ filter_site }}" class="form-selectgroup-input"
-                        onclick="filter_medias(this, '{{ Item.key }}')">
-                      <span class="form-selectgroup-label">{{ filter_site }}</span>
-                    </label>
-                    {% endfor %}
-                  </div>
-                  <div class="subheader mb-2 mt-3">质量</div>
-                  <div class="form-selectgroup form-selectgroup-pills">
-                    {% for filter_restype in Item.filter.restype %}
-                    <label class="form-selectgroup-item">
-                      <input type="checkbox" name="filter_restype" value="{{ filter_restype }}" class="form-selectgroup-input"
-                        onclick="filter_medias(this, '{{ Item.key }}', true)">
-                      <span class="form-selectgroup-label">{{ filter_restype }}</span>
-                    </label>
-                    {% endfor %}
-                  </div>
-                  <div class="subheader mb-2 mt-3">分辨率</div>
-                  <div class="form-selectgroup form-selectgroup-pills">
-                    {% for filter_respix in Item.filter.respix %}
-                    <label class="form-selectgroup-item">
-                      <input type="checkbox" name="filter_respix" value="{{ filter_respix }}" class="form-selectgroup-input"
-                        onclick="filter_medias(this, '{{ Item.key }}', true)">
-                      <span class="form-selectgroup-label">{{ filter_respix }}</span>
-                    </label>
-                    {% endfor %}
-                  </div>
-                  <div class="subheader mb-2 mt-3">制作组</div>
-                  <div class="form-selectgroup form-selectgroup-pills">
-                    {% for filter_releasegroup in Item.filter.releasegroup %}
-                    <label class="form-selectgroup-item">
-                      <input type="checkbox" name="filter_releasegroup" value="{{ filter_releasegroup }}" class="form-selectgroup-input"
-                        onclick="filter_medias(this, '{{ Item.key }}', true)">
-                      <span class="form-selectgroup-label filter_releasegroup_span">{{ filter_releasegroup }}</span>
-                    </label>
-                    {% endfor %}
-                  </div>
-                  <div class="subheader mb-2 mt-2">促销</div>
-                  <div class="form-selectgroup form-selectgroup-pills">
-                    {% for filter_free in Item.filter.free %}
-                    <label class="form-selectgroup-item">
-                      <input type="checkbox" name="filter_free" value="{{ filter_free.value }}" class="form-selectgroup-input"
-                        onclick="filter_medias(this, '{{ Item.key }}')">
-                      <span class="form-selectgroup-label">{{ filter_free.name }}</span>
-                    </label>
-                    {% endfor %}
-                  </div>
-                  {% if Item.filter.video %}
-                  <div class="subheader mb-2 mt-2">视频编码</div>
-                  <div class="form-selectgroup form-selectgroup-pills">
-                    {% for filter_video in Item.filter.video %}
-                    <label class="form-selectgroup-item">
-                      <input type="checkbox" name="filter_video" value="{{ filter_video }}" class="form-selectgroup-input"
-                        onclick="filter_medias(this, '{{ Item.key }}')">
-                      <span class="form-selectgroup-label">{{ filter_video }}</span>
-                    </label>
-                    {% endfor %}
-                  </div>
-                  {% endif %}
-                  <div class="mt-3">
-                    <button class="btn w-100" onclick="reset_filter(this, '{{ Item.key }}')">
-                      重置
-                    </button>
-                  </div>
-                </div>
-                <div class="col">
                   <!-- 标题 -->
                   <div class="row">
                     <div class="col">
@@ -166,6 +69,96 @@
                   <div class="text-muted mt-2 d-none d-md-block">
                     {{ Item.overview}}
                   </div>
+                  {% endif %}
+                </div>
+                <div class="col">
+                  <!-- 过滤条件 -->
+                  {% if Item.filter.season %}
+                  <div class="form-selectgroup form-selectgroup-pills">
+                    <div class="subheader mb-2">季</div>
+                    {% for filter_season in Item.filter.season %}
+                    <label class="form-selectgroup-item">
+                      <input type="checkbox" name="filter_season" value="{{ filter_season }}" class="form-selectgroup-input"
+                        onclick="filter_medias(this, '{{ Item.key }}')">
+                      <span class="form-selectgroup-label">{{ filter_season }}</span>
+                    </label>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                  <br>
+
+                  <div class="form-selectgroup form-selectgroup-pills">
+                    <div class="subheader mb-2 mt-3">站点</div>
+                    {% for filter_site in Item.filter.site %}
+                    <label class="form-selectgroup-item">
+                      <input type="checkbox" name="filter_site" value="{{ filter_site }}" class="form-selectgroup-input"
+                        onclick="filter_medias(this, '{{ Item.key }}')">
+                      <span class="form-selectgroup-label">{{ filter_site }}</span>
+                    </label>
+                    {% endfor %}
+                  </div>
+                  <br>
+
+                  <div class="form-selectgroup form-selectgroup-pills">
+                    <div class="subheader mb-2 mt-2">促销</div>
+                    {% for filter_free in Item.filter.free %}
+                    <label class="form-selectgroup-item">
+                      <input type="checkbox" name="filter_free" value="{{ filter_free.value }}" class="form-selectgroup-input"
+                        onclick="filter_medias(this, '{{ Item.key }}')">
+                      <span class="form-selectgroup-label">{{ filter_free.name }}</span>
+                    </label>
+                    {% endfor %}
+                  </div>
+                  <br>
+
+                  <div class="form-selectgroup form-selectgroup-pills">
+                    <div class="subheader mb-2 mt-3">分辨率</div>
+                    {% for filter_respix in Item.filter.respix %}
+                    <label class="form-selectgroup-item">
+                      <input type="checkbox" name="filter_respix" value="{{ filter_respix }}" class="form-selectgroup-input"
+                        onclick="filter_medias(this, '{{ Item.key }}', true)">
+                      <span class="form-selectgroup-label">{{ filter_respix }}</span>
+                    </label>
+                    {% endfor %}
+                  </div>
+                  <br>
+
+                  <div class="form-selectgroup form-selectgroup-pills">
+                    <div class="subheader mb-2 mt-3">质量</div>
+                    {% for filter_restype in Item.filter.restype %}
+                    <label class="form-selectgroup-item">
+                      <input type="checkbox" name="filter_restype" value="{{ filter_restype }}" class="form-selectgroup-input"
+                        onclick="filter_medias(this, '{{ Item.key }}', true)">
+                      <span class="form-selectgroup-label">{{ filter_restype }}</span>
+                    </label>
+                    {% endfor %}
+                  </div>
+                  <br>
+
+                  {% if Item.filter.video %}
+                  <div class="form-selectgroup form-selectgroup-pills">
+                    <div class="subheader mb-2 mt-2">视频编码</div>
+                    {% for filter_video in Item.filter.video %}
+                    <label class="form-selectgroup-item">
+                      <input type="checkbox" name="filter_video" value="{{ filter_video }}" class="form-selectgroup-input"
+                        onclick="filter_medias(this, '{{ Item.key }}')">
+                      <span class="form-selectgroup-label">{{ filter_video }}</span>
+                    </label>
+                    {% endfor %}
+                  </div>
+                  <br>
+                  <div class="form-selectgroup form-selectgroup-pills">
+                    <div class="subheader mb-2 mt-3">制作组</div>
+                    {% for filter_releasegroup in Item.filter.releasegroup %}
+                    <label class="form-selectgroup-item">
+                      <input type="checkbox" name="filter_releasegroup" value="{{ filter_releasegroup }}" class="form-selectgroup-input"
+                        onclick="filter_medias(this, '{{ Item.key }}', true)">
+                      <span class="form-selectgroup-label filter_releasegroup_span">{{ filter_releasegroup }}</span>
+                    </label>
+                    {% endfor %}
+                  </div>
+                  <br>
+
                   {% endif %}
                   <!-- 资源分组 -->
                   {% for SE_key, SE_dict in Item.torrent_dict %}
