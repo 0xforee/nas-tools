@@ -317,8 +317,6 @@ class MteamRssGen(_IPluginModule):
         for tr in tr_list:
             page_url = self._site_base_url + 'detail/' + tr.get('id')
             status = tr.get('status')
-            discount = status.get('discount')
-            discount_end_time = status.get('discountEndTime')
             torrent_info = RssTorrent()
             torrent_info.id = tr.get('id')
             torrent_info.title = html.escape(tr.get('name'))
@@ -332,19 +330,40 @@ class MteamRssGen(_IPluginModule):
             torrent_info.enclosure = page_url
             torrent_info.link = page_url
             torrent_info.category = tr.get('category')
-            if discount.find('FREE') != -1 and self.match_size(torrent_info.size):
-                torrent_info.mark_brush = True
-            else:
-                torrent_info.mark_brush = False
-            # if discount and discount_end_time:
-            #     torrent_info.mark_brush = True
-            # else:
-            #     torrent_info.mark_brush = False
+            torrent_info.mark_brush = False
+            if self.match_size(torrent_info.size):
+                if self.is_free_or_promote(tr):
+                    torrent_info.mark_brush = True
+
             torrents.append(torrent_info)
         if not torrents:
             self.info("found 0 torrents match")
 
         return torrents
+
+    def is_free_or_promote(self, tr):
+        try:
+            status = tr.get('status')
+            discount = status.get('discount')
+            if discount.find('FREE') != -1:
+                return True
+            else:
+                mallSingleFree = status.get('mallSingleFree')
+                if mallSingleFree and mallSingleFree.get('endDate'):
+                    endDay = mallSingleFree.get('endDate')
+                    from datetime import datetime
+
+                    # Define the given date as a string and the current date
+                    given_date = datetime.strptime(endDay, '%Y-%m-%d %H:%M:%S')
+                    current_date = datetime.now()
+
+                    # Check if the given date is past the current date
+                    is_expired = current_date > given_date
+                    if not is_expired:
+                        return True
+        except Exception as e:
+            self.error(e)
+        return False
 
     def match_size(self, torrent_size):
         limit = int(self._torrent_min_size) * 1024 ** 3
