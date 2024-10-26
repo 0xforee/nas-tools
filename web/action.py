@@ -3588,6 +3588,7 @@ class WebAction:
                 "seeders": item.SEEDERS,
                 "enclosure": item.ENCLOSURE,
                 "site": item.SITE,
+                "sekey": SE_key,
                 "torrent_name": item.TORRENT_NAME,
                 "description": item.DESCRIPTION,
                 "pageurl": item.PAGEURL,
@@ -3623,19 +3624,9 @@ class WebAction:
             if SearchResults.get(title_string):
                 # 种子列表
                 result_item = SearchResults[title_string]
-                torrent_dict = SearchResults[title_string].get("torrent_dict")
-                SE_dict = torrent_dict.get(SE_key)
-                if SE_dict:
-                    torrent_list = SE_dict.get("torrent_list")
-                    if torrent_list:
-                        torrent_list.append(torrent_item)
-                    else:
-                        torrent_list = [torrent_item]
-                    SE_dict["torrent_list"] = torrent_list
-                else:
-                    torrent_dict[SE_key] = {
-                        "torrent_list": [torrent_item]
-                    }
+                torrent_list = SearchResults[title_string].get("torrent_list")
+                torrent_list.append(torrent_item)
+
                 # 过滤条件
                 torrent_filter = dict(result_item.get("filter"))
                 if free_item not in torrent_filter.get("free"):
@@ -3678,11 +3669,7 @@ class WebAction:
                     "overview": item.OVERVIEW,
                     "fav": fav,
                     "rssid": rssid,
-                    "torrent_dict": {
-                        SE_key: {
-                            "torrent_list": [torrent_item],
-                        }
-                    },
+                    "torrent_list": [torrent_item],
                     "filter": {
                         "site": [item.SITE],
                         "free": [free_item],
@@ -3707,14 +3694,13 @@ class WebAction:
             # 排序筛选器 制作组、字幕组.  将未知放到最后
             item["filter"]["releasegroup"] = sorted(item["filter"]["releasegroup"], key=lambda x: (x == "未知", x))
             # 排序种子列 集
-            item["torrent_dict"] = sorted(item["torrent_dict"].items(),
-                                          key=se_sort,
+            # item["torrent_list"] = sorted(item["torrent_list"],
+            #                               key=se_sort,
+            #                               reverse=True)
+
+            item["torrent_list"] = sorted(item["torrent_list"],
+                                          key=lambda x: x.get('seeders'),
                                           reverse=True)
-            # 种子内部排列（种子数量，资源分辨率之类的）
-            # for se in item["torrent_dict"].items():
-            #     se["torrent_list"] = sorted(se["torrent_list"]
-            #                                 key=
-            #                                 )
 
         return {"code": 0, "total": total, "result": SearchResults}
 
