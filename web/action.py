@@ -4478,7 +4478,7 @@ class WebAction:
         twostepcode = data.get("two_step_code")
         ocrflag = data.get("ocrflag")
         # 保存设置
-        SystemConfig().set(key=SystemConfigKey.CookieUserInfo,
+        SystemConfig().set(key=f"{SystemConfigKey.CookieUserInfo}_{siteid}",
                            value={
                                "username": username,
                                "password": password,
