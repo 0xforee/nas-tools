@@ -17,30 +17,15 @@
               {{ SVG.check() }}
             </div>
             {% endif %}
-            <div class="card-body ps-1 pe-1">
+            <div class="card-body ps-1 pe-1 pt-0">
               <div class="row">
-                <div class="col-2 ps-3 d-none d-md-block" id="search_results_filter_{{ Item.key }}" style="max-width: 15rem">
-                  <!-- 图片 -->
-                  {% if Item.poster %}
-                    <normal-card
-                        card-tmdbId="{{ Item.tmdbid }}"
-                        card-mediatype="{{ Item.type }}"
-                        card-showSub="1"
-                        card-image="{{ Item.poster }}"
-                        card-fav="{{ Item.fav }}"
-                        card-vote="{{ Item.vote }}"
-                        card-year="{{ Item.year }}"
-                        card-title="{{ Item.title }}"
-                        card-overview="{{ Item.overview }}"
-                        card-restype="{{ Item.type }}"
-                      ></normal-card>
-                  {% endif %}
+                <div class="col-3 ps-3 d-none d-md-block" id="search_results_filter_{{ Item.key }}" style="max-width: 20rem">
                   <!-- 标题 -->
                   <div class="row">
                     <div class="col">
-                      <h2 class="mb-0">
-                        <strong>{{ Title }}</strong>
-                      </h2>
+                      <h3 class="mb-2 ms-1">
+                        <strong>过滤项</strong>
+                      </h3>
                     </div>
                   </div>
                   <!-- 媒体属性 -->
@@ -64,18 +49,13 @@
                       {% endif %}
                     </div>
                   </div>
-                  <!-- 简介 -->
-                  {% if Item.overview %}
+
                   <div class="text-muted mt-2 d-none d-md-block">
-                    {{ Item.overview}}
-                  </div>
-                  {% endif %}
-                </div>
-                <div class="col">
-                  <!-- 过滤条件 -->
+                    <!-- 过滤条件 -->
                   {% if Item.filter.season %}
-                  <div class="form-selectgroup form-selectgroup-pills mb-1">
                     <div class="subheader m-2">季&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+                  <div class="form-selectgroup form-selectgroup-pills mb-1">
                     {% for filter_season in Item.filter.season %}
                     <label class="form-selectgroup-item">
                       <input type="checkbox" name="filter_season" value="{{ filter_season }}" class="form-selectgroup-input"
@@ -86,9 +66,9 @@
                   </div>
                   {% endif %}
                   <br>
+                    <div class="subheader m-2">站点&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
 
                   <div class="form-selectgroup form-selectgroup-pills mb-1">
-                    <div class="subheader m-2">站点&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
                     {% for filter_site in Item.filter.site %}
                     <label class="form-selectgroup-item">
                       <input type="checkbox" name="filter_site" value="{{ filter_site }}" class="form-selectgroup-input"
@@ -98,9 +78,9 @@
                     {% endfor %}
                   </div>
                   <br>
+                    <div class="subheader m-2">促销&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
 
                   <div class="form-selectgroup form-selectgroup-pills mb-1">
-                    <div class="subheader m-2">促销&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
                     {% for filter_free in Item.filter.free %}
                     <label class="form-selectgroup-item">
                       <input type="checkbox" name="filter_free" value="{{ filter_free.value }}" class="form-selectgroup-input"
@@ -110,9 +90,9 @@
                     {% endfor %}
                   </div>
                   <br>
+                    <div class="subheader m-2">分辨率&nbsp;&nbsp;&nbsp;</div>
 
                   <div class="form-selectgroup form-selectgroup-pills mb-1">
-                    <div class="subheader m-2">分辨率&nbsp;&nbsp;&nbsp;</div>
                     {% for filter_respix in Item.filter.respix %}
                     <label class="form-selectgroup-item">
                       <input type="checkbox" name="filter_respix" value="{{ filter_respix }}" class="form-selectgroup-input"
@@ -122,9 +102,9 @@
                     {% endfor %}
                   </div>
                   <br>
+                    <div class="subheader m-2">质量&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
 
                   <div class="form-selectgroup form-selectgroup-pills mb-1">
-                    <div class="subheader m-2">质量&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
                     {% for filter_restype in Item.filter.restype %}
                     <label class="form-selectgroup-item">
                       <input type="checkbox" name="filter_restype" value="{{ filter_restype }}" class="form-selectgroup-input"
@@ -134,10 +114,10 @@
                     {% endfor %}
                   </div>
                   <br>
+                    <div class="subheader m-2 ">视频编码</div>
 
                   {% if Item.filter.video %}
                   <div class="form-selectgroup form-selectgroup-pills mb-1">
-                    <div class="subheader m-2 ">视频编码</div>
                     {% for filter_video in Item.filter.video %}
                     <label class="form-selectgroup-item">
                       <input type="checkbox" name="filter_video" value="{{ filter_video }}" class="form-selectgroup-input"
@@ -147,8 +127,11 @@
                     {% endfor %}
                   </div>
                   <br>
-
                   {% endif %}
+                  </div>
+
+                </div>
+                <div class="col">
                   <!-- 种子列表 -->
                   {% for torrent in Item.torrent_list %}
                     <div class="list-group-item p-1 search_results_torrent"
