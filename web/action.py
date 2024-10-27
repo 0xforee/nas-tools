@@ -3571,23 +3571,6 @@ class WebAction:
                 respix = ""
                 reseffect = ""
                 video_encode = ""
-            # 分组标识 (来源，分辨率)
-            group_key = re.sub(r"[-.\s@|]", "", f"{respix}_{restype}").lower()
-            # 分组信息
-            group_info = {
-                "respix": respix,
-                "restype": restype,
-            }
-            # 种子唯一标识 （大小，质量(来源、效果)，制作组组成）
-            unique_key = re.sub(r"[-.\s@|]", "",
-                                f"{respix}_{restype}_{video_encode}_{reseffect}_{item.SIZE}_{item.OTHERINFO}").lower()
-            # 标识信息
-            unique_info = {
-                "video_encode": video_encode,
-                "size": item.SIZE,
-                "reseffect": reseffect,
-                "releasegroup": item.OTHERINFO
-            }
             # 结果
             title_string = f"{item.TITLE}"
             if item.YEAR:
@@ -3605,6 +3588,7 @@ class WebAction:
                 "seeders": item.SEEDERS,
                 "enclosure": item.ENCLOSURE,
                 "site": item.SITE,
+                "sekey": SE_key,
                 "torrent_name": item.TORRENT_NAME,
                 "description": item.DESCRIPTION,
                 "pageurl": item.PAGEURL,
@@ -3626,6 +3610,8 @@ class WebAction:
             #分辨率
             if respix == "":
                 respix = "未知分辨率"
+            if restype == "":
+                restype = "未知媒介"
             # 制作组、字幕组
             if item.OTHERINFO is None:
                 releasegroup = "未知"
@@ -3638,45 +3624,9 @@ class WebAction:
             if SearchResults.get(title_string):
                 # 种子列表
                 result_item = SearchResults[title_string]
-                torrent_dict = SearchResults[title_string].get("torrent_dict")
-                SE_dict = torrent_dict.get(SE_key)
-                if SE_dict:
-                    group = SE_dict.get(group_key)
-                    if group:
-                        unique = group.get("group_torrents").get(unique_key)
-                        if unique:
-                            unique["torrent_list"].append(torrent_item)
-                            group["group_total"] += 1
-                        else:
-                            group["group_total"] += 1
-                            group.get("group_torrents")[unique_key] = {
-                                "unique_info": unique_info,
-                                "torrent_list": [torrent_item]
-                            }
-                    else:
-                        SE_dict[group_key] = {
-                            "group_info": group_info,
-                            "group_total": 1,
-                            "group_torrents": {
-                                unique_key: {
-                                    "unique_info": unique_info,
-                                    "torrent_list": [torrent_item]
-                                }
-                            }
-                        }
-                else:
-                    torrent_dict[SE_key] = {
-                        group_key: {
-                            "group_info": group_info,
-                            "group_total": 1,
-                            "group_torrents": {
-                                unique_key: {
-                                    "unique_info": unique_info,
-                                    "torrent_list": [torrent_item]
-                                }
-                            }
-                        }
-                    }
+                torrent_list = SearchResults[title_string].get("torrent_list")
+                torrent_list.append(torrent_item)
+
                 # 过滤条件
                 torrent_filter = dict(result_item.get("filter"))
                 if free_item not in torrent_filter.get("free"):
@@ -3685,6 +3635,8 @@ class WebAction:
                     torrent_filter["releasegroup"].append(releasegroup)
                 if respix not in torrent_filter.get("respix"):
                     torrent_filter["respix"].append(respix)
+                if restype not in torrent_filter.get("restype"):
+                    torrent_filter["restype"].append(restype)
                 if item.SITE not in torrent_filter.get("site"):
                     torrent_filter["site"].append(item.SITE)
                 if video_encode \
@@ -3717,25 +3669,13 @@ class WebAction:
                     "overview": item.OVERVIEW,
                     "fav": fav,
                     "rssid": rssid,
-                    "torrent_dict": {
-                        SE_key: {
-                            group_key: {
-                                "group_info": group_info,
-                                "group_total": 1,
-                                "group_torrents": {
-                                    unique_key: {
-                                        "unique_info": unique_info,
-                                        "torrent_list": [torrent_item]
-                                    }
-                                }
-                            }
-                        }
-                    },
+                    "torrent_list": [torrent_item],
                     "filter": {
                         "site": [item.SITE],
                         "free": [free_item],
                         "releasegroup": [releasegroup],
                         "respix": [respix],
+                        "restype": [restype],
                         "video": [video_encode] if video_encode else [],
                         "season": [filter_season] if filter_season else []
                     }
@@ -3754,9 +3694,14 @@ class WebAction:
             # 排序筛选器 制作组、字幕组.  将未知放到最后
             item["filter"]["releasegroup"] = sorted(item["filter"]["releasegroup"], key=lambda x: (x == "未知", x))
             # 排序种子列 集
-            item["torrent_dict"] = sorted(item["torrent_dict"].items(),
-                                          key=se_sort,
+            # item["torrent_list"] = sorted(item["torrent_list"],
+            #                               key=se_sort,
+            #                               reverse=True)
+
+            item["torrent_list"] = sorted(item["torrent_list"],
+                                          key=lambda x: x.get('seeders'),
                                           reverse=True)
+
         return {"code": 0, "total": total, "result": SearchResults}
 
     @staticmethod
