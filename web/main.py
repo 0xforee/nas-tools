@@ -389,25 +389,18 @@ def rss_calendar():
 @login_required
 def sites():
     CfgSites = Sites().get_sites()
-    CookieUserInfoCfg = SystemConfig().get(SystemConfigKey.CookieUserInfo)
-    for site in CfgSites:
-        siteid = site["id"]
-        siteCfg = SystemConfig().get(f"{SystemConfigKey.CookieUserInfo}_{siteid}")
-        if siteCfg is None:
-            siteCfg = CookieUserInfoCfg
-        site["username"] = siteCfg["username"]
-        site["password"] = siteCfg["password"]
-        site["two_step_code"] = siteCfg["two_step_code"]
     RuleGroups = {str(group["id"]): group["name"] for group in Filter().get_rule_groups()}
     DownloadSettings = {did: attr["name"] for did, attr in Downloader().get_download_setting().items()}
     ChromeOk = ChromeHelper().get_status()
     CookieCloudCfg = SystemConfig().get(SystemConfigKey.CookieCloud)
+    CookieUserInfoCfg = SystemConfig().get(SystemConfigKey.CookieUserInfo)
     return render_template("site/site.html",
                            Sites=CfgSites,
                            RuleGroups=RuleGroups,
                            DownloadSettings=DownloadSettings,
                            ChromeOk=ChromeOk,
-                           CookieCloudCfg=CookieCloudCfg)
+                           CookieCloudCfg=CookieCloudCfg,
+                           CookieUserInfoCfg=CookieUserInfoCfg)
 
 
 # 站点列表页面
