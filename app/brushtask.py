@@ -560,8 +560,8 @@ class BrushTask(object):
                                                         torrent.get('name')))
                                                 if sendmessage:
                                                     title = "【刷流任务 {} 限免结束】".format(task_name)
-                                                    msg = "限免即将结束，删除种子\n种子名称：{}".format(
-                                                        ddl, torrent.get('name'))
+                                                    msg = "限免即将结束，删除种子：{}".format(
+                                                        torrent.get('name'))
                                                     self.message.send_brushtask_remove_message(title, msg)
                                                 continue
 
