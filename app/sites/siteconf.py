@@ -127,6 +127,13 @@ class SiteConf:
                     ret_attr["2xfree"] = True
                 ret_attr["free_deadline"] = status.get('toppingEndTime')
                 ret_attr["peer_count"] = int(status.get("seeders"))
+
+                # 限免种子包含在 mallSingleFree 中
+                mallSingleFree = status.get('mallSingleFree')
+                if mallSingleFree and mallSingleFree.get('endDate'):
+                    endDay = mallSingleFree.get('endDate')
+                    ret_attr["free"] = True
+                    ret_attr["free_deadline"] = endDay
             return ret_attr
 
         xpath_strs = self.get_grap_conf(torrent_url)
