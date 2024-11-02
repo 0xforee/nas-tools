@@ -192,7 +192,7 @@ function select_SelectPart(condition, name) {
 }
 
 /**
- * 获取未选中input所有元素value
+ * 获取选中input所有元素value
  * @param: name 被管理checkbox的name
  **/
 function select_GetUnselectedVAL(name) {
