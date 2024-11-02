@@ -73,16 +73,6 @@
                     </label>
                     {% endfor %}
                   </div>
-                  <div class="subheader mb-2 mt-3">质量</div>
-                  <div class="form-selectgroup form-selectgroup-pills">
-                    {% for filter_restype in Item.filter.restype %}
-                    <label class="form-selectgroup-item">
-                      <input type="checkbox" name="filter_restype" value="{{ filter_restype }}" class="form-selectgroup-input"
-                        onclick="filter_medias(this, '{{ Item.key }}', true)">
-                      <span class="form-selectgroup-label">{{ filter_restype }}</span>
-                    </label>
-                    {% endfor %}
-                  </div>
                   <div class="subheader mb-2 mt-3">分辨率</div>
                   <div class="form-selectgroup form-selectgroup-pills">
                     {% for filter_respix in Item.filter.respix %}
@@ -169,17 +159,49 @@
                   {% endif %}
                   <!-- 资源分组 -->
                   {% for SE_key, SE_dict in Item.torrent_dict %}
+                  {% if SE_key != 'MOV' %}
+                    <a href="javascript:$('#search_se_accordion_{{ SE_key.replace(' ', '') }}_{{ Item.key }}').slideToggle()"
+                      class="search_results_season_{{ Item.key }}"
+                      data-season="{{ SE_key }}">
+                      <div class="row mt-2">
+                        <h3 class="mb-0">
+                        <strong>{{ SE_key }}</strong>
+                        </h3>
+                      </div>
+                    </a>
+                  {% endif %}
                   <div {% if SE_key != 'MOV' %} id="search_se_accordion_{{ SE_key.replace(' ', '') }}_{{ Item.key }}" {% endif %}>
-                    <div class="accordion" id="search_results_accordion_{{ Item.key }}">
+                    <div class="accordion mt-2" id="search_results_accordion_{{ Item.key }}">
+                      {% for group_key, group in SE_dict.items() %}
+                      <div class="accordion-item" id="search_results_accordion_item_{{ group_key }}_{{ Item.key }}_{{ SE_key.replace(' ', '') }}">
+                        <h2 class="accordion-header">
+                          <button
+                              class="accordion-button p-2 {% if loop.index0 != 0 %}collapsed{% endif %}"
+                              type="button"
+                              data-bs-toggle="collapse"
+                              data-bs-target="#search_results_group_{{ group_key }}_{{ Item.key }}_{{ SE_key.replace(' ', '') }}"
+                              aria-expanded="true">
+                              <span class="text-red">{{ group.group_info.restype or "未知媒介" }}</span>
+                                &nbsp;/&nbsp;
+                              <span class="text-orange">{{ group.group_info.respix or "未知分辨率" }}</span>
+                                &nbsp;/&nbsp;
+                              <span class="text">共 <span id="search_results_group_total_{{ group_key }}_{{ Item.key }}_{{ SE_key.replace(' ', '') }}"
+                                                       class="search_results_group_total"
+                                                       data-total="{{ group.group_total }}">{{ group.group_total }}</span> 个种子 </span>
+                          </button>
+                        </h2>
+                        <div id="search_results_group_{{ group_key }}_{{ Item.key }}_{{ SE_key.replace(' ', '') }}"
+                             class="accordion-collapse collapse {% if loop.index0 == 0 %}show{% endif %}"
+                             data-bs-parent="#search_results_accordion_{{ Item.key }}">
                           <div class="accordion-body p-1">
                             <div class="card-list-group mt-1">
                               <!-- 种子列表 -->
-                              {% for torrent in SE_dict.torrent_list %}
+                            {% for unique_key, unique in group.group_torrents.items() %}
+                              {% for torrent in unique.torrent_list %}
                                 <div class="list-group-item p-1 search_results_torrent"
                                   data-site="{{ torrent.site }}"
                                   data-releasegroup="{{ torrent.releasegroup or '未知' }}"
                                   data-respix="{{ torrent.respix or '未知分辨率' }}"
-                                  data-restype="{{ torrent.restype or '未知媒介' }}"
                                   data-free="{{ torrent.uploadvalue|string + ' ' + torrent.downloadvalue|string }}"
                                   data-video="{{ torrent.video_encode }}"
                                   data-group="{{ group_key }}"
@@ -229,9 +251,6 @@
                                         {% if torrent.respix %}
                                           <span class="badge text-white bg-cyan mb-1">{{ torrent.respix }}</span>
                                         {% endif %}
-                                        {% if torrent.restype %}
-                                          <span class="badge text-white bg-cyan mb-1">{{ torrent.restype }}</span>
-                                        {% endif %}
                                         {% if torrent.uploadvalue != 1.0 %}
                                         <span class="badge text-white bg-azure mb-1">{{ (torrent.uploadvalue * 100) | int }}%UL</span>
                                         {% endif %}
@@ -275,8 +294,12 @@
                                   </div>
                                 </div>
                               {% endfor %}
+                            {% endfor %}
                             </div>
                           </div>
+                        </div>
+                      </div>
+                      {% endfor %}
                     </div>
                   </div>
                   {% endfor %}
@@ -324,16 +347,6 @@
                 <input type="checkbox" name="filter_site" value="{{ filter_site }}" class="form-selectgroup-input"
                   onclick="filter_medias(this, '{{ Item.key }}', true)">
                 <span class="form-selectgroup-label">{{ filter_site }}</span>
-              </label>
-              {% endfor %}
-            </div>
-            <div class="subheader mb-2 mt-3">质量</div>
-            <div class="form-selectgroup form-selectgroup-pills">
-              {% for filter_restype in Item.filter.restype %}
-              <label class="form-selectgroup-item">
-                <input type="checkbox" name="filter_restype" value="{{ filter_restype }}" class="form-selectgroup-input"
-                  onclick="filter_medias(this, '{{ Item.key }}', true)">
-                <span class="form-selectgroup-label">{{ filter_restype }}</span>
               </label>
               {% endfor %}
             </div>
@@ -434,8 +447,6 @@
     let filter_site = select_GetSelectedVAL("filter_site")[0];
     // 过滤制作组
     let filter_releasegroup = select_GetSelectedVAL("filter_releasegroup")[0];
-    // 过滤质量
-    let filter_restype = select_GetSelectedVAL("filter_restype")[0];
     // 过滤分辨率
     let filter_respix = select_GetSelectedVAL("filter_respix")[0];
     // 过滤促销
@@ -445,7 +456,7 @@
     //过滤剧集
     let filter_season = select_GetSelectedVAL("filter_season")[0];
     // 有过滤则展开，无过滤则收起
-    if (filter_site || filter_free || filter_video|| filter_releasegroup || filter_respix || filter_restype) {
+    if (filter_site || filter_free || filter_video|| filter_releasegroup || filter_respix) {
       $(`${torrent_obj} .accordion-button`).each(function () {
         $(this).removeClass("collapsed");
       });
@@ -474,16 +485,6 @@
     if (filter_releasegroup) {
       $(`${torrent_obj} .search_results_torrent`).each(function () {
         if ($(this).attr("data-releasegroup") !== filter_releasegroup) {
-          if($(this).is(":visible")){
-            sub_group_total($(this).attr("data-group"), key, $(this).attr("data-season"));
-            $(this).hide();
-          }
-        }
-      });
-    }
-    if (filter_restype) {
-      $(`${torrent_obj} .search_results_torrent`).each(function () {
-        if ($(this).attr("data-restype") !== filter_restype) {
           if($(this).is(":visible")){
             sub_group_total($(this).attr("data-group"), key, $(this).attr("data-season"));
             $(this).hide();
