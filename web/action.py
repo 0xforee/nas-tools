@@ -3582,25 +3582,13 @@ class WebAction:
             # 只需要部分种子标签
             labels = [label for label in str(item.NOTE).split("|")
                       if label in ["官方", "官组", "中字", "国语", "特效", "特效字幕"]]
-            # 季
-            filter_season = SE_key.split()[0] if SE_key and SE_key not in [
-                "MOV", "TV"] else None
-            # 集
-            if SE_key and SE_key not in ["MOV", "TV"]:
-                if len(SE_key.split()) > 1:
-                    filter_episode = SE_key.split()[1]
-                else:
-                    filter_episode = "整季"
-            else:
-                filter_episode = None
             # 种子信息
             torrent_item = {
                 "id": item.ID,
                 "seeders": item.SEEDERS,
                 "enclosure": item.ENCLOSURE,
                 "site": item.SITE,
-                "sekey": filter_season,
-                "episode": filter_episode,
+                "sekey": SE_key,
                 "torrent_name": item.TORRENT_NAME,
                 "description": item.DESCRIPTION,
                 "pageurl": item.PAGEURL,
@@ -3629,7 +3617,9 @@ class WebAction:
                 releasegroup = "未知"
             else:
                 releasegroup = item.OTHERINFO
-
+            # 季
+            filter_season = SE_key.split()[0] if SE_key and SE_key not in [
+                "MOV", "TV"] else None
             # 合并搜索结果
             if SearchResults.get(title_string):
                 # 种子列表
@@ -3652,12 +3642,9 @@ class WebAction:
                 if video_encode \
                         and video_encode not in torrent_filter.get("video"):
                     torrent_filter["video"].append(video_encode)
-                if filter_season:
-                    if filter_season not in torrent_filter.get("season"):
-                        torrent_filter["season"].append(filter_season)
-                    if filter_episode \
-                            and filter_episode not in torrent_filter.get("episode"):
-                        torrent_filter["episode"].append(filter_episode)
+                if filter_season \
+                        and filter_season not in torrent_filter.get("season"):
+                    torrent_filter["season"].append(filter_season)
             else:
                 fav, rssid = 0, None
                 # 存在标志
@@ -3690,8 +3677,7 @@ class WebAction:
                         "respix": [respix],
                         "restype": [restype],
                         "video": [video_encode] if video_encode else [],
-                        "season": [filter_season] if filter_season else [],
-                        "episode": [filter_episode] if filter_episode else []
+                        "season": [filter_season] if filter_season else []
                     }
                 }
 
@@ -3702,21 +3688,19 @@ class WebAction:
             return (k[0], k[1]) if len(k) > 1 else ("Z" + k[0], "ZZZ")
 
         # 开始排序季集顺序
-        # 种子：做种排序 -> 季排序 -> 整季顶层
-        # 筛选器：制作组，季，集
         for title, item in SearchResults.items():
             # 排序筛选器 季
             item["filter"]["season"].sort(reverse=True)
             # 排序筛选器 制作组、字幕组.  将未知放到最后
             item["filter"]["releasegroup"] = sorted(item["filter"]["releasegroup"], key=lambda x: (x == "未知", x))
-            item["filter"]["episode"] = sorted(item["filter"]["episode"], key=lambda x: (x != " 整季", x), reverse=True)
-            # 排序种子列
-            item["torrent_list"] = sorted(item["torrent_list"],
-                                          key=lambda x: x.get('seeders'),
-                                          reverse=True)
+            # 排序种子列 集
             # item["torrent_list"] = sorted(item["torrent_list"],
             #                               key=se_sort,
             #                               reverse=True)
+
+            item["torrent_list"] = sorted(item["torrent_list"],
+                                          key=lambda x: x.get('seeders'),
+                                          reverse=True)
 
         return {"code": 0, "total": total, "result": SearchResults}
 

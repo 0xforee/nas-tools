@@ -66,22 +66,6 @@
                   </div>
                   {% endif %}
                   <br>
-
-                  {% if Item.filter.episode %}
-                  <div class="subheader m-2">集&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-
-                  <div class="form-selectgroup form-selectgroup-pills mb-1">
-                    {% for filter_episode in Item.filter.episode %}
-                    <label class="form-selectgroup-item">
-                      <input type="checkbox" name="filter_episode" value="{{ filter_episode }}" class="form-selectgroup-input"
-                        onclick="filter_medias(this, '{{ Item.key }}')">
-                      <span class="form-selectgroup-label" style="padding:0.2375em 0.75em;">{{ filter_episode }}</span>
-                    </label>
-                    {% endfor %}
-                  </div>
-                  {% endif %}
-                  <br>
-
                     <div class="subheader m-2">站点&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
 
                   <div class="form-selectgroup form-selectgroup-pills mb-1">
@@ -175,7 +159,6 @@
                       data-free="{{ torrent.uploadvalue|string + ' ' + torrent.downloadvalue|string }}"
                       data-video="{{ torrent.video_encode }}"
                       data-group="{{ group_key }}"
-                      data-episode="{{ torrent.episode }}"
                       data-season="{{ torrent.sekey }}">
                       <input type="hidden" id="title_{{ torrent.id }}" value="{{ torrent.torrent_name }}">
                       <input type="hidden" id="description_{{ torrent.id }}" value="{{ torrent.description }}">
@@ -416,10 +399,8 @@
     let filter_frees = select_GetSelectedVAL("filter_free");
     // 过滤编码
     let filter_videos = select_GetSelectedVAL("filter_video");
-    //过滤季
+    //过滤剧集
     let filter_seasons = select_GetSelectedVAL("filter_season");
-    //过滤集
-    let filter_episodes = select_GetSelectedVAL("filter_episode");
     // 有过滤则展开，无过滤则收起
     // if (filter_sites || filter_free || filter_video|| filter_releasegroup || filter_respix || filter_restype) {
     //   $(`${torrent_obj} .accordion-button`).each(function () {
@@ -441,7 +422,7 @@
       $(".search_results_torrent").each(function () {
         if (filter_sites.indexOf($(this).attr("data-site")) === -1) {
           if ($(this).is(":visible")) {
-            // sub_group_total($(this).attr("data-group"), key, $(this).attr("data-season"));
+            sub_group_total($(this).attr("data-group"), key, $(this).attr("data-season"));
             $(this).hide();
           }
         }
@@ -451,7 +432,7 @@
       $(`.search_results_torrent`).each(function () {
         if (filter_releasegroups.indexOf($(this).attr("data-releasegroup")) === -1) {
           if($(this).is(":visible")){
-            // sub_group_total($(this).attr("data-group"), key, $(this).attr("data-season"));
+            sub_group_total($(this).attr("data-group"), key, $(this).attr("data-season"));
             $(this).hide();
           }
         }
@@ -461,7 +442,7 @@
       $(`.search_results_torrent`).each(function () {
         if (filter_restypes.indexOf($(this).attr("data-restype")) === -1) {
           if($(this).is(":visible")){
-            // sub_group_total($(this).attr("data-group"), key, $(this).attr("data-season"));
+            sub_group_total($(this).attr("data-group"), key, $(this).attr("data-season"));
             $(this).hide();
           }
         }
@@ -471,7 +452,7 @@
       $(`.search_results_torrent`).each(function () {
         if (filter_respixs.indexOf($(this).attr("data-respix")) === -1) {
           if($(this).is(":visible")){
-            // sub_group_total($(this).attr("data-group"), key, $(this).attr("data-season"));
+            sub_group_total($(this).attr("data-group"), key, $(this).attr("data-season"));
             $(this).hide();
           }
         }
@@ -502,17 +483,6 @@
       $(`.search_results_torrent`).each(function () {
         let season = $(this).attr("data-season").split(" ")[0];
         if (filter_seasons.indexOf(season) === -1) {
-          if($(this).is(":visible")) {
-            $(this).hide();
-          }
-        }
-      });
-    }
-
-    if (filter_episodes.length > 0) {
-      $(`.search_results_torrent`).each(function () {
-        let episode = $(this).attr("data-episode").split(" ")[0];
-        if (filter_episodes.indexOf(episode) === -1) {
           if($(this).is(":visible")) {
             $(this).hide();
           }
