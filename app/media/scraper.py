@@ -418,7 +418,7 @@ class Scraper:
             return
         try:
             log.info(f"【Scraper】正在下载{itype}图片：{url} ...")
-            r = RequestUtils().get_res(url=url, raise_exception=True)
+            r = RequestUtils(proxies=Config().get_tmdbimage_proxy()).get_res(url=url, raise_exception=True)
             if r:
                 # 下载到temp目录，远程则先存到temp再远程移动，本地则直接保存
                 if self._rmt_mode in ModuleConf.REMOTE_RMT_MODES:

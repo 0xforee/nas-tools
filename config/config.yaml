@@ -39,6 +39,8 @@ app:
   tmdb_domain: api.tmdb.org
   # 【TMDB图片代理地址】：加速图片下载，留空使用TMDB官方地址
   tmdb_image_url: https://image.tmdb.org
+  # TMDB 图片是否走代理服务器
+  tmdb_image_proxy: false
   # 【TMDB匹配模式】：normal、strict，normal模式下如使用文件名/种子名中的年份无法匹配到媒体信息，会去掉年份再匹配一次；strict模式则严格按文件中年份匹配
   # normal模式下会提升识别成功率，但也可能会导致误识别率增加；strict模式可以降低误识别率，但可能导致很多文件名/种子名中年份不正确的无法被识别（特别是剧集，需要是首播年份）
   rmt_match_mode: normal

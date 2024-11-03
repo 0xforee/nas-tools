@@ -223,6 +223,13 @@ class Config(object):
 
         return f"https://{tmdb_domain}/3"
 
+    def get_tmdbimage_proxy(self):
+        proxy_on = self.get_config("app").get("tmdb_image_proxy")
+        if proxy_on:
+            return self.get_proxies()
+
+        return None
+
     def get_tmdbimage_url(self, path, prefix="w500"):
         if not path:
             return ""
