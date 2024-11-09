@@ -281,7 +281,7 @@ class IYUUAutoSeed(_IPluginModule):
                                 <label class="form-label required">IYUU合作站点</label>
                                 <select class="form-control" id="iyuuautoseed_site" onchange="">
                                     {% for Site in AuthSites %}
-                                    <option value="{{ Site.site }}">{{ Site.site }}</option>
+                                    <option value="{{Site.site}}_{{Site.id}}">{{Site.site}}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -314,7 +314,9 @@ class IYUUAutoSeed(_IPluginModule):
         return """
           // IYUU站点认证
           function IYUUAutoSeed_user_bind_site(){
-            let site = $("#iyuuautoseed_site").val();
+            let site_and_id = $("#iyuuautoseed_site").val();
+            let site = site_and_id.split('_')[0];
+            let site_id = site_and_id.split('_')[1];
             let uid = $("#iyuuautoseed_uid").val();
             let passkey = $("#iyuuautoseed_passkey").val();
             let token = '{{ IyuuToken }}';
@@ -331,7 +333,7 @@ class IYUUAutoSeed(_IPluginModule):
                 $("#iyuuautoseed_passkey").removeClass("is-invalid");
             }
             // 认证
-            ajax_post("run_plugin_method", {"plugin_id": 'IYUUAutoSeed', 'method': 'iyuu_bind_site', "site": site, "uid": uid, "passkey": passkey}, function (ret) {
+            ajax_post("run_plugin_method", {"plugin_id": 'IYUUAutoSeed', 'method': 'iyuu_bind_site', "site": site, "sid": site_id, "uid": uid, "passkey": passkey}, function (ret) {
                 $("#modal-plugin-page").modal('hide');
                 if (ret.result.code === 0) {
                     show_success_modal("IYUU用户认证成功！", function () {
@@ -346,11 +348,12 @@ class IYUUAutoSeed(_IPluginModule):
           }
         """
 
-    def iyuu_bind_site(self, site, passkey, uid):
+    def iyuu_bind_site(self, site, sid, passkey, uid):
         """
         IYUU绑定合作站点
         """
         state, msg = self.iyuuhelper.bind_site(site=site,
+                                               sid=sid,
                                                passkey=passkey,
                                                uid=uid)
         return {"code": 0 if state == [] else 1, "msg": msg}
