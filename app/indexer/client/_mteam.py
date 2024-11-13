@@ -17,8 +17,7 @@ class MTeamSpider(object):
             self._indexerid = indexer.id
             self._domain = indexer.domain
             self._name = indexer.name
-            if indexer.proxy:
-                self._proxy = Config().get_proxies()
+            self._proxy = Config().get_proxies() if indexer.proxy else None
             self._cookie = indexer.cookie
             self._ua = indexer.ua
         self._api_url = self._api_url % MteamUtils.get_api_url(self._domain)
@@ -26,7 +25,7 @@ class MTeamSpider(object):
 
     def init_config(self):
         session = requests.session()
-        self._req = MteamUtils.buildRequestUtils(proxies=Config().get_proxies(), session=session, content_type="application/json",
+        self._req = MteamUtils.buildRequestUtils(proxies=self._proxy, session=session, content_type="application/json",
             accept_type="application/json", api_key=MteamUtils.get_api_key(self._domain), headers=self._ua, timeout=10)
 
     def get_discount(self, discount):
@@ -93,7 +92,7 @@ class MTeamSpider(object):
             log.warn(f"【INDEXER】{self._name} 搜索失败，错误码：{res.status_code}")
             return True, []
         else:
-            log.warn(f"【INDEXER】{self._name} 搜索失败，无法连接 torrentapi.org")
+            log.warn(f"【INDEXER】{self._name} 搜索失败，无法获取请求结果")
             return True, []
         return False, torrents
 
