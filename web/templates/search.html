@@ -83,16 +83,6 @@
                     </label>
                     {% endfor %}
                   </div>
-                  <div class="subheader mb-2 mt-3">制作组</div>
-                  <div class="form-selectgroup form-selectgroup-pills">
-                    {% for filter_releasegroup in Item.filter.releasegroup %}
-                    <label class="form-selectgroup-item">
-                      <input type="checkbox" name="filter_releasegroup" value="{{ filter_releasegroup }}" class="form-selectgroup-input"
-                        onclick="filter_medias(this, '{{ Item.key }}', true)">
-                      <span class="form-selectgroup-label filter_releasegroup_span">{{ filter_releasegroup }}</span>
-                    </label>
-                    {% endfor %}
-                  </div>
                   <div class="subheader mb-2 mt-2">促销</div>
                   <div class="form-selectgroup form-selectgroup-pills">
                     {% for filter_free in Item.filter.free %}
@@ -111,6 +101,16 @@
                       <input type="checkbox" name="filter_video" value="{{ filter_video }}" class="form-selectgroup-input"
                         onclick="filter_medias(this, '{{ Item.key }}')">
                       <span class="form-selectgroup-label">{{ filter_video }}</span>
+                    </label>
+                    {% endfor %}
+                  </div>
+                  <div class="subheader mb-2 mt-3">制作组</div>
+                  <div class="form-selectgroup form-selectgroup-pills">
+                    {% for filter_releasegroup in Item.filter.releasegroup %}
+                    <label class="form-selectgroup-item">
+                      <input type="checkbox" name="filter_releasegroup" value="{{ filter_releasegroup }}" class="form-selectgroup-input"
+                        onclick="filter_medias(this, '{{ Item.key }}', true)">
+                      <span class="form-selectgroup-label filter_releasegroup_span">{{ filter_releasegroup }}</span>
                     </label>
                     {% endfor %}
                   </div>
