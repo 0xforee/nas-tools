@@ -159,12 +159,24 @@ class SiteConf:
                     ret_attr["free"] = True
             # 检测限时信息，result为空表示未找到 限时信息
             try:
+                free_ddl = ""
                 title_xpath_str = "//h1[@id='top']//span"
                 result = html.xpath(title_xpath_str)
                 if len(result) > 0:
                     free_ddl = self.__parse_free_deadline(result[0].text)
                 else:
-                    free_ddl = ""
+                    free_ddl_pattern = xpath_strs.get("FREE_DDL")
+                    if free_ddl_pattern:
+                        for xpath_str in free_ddl_pattern:
+                            result = html.xpath(xpath_str)
+                            if len(result) > 0:
+                                # get title attr first
+                                ddl_str_2 = result[0].get('title')
+                                if ddl_str_2:
+                                    free_ddl = self.__parse_free_ddl_2(ddl_str_2)
+                                else:
+                                    free_ddl = self.__parse_free_deadline(result[0].text)
+
                 ret_attr["free_deadline"] = free_ddl
             except Exception as err:
                 ExceptionUtils.exception_traceback(err)
@@ -189,6 +201,29 @@ class SiteConf:
         # 随机休眼后再返回
         time.sleep(round(random.uniform(1, 5), 1))
         return ret_attr
+
+    def __parse_free_ddl_2(self, ddl_str: str):
+        """
+        解析限免时间:
+        "2025-01-02 00:00:17"
+        转换时间格式：%Y%m%d_%H%M
+        返回，转换后时间 20250102_0000
+        """
+        free_deadline_str = ""
+        try:
+            import datetime
+            # Parse the time string into a datetime object
+            dt = datetime.datetime.strptime(ddl_str, "%Y-%m-%d %H:%M:%S")
+
+            # Format the datetime object into the desired format
+            free_deadline_str = dt.strftime("%Y%m%d_%H%M")
+        except Exception as err:
+            ExceptionUtils.exception_traceback(err)
+            # 如果没有限时信息，就直接crash掉了，返回空
+            log.debug("Parse Deadline Error, origin: %s " % free_deadline_str)
+
+        return free_deadline_str
+
 
     def __parse_free_deadline(self, deadline_str: str):
         """
