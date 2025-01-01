@@ -63,6 +63,16 @@
                     {% endfor %}
                   </div>
                   {% endif %}
+                  <div class="subheader mb-2 mt-3">站点</div>
+                  <div class="form-selectgroup form-selectgroup-pills">
+                    {% for filter_site in Item.filter.site %}
+                    <label class="form-selectgroup-item">
+                      <input type="checkbox" name="filter_site" value="{{ filter_site }}" class="form-selectgroup-input"
+                        onclick="filter_medias(this, '{{ Item.key }}')">
+                      <span class="form-selectgroup-label">{{ filter_site }}</span>
+                    </label>
+                    {% endfor %}
+                  </div>
                   <div class="subheader mb-2 mt-3">分辨率</div>
                   <div class="form-selectgroup form-selectgroup-pills">
                     {% for filter_respix in Item.filter.respix %}
@@ -70,6 +80,26 @@
                       <input type="checkbox" name="filter_respix" value="{{ filter_respix }}" class="form-selectgroup-input"
                         onclick="filter_medias(this, '{{ Item.key }}', true)">
                       <span class="form-selectgroup-label">{{ filter_respix }}</span>
+                    </label>
+                    {% endfor %}
+                  </div>
+                  <div class="subheader mb-2 mt-3">制作组</div>
+                  <div class="form-selectgroup form-selectgroup-pills">
+                    {% for filter_releasegroup in Item.filter.releasegroup %}
+                    <label class="form-selectgroup-item">
+                      <input type="checkbox" name="filter_releasegroup" value="{{ filter_releasegroup }}" class="form-selectgroup-input"
+                        onclick="filter_medias(this, '{{ Item.key }}', true)">
+                      <span class="form-selectgroup-label filter_releasegroup_span">{{ filter_releasegroup }}</span>
+                    </label>
+                    {% endfor %}
+                  </div>
+                  <div class="subheader mb-2 mt-2">促销</div>
+                  <div class="form-selectgroup form-selectgroup-pills">
+                    {% for filter_free in Item.filter.free %}
+                    <label class="form-selectgroup-item">
+                      <input type="checkbox" name="filter_free" value="{{ filter_free.value }}" class="form-selectgroup-input"
+                        onclick="filter_medias(this, '{{ Item.key }}')">
+                      <span class="form-selectgroup-label">{{ filter_free.name }}</span>
                     </label>
                     {% endfor %}
                   </div>
@@ -85,36 +115,6 @@
                     {% endfor %}
                   </div>
                   {% endif %}
-                  <div class="subheader mb-2 mt-2">促销</div>
-                  <div class="form-selectgroup form-selectgroup-pills">
-                    {% for filter_free in Item.filter.free %}
-                    <label class="form-selectgroup-item">
-                      <input type="checkbox" name="filter_free" value="{{ filter_free.value }}" class="form-selectgroup-input"
-                        onclick="filter_medias(this, '{{ Item.key }}')">
-                      <span class="form-selectgroup-label">{{ filter_free.name }}</span>
-                    </label>
-                    {% endfor %}
-                  </div>
-                  <div class="subheader mb-2 mt-3">制作组</div>
-                  <div class="form-selectgroup form-selectgroup-pills">
-                    {% for filter_releasegroup in Item.filter.releasegroup %}
-                    <label class="form-selectgroup-item">
-                      <input type="checkbox" name="filter_releasegroup" value="{{ filter_releasegroup }}" class="form-selectgroup-input"
-                        onclick="filter_medias(this, '{{ Item.key }}', true)">
-                      <span class="form-selectgroup-label filter_releasegroup_span">{{ filter_releasegroup }}</span>
-                    </label>
-                    {% endfor %}
-                  </div>
-                  <div class="subheader mb-2 mt-3">站点</div>
-                  <div class="form-selectgroup form-selectgroup-pills">
-                    {% for filter_site in Item.filter.site %}
-                    <label class="form-selectgroup-item">
-                      <input type="checkbox" name="filter_site" value="{{ filter_site }}" class="form-selectgroup-input"
-                        onclick="filter_medias(this, '{{ Item.key }}')">
-                      <span class="form-selectgroup-label">{{ filter_site }}</span>
-                    </label>
-                    {% endfor %}
-                  </div>
                   <div class="mt-3">
                     <button class="btn w-100" onclick="reset_filter(this, '{{ Item.key }}')">
                       重置
@@ -340,6 +340,16 @@
               {% endfor %}
             </div>
             {% endif %}
+            <div class="subheader mb-2 mt-3">站点</div>
+            <div class="form-selectgroup form-selectgroup-pills">
+              {% for filter_site in Item.filter.site %}
+              <label class="form-selectgroup-item">
+                <input type="checkbox" name="filter_site" value="{{ filter_site }}" class="form-selectgroup-input"
+                  onclick="filter_medias(this, '{{ Item.key }}', true)">
+                <span class="form-selectgroup-label">{{ filter_site }}</span>
+              </label>
+              {% endfor %}
+            </div>
             <div class="subheader mb-2 mt-3">分辨率</div>
             <div class="form-selectgroup form-selectgroup-pills">
               {% for filter_respix in Item.filter.respix %}
@@ -347,6 +357,26 @@
                 <input type="checkbox" name="filter_respix" value="{{ filter_respix }}" class="form-selectgroup-input"
                   onclick="filter_medias(this, '{{ Item.key }}', true)">
                 <span class="form-selectgroup-label">{{ filter_respix }}</span>
+              </label>
+              {% endfor %}
+            </div>
+            <div class="subheader mb-2 mt-3">制作组</div>
+            <div class="form-selectgroup form-selectgroup-pills">
+              {% for filter_releasegroup in Item.filter.releasegroup %}
+              <label class="form-selectgroup-item">
+                <input type="checkbox" name="filter_releasegroup" value="{{ filter_releasegroup }}" class="form-selectgroup-input"
+                  onclick="filter_medias(this, '{{ Item.key }}', true)">
+                <span class="form-selectgroup-label filter_releasegroup_span">{{ filter_releasegroup }}</span>
+              </label>
+              {% endfor %}
+            </div>
+            <div class="subheader mb-2 mt-2">促销</div>
+            <div class="form-selectgroup form-selectgroup-pills">
+              {% for filter_free in Item.filter.free %}
+              <label class="form-selectgroup-item">
+                <input type="checkbox" name="filter_free" value="{{ filter_free.value }}" class="form-selectgroup-input"
+                  onclick="filter_medias(this, '{{ Item.key }}', true)">
+                <span class="form-selectgroup-label">{{ filter_free.name }}</span>
               </label>
               {% endfor %}
             </div>
@@ -362,36 +392,6 @@
               {% endfor %}
             </div>
             {% endif %}
-            <div class="subheader mb-2 mt-2">促销</div>
-            <div class="form-selectgroup form-selectgroup-pills">
-              {% for filter_free in Item.filter.free %}
-              <label class="form-selectgroup-item">
-                <input type="checkbox" name="filter_free" value="{{ filter_free.value }}" class="form-selectgroup-input"
-                  onclick="filter_medias(this, '{{ Item.key }}', true)">
-                <span class="form-selectgroup-label">{{ filter_free.name }}</span>
-              </label>
-              {% endfor %}
-            </div>
-            <div class="subheader mb-2 mt-3">制作组</div>
-            <div class="form-selectgroup form-selectgroup-pills">
-              {% for filter_releasegroup in Item.filter.releasegroup %}
-              <label class="form-selectgroup-item">
-                <input type="checkbox" name="filter_releasegroup" value="{{ filter_releasegroup }}" class="form-selectgroup-input"
-                  onclick="filter_medias(this, '{{ Item.key }}', true)">
-                <span class="form-selectgroup-label filter_releasegroup_span">{{ filter_releasegroup }}</span>
-              </label>
-              {% endfor %}
-            </div>
-            <div class="subheader mb-2 mt-3">站点</div>
-            <div class="form-selectgroup form-selectgroup-pills">
-              {% for filter_site in Item.filter.site %}
-              <label class="form-selectgroup-item">
-                <input type="checkbox" name="filter_site" value="{{ filter_site }}" class="form-selectgroup-input"
-                  onclick="filter_medias(this, '{{ Item.key }}', true)">
-                <span class="form-selectgroup-label">{{ filter_site }}</span>
-              </label>
-              {% endfor %}
-            </div>
           </div>
         </div>
       </div>
