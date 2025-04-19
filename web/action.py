@@ -559,6 +559,11 @@ class WebAction:
         dl_dir = data.get("dir")
         dl_setting = data.get("setting")
         results = Searcher().get_search_result_by_id(dl_id)
+        if current_user.is_authenticated:
+            user_name = current_user.username
+        else:
+            # Handle case when user is not authenticated
+            user_name = "API"  # Or handle appropriately
         for res in results:
             dl_enclosure = res.ENCLOSURE if Sites().get_sites_by_url_domain(res.ENCLOSURE) else Torrent.format_enclosure(res.ENCLOSURE)
             if not dl_enclosure:
@@ -578,7 +583,7 @@ class WebAction:
                                                     download_dir=dl_dir,
                                                     download_setting=dl_setting,
                                                     in_from=SearchType.WEB,
-                                                    user_name=current_user.username)
+                                                    user_name=user_name)
             if not ret:
                 return {"retcode": -1, "retmsg": ret_msg}
         return {"retcode": 0, "retmsg": ""}

@@ -7,7 +7,7 @@ import sys
 # sys.path.append(project_root)
 
 # from app.helper import OcrHelper
-# from app.media.meta import MediaItem
+from app.media.meta import MediaItem
 from tests_utils import TestUtils
 
 def main():
@@ -80,6 +80,17 @@ def main():
     # video7_dict = TestUtils.guess_movie_info(video7)
     # video7_item = MediaItem(datas=video7_dict)
     # print(video7_item.to_dict_str())
+
+    video7 = "All or Nothing: Die Nationalmannschaft in Katar 2023 S01 1080p WEB-DL H264 DDP5.1-FAWR"
+    video7 = "[Sakurato] Yuru Camp Season 3 [01][AVC-8bit 1080p AAC][CHS].mp4"
+    video7 = "[Up to 21°C] 身為 VTuber 的我因為忘記關台而成了傳說 - 04 (Baha 1920x1080 AVC AAC MP4) [8DF7B7B4].mp4"
+    video7 = "No More Bets 2023 1080p NF WEB-DL x264 DDP5.1-ADWeb"
+    video7 = "Forrest Gump 1994 BluRay 1080p iPad AAC x264-HDHPad"
+    video7 = "冲锋陷阵.Heat.Team.2004.1080p.MyTVS.WEB-DL.H265.AAC-YingWEB"
+    video7 = "夺宝奇兵5.Indiana Jones and the Dial of Destiny.2023.2160p.HDR.H265.内嵌中英字幕.mp4"
+    video7_dict = TestUtils.guess_movie_info(video7)
+    video7_item = MediaItem(datas=video7_dict)
+    print(video7_item.to_dict_str())
     
     # ocr_result = OcrHelper().get_captcha_text(image_url="https://www.yht7.com/upload/image/20191109/1735560-20191109220533186-1855679599.jpg")
     # print(ocr_result)

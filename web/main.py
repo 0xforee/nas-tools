@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 from flask import Flask, request, json, render_template, make_response, session, send_from_directory, send_file, \
     redirect, Response
 from flask_compress import Compress
+from flask_cors import CORS
 from flask_login import LoginManager, login_user, login_required, current_user
 from flask_sock import Sock
 from icalendar import Calendar, Event, Alarm
@@ -72,6 +73,7 @@ App.config['SOCK_SERVER_OPTIONS'] = {'ping_interval': 25}
 App.config['SESSION_REFRESH_EACH_REQUEST'] = False
 App.secret_key = os.urandom(24)
 App.permanent_session_lifetime = datetime.timedelta(days=30)
+cors = CORS(App) # allow CORS for all domains on all routes.
 
 # Flask Socket
 Sock = Sock(App)

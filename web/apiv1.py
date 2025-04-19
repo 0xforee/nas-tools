@@ -1293,6 +1293,8 @@ class RecommendList(ClientResource):
     parser.add_argument('type', type=str, help='类型', location='form', required=True)
     parser.add_argument('subtype', type=str, help='子类型', location='form', required=True)
     parser.add_argument('page', type=int, help='页码', location='form', required=True)
+    parser.add_argument('keyword', type=str, help='关键字', location='form', required=False)
+    parser.add_argument('source', type=str, help='搜索站点', location='form', required=False)
 
     @recommend.doc(parser=parser)
     def post(self):
