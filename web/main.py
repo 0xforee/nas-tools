@@ -73,7 +73,11 @@ App.config['SOCK_SERVER_OPTIONS'] = {'ping_interval': 25}
 App.config['SESSION_REFRESH_EACH_REQUEST'] = False
 App.secret_key = os.urandom(24)
 App.permanent_session_lifetime = datetime.timedelta(days=30)
-cors = CORS(App) # allow CORS for all domains on all routes.
+
+# Allow CORS for internal networks (192.168.x.x), localhost, and 127.0.0.1
+# Regex matches full origin URLs with schema and optional port
+internal_network_regex = r'https?://(192\.168\.\d{1,3}\.\d{1,3}|localhost|127\.0\.0\.1)(:\d+)?$'
+cors = CORS(App, origins=internal_network_regex) # allow CORS for internal networks (192.168.x.x)
 
 # Flask Socket
 Sock = Sock(App)
