@@ -26,6 +26,13 @@
           <a href="javascript:show_sitetest_modal()" class="btn d-sm-none btn-icon">
             {{ SVG.activity_heartbeat() }}
           </a>
+          <a href="javascript:open_all_sites()" class="btn d-none d-sm-inline-block">
+            {{ SVG.link() }}
+            打开全部
+          </a>
+          <a href="javascript:open_all_sites()" class="btn d-sm-none btn-icon">
+            {{ SVG.link() }}
+          </a>
         </div>
       </div>
     </div>
@@ -946,4 +953,13 @@
     }
   });
 
+  // 打开全部站点
+  function open_all_sites() {
+    $('.grid-info-card .card-title a[target="_blank"]').each(function() {
+      let url = $(this).attr('href');
+      if (url && url !== 'javascript:void(0)') {
+        window.open(url, '_blank');
+      }
+    });
+  }
 </script>
