@@ -7,7 +7,10 @@ import hashlib
 from urllib.parse import quote, unquote, urlencode, urlparse
 
 import libtorrent
-from bencode import bencode, bdecode
+try:
+    from bencode import bencode, bdecode
+except ImportError:
+    from bencode import encode as bencode, decode as bdecode
 
 import log
 from app.utils import StringUtils

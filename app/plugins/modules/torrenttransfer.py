@@ -6,7 +6,10 @@ from threading import Event
 import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from bencode import bdecode, bencode
+try:
+    from bencode import bencode, bdecode
+except ImportError:
+    from bencode import encode as bencode, decode as bdecode
 
 from app.downloader import Downloader
 from app.media.meta import MetaInfo

@@ -27,7 +27,7 @@ decorator==5.1.1
 executing==1.2.0
 Flask==2.3.3
 Flask-Login==0.6.2
-fast-bencode==1.1.4
+bencode.py==4.0.0
 flask-compress==1.14
 flask-cors==4.0.0
 flask-restx==1.1.0
