@@ -10,7 +10,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Init Python 3.10.11
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10.11'
 
@@ -44,7 +44,7 @@ jobs:
       shell: pwsh
 
     - name: Upload windows file
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: windows
         path: D:/a/nas-tools/nas-tools/nas-tools/package/dist/nas-tools.exe
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Init Python 3.10.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10.11'
 
@@ -91,7 +91,7 @@ jobs:
         shell: pwsh
 
       - name: Upload linux file
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux-amd64
           path: /home/runner/work/nas-tools/nas-tools/nas-tools/package/dist/nas-tools.linux.amd64
@@ -100,13 +100,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set Up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set Up Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Package through pyinstaller
         run: |
@@ -117,7 +117,7 @@ jobs:
         shell: pwsh
 
       - name: Upload linux file
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux-arm64
           path: /home/runner/work/nas-tools/nas-tools/nas-tools/package/dist/nas-tools.linux.arm64
@@ -126,13 +126,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set Up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set Up Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Package through pyinstaller
         run: |
@@ -143,7 +143,7 @@ jobs:
         shell: pwsh
 
       - name: Upload linux file
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux-musl-amd64
           path: /home/runner/work/nas-tools/nas-tools/nas-tools/package/dist/nas-tools.linux.musl.amd64
@@ -152,13 +152,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set Up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set Up Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Ppackage through pyinstaller
         run: |
@@ -169,7 +169,7 @@ jobs:
         shell: pwsh
 
       - name: Upload linux file
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux-musl-arm64
           path: /home/runner/work/nas-tools/nas-tools/nas-tools/package/dist/nas-tools.linux.musl.arm64
@@ -179,7 +179,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ Windows-build, Linux-build-amd64, Linux-build-arm64, Linux-build-amd64-musl, Linux-build-arm64-musl ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Release version
         id: release_version
@@ -187,7 +187,7 @@ jobs:
           app_version=$(cat version.py |sed -ne "s/APP_VERSION\s=\s'v\(.*\)'/\1/gp")
           echo "app_version=$app_version" >> $GITHUB_ENV
       - name: Download exe and rename
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       - name: get release_informations
         shell: bash
         run: |
