@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 
 from web.backend.pro_user import ProUser
@@ -21,7 +22,10 @@ class SiteRankingManager:
     @staticmethod
     def _to_float(value, default=0.0):
         try:
-            return float(value)
+            f = float(value)
+            if math.isinf(f) or math.isnan(f):
+                return default
+            return f
         except Exception:
             return default
 
@@ -130,6 +134,21 @@ class SiteRankingManager:
             return current_level.get("order", 0) >= keep_level.get("order", 0)
         return str(current_level_name or "").strip().lower() == str(keep_account_level or "").strip().lower()
 
+    @staticmethod
+    def _normalize_ratio_for_ranking(value):
+        text = str(value).strip().lower()
+        if text in ["inf", "infinity", "∞"]:
+            return 10000.0
+        try:
+            ratio = float(value)
+            if math.isinf(ratio) or math.isnan(ratio):
+                return 10000.0
+            if ratio == 0 or ratio > 10000:
+                return 10000.0
+            return ratio
+        except Exception:
+            return 0.0
+
     def _requirement_progress(self, key, required_value, stats):
         required = self._to_float(required_value)
         if key == "weeks":
@@ -145,7 +164,7 @@ class SiteRankingManager:
             unit = "GiB"
             label = "Download"
         elif key == "ratio":
-            current = self._to_float(stats.get("ratio"))
+            current = self._normalize_ratio_for_ranking(stats.get("ratio"))
             unit = ""
             label = "Ratio"
         elif key == "bonus":

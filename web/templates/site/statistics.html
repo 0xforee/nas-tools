@@ -233,7 +233,7 @@
                         </div>
                       </td>
                       <td>
-                        <span class="d-none d-lg-block position-relative ranking-level-trigger"
+                        <span class="d-none d-lg-block position-relative ranking-level-trigger pe-5"
                               data-site="{{ item.site }}"
                               data-level="{{ item.user_level }}"
                               style="cursor:pointer; text-decoration: underline dotted;">
@@ -244,7 +244,7 @@
                           </span>
                           {% endif %}
                           {% if item.is_keep_account_level %}
-                          <span class="badge bg-green-lt text-green ms-1">保号</span>
+                          <span class="position-absolute top-0 end-0 badge bg-green-lt text-green">保号</span>
                           {% endif %}
                         </span>
                       </td>
@@ -1006,7 +1006,18 @@
       if (data.is_special_level) {
         return `<div class="card-body"><div class="fw-semibold mb-1">${data.current_level}<\/div><div class="text-muted">${data.special_level_description || data.message}<\/div><\/div>`;
       }
-      const rows = (data.requirements || []).slice(0, 3).map(item => rankingRequirementRow(item, true)).join('');
+      if (data.message) {
+        return `
+          <div class="card-body">
+            <div class="fw-semibold mb-2 text-danger">等级映射异常</div>
+            <div class="small text-muted mb-1">当前等级：${data.current_level || '-'}</div>
+            <div class="alert alert-danger py-2 px-3 mb-0" role="alert">${data.message}</div>
+          </div>
+        `;
+      }
+      const pendingRequirements = (data.requirements || []).filter(item => !item.met);
+      const rows = pendingRequirements.map(item => rankingRequirementRow(item, true)).join('');
+      const pendingBlock = rows || '<div class="text-muted" style="font-size:.72rem;">当前条件均已完成</div>';
       return `
         <div class="card-body">
           <div class="ranking-tooltip-head">
@@ -1019,8 +1030,7 @@
               <span class="value">${data.overall_progress}%</span>
             </div>
           </div>
-          ${rows}
-          <div class="text-muted mt-2" style="font-size:.72rem;">点击查看详情</div>
+          ${pendingBlock}
         </div>
       `;
     }
@@ -1028,14 +1038,41 @@
     function showRankingTooltip(target, data) {
       const tooltip = $('#ranking-tooltip');
       tooltip.html(renderRankingTooltip(data));
-      const offset = $(target).offset();
+
+      const rect = target.getBoundingClientRect();
+      const tooltipWidth = 320;
+      const margin = 10;
+      const viewportW = window.innerWidth;
+      const viewportH = window.innerHeight;
+
       tooltip.css({
-        left: offset.left,
-        top: offset.top + $(target).outerHeight() + 8,
-        position: 'absolute',
-        width: 320,
+        position: 'fixed',
+        width: tooltipWidth,
         'z-index': 1200,
+        'max-height': Math.max(220, viewportH - margin * 2),
+        overflow: 'auto'
       }).show();
+
+      const tooltipEl = tooltip[0];
+      const tooltipH = tooltipEl ? tooltipEl.offsetHeight : 0;
+
+      let left = rect.left;
+      if (left + tooltipWidth + margin > viewportW) {
+        left = viewportW - tooltipWidth - margin;
+      }
+      if (left < margin) {
+        left = margin;
+      }
+
+      let top = rect.bottom + 8;
+      if (top + tooltipH + margin > viewportH) {
+        top = rect.top - tooltipH - 8;
+      }
+      if (top < margin) {
+        top = margin;
+      }
+
+      tooltip.css({ left, top });
     }
 
     function renderRankingSteps(data) {
@@ -1049,7 +1086,7 @@
             <div class="ranking-step-dot"></div>
             <div class="ranking-step-label">${step.name}</div>
             ${step.state === 'current' ? '<div class="ranking-step-badge">当前等级</div>' : ''}
-            ${step.is_keep ? '<div class="ranking-step-keep">保级</div>' : ''}
+            ${step.is_keep ? '<div class="ranking-step-keep">保号</div>' : ''}
           </div>
         `;
       }).join('');
@@ -1150,6 +1187,22 @@
         }
         showRankingDetail(data);
       });
+    });
+
+    $('#ranking-detail').off('shown.bs.modal').on('shown.bs.modal', function () {
+      $('body').addClass('ranking-modal-open');
+    });
+
+    $('#ranking-detail').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+      $('body').removeClass('ranking-modal-open');
+    });
+
+    $('#ranking-detail').off('show.bs.modal').on('show.bs.modal', function () {
+      $('body').css('overflow', 'hidden');
+    });
+
+    $('#ranking-detail').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+      $('body').css('overflow', '');
     });
 
     // 显示统计数据图片生成设置

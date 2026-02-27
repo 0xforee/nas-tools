@@ -58,6 +58,30 @@ class WebAction:
     _actions = {}
     _commands = {}
 
+    @staticmethod
+    def _normalize_user_level(raw_level):
+        if raw_level is None:
+            return ""
+
+        text = str(raw_level)
+
+        # 优先取 img 的 alt/title 文本
+        m = re.search(r'alt\s*=\s*["\']([^"\']+)["\']', text, re.IGNORECASE)
+        if not m:
+            m = re.search(r'title\s*=\s*["\']([^"\']+)["\']', text, re.IGNORECASE)
+        if m:
+            text = m.group(1)
+
+        # 去除 HTML 标签
+        text = re.sub(r'<[^>]*>', '', text)
+
+        # 去掉前缀站点标识，如：(江湖儿女)
+        text = re.sub(r'^[\(\（][^\)\）]*[\)\）]\s*', '', text)
+        # 去掉后缀备注，如：Power User(憨声憨气)
+        text = re.sub(r'\s*[\(\（][^\)\）]*[\)\）]\s*$', '', text)
+
+        return text.strip()
+
     def __init__(self):
         # WEB请求响应
         self._actions = {
@@ -4686,6 +4710,7 @@ class WebAction:
             for item in statistics:
                 item["site_hash"] = StringUtils.md5_hash(item.get("site"))
         for item in statistics:
+            item['user_level'] = WebAction._normalize_user_level(item.get('user_level'))
             item['last_seen'] = TimeUtils.time_difference(item['last_seen'])
             item['update_at'] = TimeUtils.time_difference(item['update_at'])
             if TimeUtils.less_than_days(item['join_at'], 31):
@@ -4723,6 +4748,7 @@ class WebAction:
 
         site_stats = None
         for item in statistics:
+            item['user_level'] = WebAction._normalize_user_level(item.get('user_level'))
             if item.get("site") == site_name:
                 site_stats = item
                 break

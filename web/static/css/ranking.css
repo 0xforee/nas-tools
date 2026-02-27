@@ -2,8 +2,9 @@
   box-shadow: 0 14px 38px rgba(15, 23, 42, 0.18);
   border: 1px solid rgba(98, 105, 118, 0.18);
   border-radius: 0.75rem;
-  overflow: hidden;
+  overflow: auto;
   background: #fff;
+  contain: layout paint;
 }
 
 .ranking-detail-modal {
@@ -241,7 +242,7 @@
   grid-auto-columns: minmax(68px, 1fr);
   gap: 0.35rem;
   align-items: start;
-  padding: 0.3rem 0.25rem 1.85rem;
+  padding: 0.3rem 0.25rem 1rem;
   margin-bottom: 1rem;
   overflow-x: auto;
   overflow-y: hidden;
@@ -250,7 +251,7 @@
 
 .ranking-step-line {
   position: absolute;
-  top: 0.95rem;
+  top: 0.72rem;
   left: 0.8rem;
   right: 0.8rem;
   height: 2px;
@@ -296,10 +297,14 @@
 .ranking-step-current .ranking-step-dot {
   width: 1.12rem;
   height: 1.12rem;
-  margin-top: -0.08rem;
+  margin-top: -0.14rem;
   border-color: #3b82f6;
   background: #3b82f6;
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+.ranking-step-current {
+  padding-top: 0.02rem;
 }
 
 .ranking-step-current .ranking-step-label {
@@ -396,7 +401,9 @@
 }
 
 .ranking-step-keep {
-  margin-top: 0.26rem;
+  position: absolute;
+  right: -0.2rem;
+  top: -0.32rem;
   display: inline-block;
   font-size: 0.56rem;
   line-height: 1;
@@ -405,6 +412,7 @@
   background: rgba(47, 179, 68, 0.12);
   color: #1b8f35;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
@@ -417,6 +425,16 @@
     height: 1.7rem;
     font-size: 0.55rem;
   }
+}
+
+body.ranking-modal-open {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+body.ranking-modal-open .page-wrapper,
+body.ranking-modal-open .page-body {
+  overscroll-behavior: none;
 }
 
 .ranking-level-trigger {
