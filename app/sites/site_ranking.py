@@ -218,6 +218,7 @@ class SiteRankingManager:
                 "rule_url": "",
                 "is_special_level": False,
                 "special_level_description": "",
+                "status_type": "not_configured",
                 "message": "站点未配置等级数据"
             }
 
@@ -239,7 +240,8 @@ class SiteRankingManager:
                 "rule_url": rule_url,
                 "is_special_level": True,
                 "special_level_description": special_level.get("description", ""),
-                "message": "Special level does not participate in progression"
+                "status_type": "special_level",
+                "message": "特殊等级不参与晋升"
             }
 
         current_level = self._find_level(current_level_name, ranking_system)
@@ -257,7 +259,8 @@ class SiteRankingManager:
                 "rule_url": rule_url,
                 "is_special_level": False,
                 "special_level_description": "",
-                "message": "Current level is not mapped in ranking configuration"
+                "status_type": "mapping_error",
+                "message": "当前等级未在映射中配置"
             }
 
         next_level = self._next_level(current_level, ranking_system)
@@ -271,11 +274,12 @@ class SiteRankingManager:
                 "requirements": [],
                 "level_steps": self._build_level_steps(ranking_system, current_level_name, None, keep_account_level),
                 "keep_account_level": keep_account_level or "",
-                "current_is_keep": str(current_level_name or "").strip().lower() == str(keep_account_level or "").strip().lower(),
+                "current_is_keep": self._is_keep_reached(current_level_name, ranking_system, keep_account_level),
                 "rule_url": rule_url,
                 "is_special_level": False,
                 "special_level_description": "",
-                "message": "You are already at the highest configured level"
+                "status_type": "highest_level",
+                "message": "已达到最高等级"
             }
 
         requirements = []
@@ -291,10 +295,11 @@ class SiteRankingManager:
             "requirements": requirements,
             "level_steps": self._build_level_steps(ranking_system, current_level_name, next_level.get("name"), keep_account_level),
             "keep_account_level": keep_account_level or "",
-            "current_is_keep": str(current_level_name or "").strip().lower() == str(keep_account_level or "").strip().lower(),
+            "current_is_keep": self._is_keep_reached(current_level_name, ranking_system, keep_account_level),
             "rule_url": rule_url,
             "is_special_level": False,
             "special_level_description": "",
+            "status_type": "normal",
             "message": ""
         }
 

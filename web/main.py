@@ -612,52 +612,52 @@ def statistics():
     refresh_site = request.args.getlist("refresh_site")
     # 强制刷新所有
     refresh_force = True if request.args.get("refresh_force") else False
+    # 跳过后台刷新（用于页面自动二次加载，避免重复触发刷新）
+    skip_background_refresh = True if request.args.get("skip_background_refresh") else False
+
+    # 显式刷新（单站点/全站）时，保持同步刷新行为
+    if refresh_force or refresh_site:
+        SiteUserInfo().get_site_data(specify_sites=refresh_site, force=refresh_force)
+    # 普通访问：使用缓存数据，不自动刷新（有定时任务负责刷新）
+    # 只有当明确要求跳过后台刷新时才不进行任何刷新操作
+
+    # 站点用户数据（数据库缓存）
+    SiteUserStatistics = WebAction().get_site_user_statistics({"encoding": "DICT"}).get("data") or []
+
     # 总上传下载
     TotalUpload = 0
     TotalDownload = 0
     TotalSeedingSize = 0
     TotalSeeding = 0
+
     # 站点标签及上传下载
     SiteNames = []
     SiteUploads = []
     SiteDownloads = []
     SiteRatios = []
     SiteErrs = {}
-    # 站点上传下载
-    SiteData = SiteUserInfo().get_site_data(specify_sites=refresh_site, force=refresh_force)
-    if isinstance(SiteData, dict):
-        for name, data in SiteData.items():
-            if not data:
-                continue
-            up = data.get("upload", 0)
-            dl = data.get("download", 0)
-            ratio = data.get("ratio", 0)
-            seeding = data.get("seeding", 0)
-            seeding_size = data.get("seeding_size", 0)
-            err_msg = data.get("err_msg", "")
 
-            SiteErrs.update({name: err_msg})
+    for item in SiteUserStatistics:
+        name = item.get("site")
+        up = item.get("upload", 0) or 0
+        dl = item.get("download", 0) or 0
+        ratio = item.get("ratio", 0) or 0
+        seeding = item.get("seeding", 0) or 0
+        seeding_size = item.get("seeding_size", 0) or 0
+        if not name:
+            continue
+        if name in SiteNames:
+            continue
+        SiteNames.append(name)
+        SiteUploads.append(int(up))
+        SiteDownloads.append(int(dl))
+        SiteRatios.append(round(float(ratio), 1))
+        TotalUpload += int(up)
+        TotalDownload += int(dl)
+        TotalSeeding += int(seeding)
+        TotalSeedingSize += int(seeding_size)
 
-            if not up and not dl and not ratio:
-                continue
-            if not str(up).isdigit() or not str(dl).isdigit():
-                continue
-            if name not in SiteNames:
-                SiteNames.append(name)
-                TotalUpload += int(up)
-                TotalDownload += int(dl)
-                TotalSeeding += int(seeding)
-                TotalSeedingSize += int(seeding_size)
-                SiteUploads.append(int(up))
-                SiteDownloads.append(int(dl))
-                SiteRatios.append(round(float(ratio), 1))
-
-    # 近期上传下载各站点汇总
-    # CurrentUpload, CurrentDownload, _, _, _ = SiteUserInfo().get_pt_site_statistics_history(
-    #    days=2)
-
-    # 站点用户数据
-    SiteUserStatistics = WebAction().get_site_user_statistics({"encoding": "DICT"}).get("data")
+    auto_refresh_statistics = not refresh_force and not refresh_site and not skip_background_refresh
 
     return render_template("site/statistics.html",
                            TotalDownload=TotalDownload,
@@ -669,7 +669,8 @@ def statistics():
                            SiteRatios=SiteRatios,
                            SiteNames=SiteNames,
                            SiteErr=SiteErrs,
-                           SiteUserStatistics=SiteUserStatistics)
+                           SiteUserStatistics=SiteUserStatistics,
+                           AutoRefreshStatistics=auto_refresh_statistics)
 
 
 # 刷流任务页面

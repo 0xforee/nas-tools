@@ -943,7 +943,6 @@
     pie_dl.showLoading();
     pie_ul.showLoading();
 
-
     tableDataList = new List('table-site-user-data', {
       sortClass: 'table-sort',
       listClass: 'table-tbody',
@@ -1007,13 +1006,25 @@
         return `<div class="card-body"><div class="fw-semibold mb-1">${data.current_level}<\/div><div class="text-muted">${data.special_level_description || data.message}<\/div><\/div>`;
       }
       if (data.message) {
-        return `
-          <div class="card-body">
-            <div class="fw-semibold mb-2 text-danger">等级映射异常</div>
-            <div class="small text-muted mb-1">当前等级：${data.current_level || '-'}</div>
-            <div class="alert alert-danger py-2 px-3 mb-0" role="alert">${data.message}</div>
-          </div>
-        `;
+        if (data.status_type === 'highest_level') {
+          return `
+            <div class="card-body">
+              <div class="fw-semibold mb-2 text-primary">已达到最高等级</div>
+              <div class="small text-muted mb-1">当前等级：${data.current_level || '-'}</div>
+              <div class="alert alert-info py-2 px-3 mb-0" role="alert">${data.message}</div>
+            </div>
+          `;
+        }
+        if (data.status_type === 'mapping_error') {
+          return `
+            <div class="card-body">
+              <div class="fw-semibold mb-2 text-danger">等级映射异常</div>
+              <div class="small text-muted mb-1">当前等级：${data.current_level || '-'}</div>
+              <div class="alert alert-danger py-2 px-3 mb-0" role="alert">${data.message}</div>
+            </div>
+          `;
+        }
+        return `<div class="card-body"><div class="fw-semibold mb-1">${data.current_level || '-'}<\/div><div class="text-muted">${data.message}<\/div><\/div>`;
       }
       const pendingRequirements = (data.requirements || []).filter(item => !item.met);
       const rows = pendingRequirements.map(item => rankingRequirementRow(item, true)).join('');
@@ -1033,6 +1044,10 @@
           ${pendingBlock}
         </div>
       `;
+    }
+
+    function hideRankingTooltip() {
+      $('#ranking-tooltip').hide();
     }
 
     function showRankingTooltip(target, data) {
@@ -1175,7 +1190,21 @@
     });
 
     $(document).on('mouseleave', '.ranking-level-trigger', function () {
-      $('#ranking-tooltip').hide();
+      hideRankingTooltip();
+    });
+
+    $(window).on('scroll resize', function () {
+      hideRankingTooltip();
+    });
+
+    $(document).on('click', function (e) {
+      if (!$(e.target).closest('.ranking-level-trigger, #ranking-tooltip').length) {
+        hideRankingTooltip();
+      }
+    });
+
+    $(window).on('beforeunload', function () {
+      hideRankingTooltip();
     });
 
     $(document).on('click', '.ranking-level-trigger', function () {
@@ -1195,14 +1224,11 @@
 
     $('#ranking-detail').off('hidden.bs.modal').on('hidden.bs.modal', function () {
       $('body').removeClass('ranking-modal-open');
+      $('body').css('overflow', '');
     });
 
     $('#ranking-detail').off('show.bs.modal').on('show.bs.modal', function () {
       $('body').css('overflow', 'hidden');
-    });
-
-    $('#ranking-detail').off('hidden.bs.modal').on('hidden.bs.modal', function () {
-      $('body').css('overflow', '');
     });
 
     // 显示统计数据图片生成设置
