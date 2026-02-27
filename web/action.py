@@ -39,6 +39,7 @@ from app.rsschecker import RssChecker
 from app.scheduler import Scheduler
 from app.searcher import Searcher
 from app.sites import Sites, SiteUserInfo, SiteCookie, SiteConf
+from app.sites.site_ranking import SiteRankingManager
 from app.subscribe import Subscribe
 from app.sync import Sync
 from app.torrentremover import TorrentRemover
@@ -207,6 +208,7 @@ class WebAction:
             "list_brushtask_torrents": self.__list_brushtask_torrents,
             "set_system_config": self.__set_system_config,
             "get_site_user_statistics": self.get_site_user_statistics,
+            "get_user_ranking_status": self.get_user_ranking_status,
             "send_plugin_message": self.send_plugin_message,
             "send_custom_message": self.send_custom_message,
             "media_detail": self.media_detail,
@@ -4690,7 +4692,45 @@ class WebAction:
                 item['level_description'] = "新手"
             else:
                 item['level_description'] = ""
+
+            ranking_info = SiteRankingManager().get_site_ranking_info(site_name=item.get('site'),
+                                                                      site_url=item.get('url'))
+            keep_level = (ranking_info or {}).get('keep_account_level')
+            current_level = item.get('user_level')
+            item['keep_account_level'] = keep_level or ""
+            ranking_system = (ranking_info or {}).get('ranking_system') or {}
+            keep_level_obj = SiteRankingManager._find_level(keep_level, ranking_system) if keep_level else None
+            current_level_obj = SiteRankingManager._find_level(current_level, ranking_system) if current_level else None
+            if keep_level_obj and current_level_obj:
+                item['is_keep_account_level'] = current_level_obj.get('order', 0) >= keep_level_obj.get('order', 0)
+            else:
+                item['is_keep_account_level'] = bool(keep_level and current_level and
+                                                     str(current_level).strip().lower() == str(keep_level).strip().lower())
         return {"code": 0, "data": statistics}
+
+    @staticmethod
+    def get_user_ranking_status(data):
+        """
+        获取站点用户等级进度信息
+        """
+        site_name = data.get("site")
+        if not site_name:
+            return {"code": 1, "msg": "未指定站点"}
+
+        statistics = SiteUserInfo().get_site_user_statistics(sites=[site_name], encoding="DICT")
+        if not statistics:
+            return {"code": 1, "msg": f"未找到站点 {site_name} 的统计数据"}
+
+        site_stats = None
+        for item in statistics:
+            if item.get("site") == site_name:
+                site_stats = item
+                break
+        if not site_stats:
+            site_stats = statistics[0]
+
+        status = SiteRankingManager().build_status(site_stats)
+        return {"code": 0, "data": status}
 
     @staticmethod
     def send_plugin_message(data):

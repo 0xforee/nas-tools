@@ -366,6 +366,38 @@ class ProUser(UserMixin):
                            render=render,
                            pri=pri)
 
+    def get_site_config(self, name=None, domain=None, siteid=None):
+        if not self._user_sites or "indexer" not in self._user_sites:
+            return None
+
+        indexer_list = self._user_sites.get("indexer", [])
+        if not indexer_list:
+            return None
+
+        name_lower = str(name).strip().lower() if name else None
+        domain_normalized = StringUtils.get_url_domain(domain) if domain else None
+        siteid_str = str(siteid) if siteid is not None else None
+
+        for item in indexer_list:
+            if siteid_str and str(item.get("id")) == siteid_str:
+                return item
+
+            if name_lower and str(item.get("name", "")).strip().lower() == name_lower:
+                return item
+
+            if domain_normalized:
+                item_domain = StringUtils.get_url_domain(item.get("domain", ""))
+                if item_domain and item_domain == domain_normalized:
+                    return item
+
+        return None
+
+    def get_site_user_ranking_info(self, name=None, domain=None, siteid=None):
+        site = self.get_site_config(name=name, domain=domain, siteid=siteid)
+        if not site:
+            return None
+        return site.get("user_ranking_info")
+
     def get_public_sites(self):
         if self._public_sites:
             return self._public_sites

@@ -1,5 +1,6 @@
 {% import 'macro/svg.html' as SVG %}
 {% import 'macro/oops.html' as OOPS %}
+<link rel="stylesheet" href="static/css/ranking.css">
 <div class="container-xl">
   <div class="page-header d-print-none">
     <div class="row align-items-center">
@@ -232,11 +233,18 @@
                         </div>
                       </td>
                       <td>
-                        <span class="d-none d-lg-block position-relative">{{ item.user_level }}
+                        <span class="d-none d-lg-block position-relative ranking-level-trigger"
+                              data-site="{{ item.site }}"
+                              data-level="{{ item.user_level }}"
+                              style="cursor:pointer; text-decoration: underline dotted;">
+                          {{ item.user_level }}
                           {% if item.level_description %}
                           <span class="position-absolute badge bottom-50 p-0 bg-yellow ">
                               <span class="fs-6">{{item.level_description}}</span>
                           </span>
+                          {% endif %}
+                          {% if item.is_keep_account_level %}
+                          <span class="badge bg-green-lt text-green ms-1">保号</span>
                           {% endif %}
                         </span>
                       </td>
@@ -399,6 +407,28 @@
     </div>
     </div>
   </div>
+
+  <div id="ranking-tooltip" class="ranking-tooltip card" style="display:none;"></div>
+
+  <div class="modal modal-blur fade" id="ranking-detail" tabindex="-1" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+      <div class="modal-content ranking-detail-modal">
+        <div class="modal-header ranking-detail-modal-header">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-yellow-lt text-yellow">RANKING</span>
+            <h5 class="modal-title mb-0" id="ranking-detail-title">等级进度</h5>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="ranking-detail-body"></div>
+        <div class="modal-footer ranking-detail-modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+          <a id="ranking-detail-rule-btn" href="javascript:void(0)" target="_blank" rel="noopener noreferrer" class="btn btn-primary disabled" aria-disabled="true">查看完整规则</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script type="text/javascript">
     $('#site-activity').off('shown.bs.modal').on('shown.bs.modal', function (e) {
       let site_name = $('#site-activity-name').val();
@@ -923,6 +953,203 @@
         {attr: 'data-data', name: 'sort-data'},
         {attr: 'data-ratio', name: 'sort-ratio'}
       ]
+    });
+
+    const rankingCache = new Map();
+
+    function rankingRequirementMeta(item) {
+      const key = item.key || '';
+      if (key === 'download_gb') {
+        return { icon: '↓', iconClass: 'text-blue', barClass: 'bg-blue', pendingClass: 'text-red', metText: '已达成' };
+      }
+      if (key === 'weeks') {
+        return { icon: '⏱', iconClass: 'text-orange', barClass: 'bg-orange', pendingClass: 'text-orange', metText: '已达成' };
+      }
+      if (key === 'ratio') {
+        return { icon: '%', iconClass: 'text-cyan', barClass: 'bg-cyan', pendingClass: 'text-cyan', metText: '已达成' };
+      }
+      if (key === 'bonus') {
+        return { icon: '✦', iconClass: 'text-purple', barClass: 'bg-purple', pendingClass: 'text-purple', metText: '已达成' };
+      }
+      return { icon: '•', iconClass: 'text-muted', barClass: 'bg-blue', pendingClass: 'text-orange', metText: '已达成' };
+    }
+
+    function rankingRequirementRow(item, compact) {
+      const unit = item.unit || '';
+      const meta = rankingRequirementMeta(item);
+      const needText = item.met ? meta.metText : `还需 ${item.need}${unit ? ' ' + unit : ''}`;
+      const barClass = item.met ? 'bg-green' : meta.barClass;
+      const progress = Math.max(0, Math.min(item.progress || 0, 100));
+      return `
+        <div class="ranking-req-row ${compact ? 'ranking-req-row-compact' : ''}">
+          <div class="ranking-req-top d-flex justify-content-between align-items-center">
+            <span class="fw-semibold d-flex align-items-center gap-1">
+              <span class="ranking-req-icon ${meta.iconClass}">${meta.icon}</span>${item.label}
+            </span>
+            <span class="text-muted">${item.current} / ${item.required}${unit ? ' ' + unit : ''}</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar ${barClass}" style="width:${progress}%"></div>
+          </div>
+          <div class="ranking-req-meta">
+            <span class="${item.met ? 'text-green' : meta.pendingClass}">${needText}</span>
+            <span class="text-muted">${progress}%</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRankingTooltip(data) {
+      if (!data.configured) {
+        return `<div class="card-body"><div class="fw-semibold mb-1">${data.current_level || '-'}<\/div><div class="text-muted">${data.message || '暂无等级晋升数据'}<\/div><\/div>`;
+      }
+      if (data.is_special_level) {
+        return `<div class="card-body"><div class="fw-semibold mb-1">${data.current_level}<\/div><div class="text-muted">${data.special_level_description || data.message}<\/div><\/div>`;
+      }
+      const rows = (data.requirements || []).slice(0, 3).map(item => rankingRequirementRow(item, true)).join('');
+      return `
+        <div class="card-body">
+          <div class="ranking-tooltip-head">
+            <div>
+              <div class="ranking-tooltip-level">下一等级</div>
+              <div class="ranking-tooltip-next">${data.next_level || '最高级'} </div>
+            </div>
+            <div class="ranking-tooltip-progress">
+              <span class="label">总进度</span>
+              <span class="value">${data.overall_progress}%</span>
+            </div>
+          </div>
+          ${rows}
+          <div class="text-muted mt-2" style="font-size:.72rem;">点击查看详情</div>
+        </div>
+      `;
+    }
+
+    function showRankingTooltip(target, data) {
+      const tooltip = $('#ranking-tooltip');
+      tooltip.html(renderRankingTooltip(data));
+      const offset = $(target).offset();
+      tooltip.css({
+        left: offset.left,
+        top: offset.top + $(target).outerHeight() + 8,
+        position: 'absolute',
+        width: 320,
+        'z-index': 1200,
+      }).show();
+    }
+
+    function renderRankingSteps(data) {
+      const steps = data.level_steps || [];
+      if (!steps.length) {
+        return '';
+      }
+      const items = steps.map(step => {
+        return `
+          <div class="ranking-step-item ranking-step-${step.state}">
+            <div class="ranking-step-dot"></div>
+            <div class="ranking-step-label">${step.name}</div>
+            ${step.state === 'current' ? '<div class="ranking-step-badge">当前等级</div>' : ''}
+            ${step.is_keep ? '<div class="ranking-step-keep">保级</div>' : ''}
+          </div>
+        `;
+      }).join('');
+      return `<div class="ranking-step-line-wrap"><div class="ranking-step-line"></div>${items}</div>`;
+    }
+
+    function showRankingDetail(data) {
+      const title = `${data.site || ''} 等级进度`;
+      $('#ranking-detail-title').text(title);
+      const ruleBtn = $('#ranking-detail-rule-btn');
+      if (data.rule_url) {
+        ruleBtn.removeClass('disabled').removeAttr('aria-disabled').attr('href', data.rule_url);
+      } else {
+        ruleBtn.addClass('disabled').attr('aria-disabled', 'true').attr('href', 'javascript:void(0)');
+      }
+      if (!data.configured) {
+        const ruleBtn = $('#ranking-detail-rule-btn');
+        ruleBtn.addClass('disabled').attr('aria-disabled', 'true').attr('href', 'javascript:void(0)');
+        $('#ranking-detail-body').html(`<div class="text-muted">${data.message || '暂无等级晋升数据'}<\/div>`);
+        return;
+      }
+      if (data.is_special_level) {
+        $('#ranking-detail-body').html(`
+          <div class="ranking-special text-center">
+            <div class="ranking-special-badge">特殊等级<\/div>
+            <div class="ranking-special-avatar mb-3">★<\/div>
+            <h4 class="mb-2">${data.current_level}<\/h4>
+            <p class="mb-0 text-muted">${data.special_level_description || data.message}<\/p>
+          <\/div>
+        `);
+      } else {
+        const requirements = data.requirements || [];
+        const rows = requirements.map(item => rankingRequirementRow(item, false)).join('');
+        const completedCount = requirements.filter(item => item.met).length;
+        const stepLine = renderRankingSteps(data);
+        $('#ranking-detail-body').html(`
+          <div class="ranking-dialog-shell">
+            ${stepLine}
+
+            <div class="ranking-summary-grid">
+              <div class="ranking-summary-card">
+                <div class="ranking-summary-label">总进度</div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div class="ranking-summary-value">${data.overall_progress}%</div>
+                  <span class="badge bg-green-lt text-green">${data.overall_progress}%</span>
+                </div>
+                <div class="progress"><div class="progress-bar bg-primary" style="width:${data.overall_progress}%"></div></div>
+                <div class="ranking-summary-note">距离下一等级已经很接近了</div>
+              </div>
+              <div class="ranking-summary-card">
+                <div class="ranking-summary-label">下一等级</div>
+                <div class="ranking-summary-value text-purple">${data.next_level || '最高级'}</div>
+                <div class="ranking-summary-note">已完成 ${completedCount}/${requirements.length} 项条件</div>
+              </div>
+            </div>
+
+            <div class="ranking-detail-req-title">晋升条件</div>
+            <div class="ranking-req-list">${rows}</div>
+          </div>
+        `);
+      }
+      $('#ranking-detail').modal('show');
+    }
+
+    function fetchRankingStatus(siteName, callback) {
+      if (rankingCache.has(siteName)) {
+        callback(rankingCache.get(siteName));
+        return;
+      }
+      ajax_post('get_user_ranking_status', {site: siteName}, function(ret){
+        if (ret.code === 0 && ret.data) {
+          rankingCache.set(siteName, ret.data);
+          callback(ret.data);
+        } else {
+          callback({configured:false, current_level:'-', message: ret.msg || '暂无等级晋升数据'});
+        }
+      });
+    }
+
+    $(document).on('mouseenter', '.ranking-level-trigger', function () {
+      const siteName = $(this).data('site');
+      const target = this;
+      fetchRankingStatus(siteName, function(data){
+        showRankingTooltip(target, data);
+      });
+    });
+
+    $(document).on('mouseleave', '.ranking-level-trigger', function () {
+      $('#ranking-tooltip').hide();
+    });
+
+    $(document).on('click', '.ranking-level-trigger', function () {
+      const siteName = $(this).data('site');
+      fetchRankingStatus(siteName, function(data){
+        if (!data.configured) {
+          show_warn_modal(data.message || '该站点未配置等级系统');
+          return;
+        }
+        showRankingDetail(data);
+      });
     });
 
     // 显示统计数据图片生成设置
