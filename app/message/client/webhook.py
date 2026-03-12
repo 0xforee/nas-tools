@@ -2,6 +2,7 @@ import json
 from threading import Lock
 
 import requests
+from jinja2 import Template
 
 from app.message.client._base import _IMessageClient
 from app.utils import ExceptionUtils
@@ -18,7 +19,8 @@ class Webhook(_IMessageClient):
     _url = None
     _method = None
     _query_params = None
-    _json_body = None
+    _json_tpl = None
+    _json_list_tpl = None
     _token = None
 
     def __init__(self, config):
@@ -36,12 +38,29 @@ class Webhook(_IMessageClient):
         except json.JSONDecodeError as e:
             raise ValueError(f"{attr_name} Json解析失败：{json_str}") from e
 
+    @classmethod
+    def __render_template(cls, template_str, variables):
+        """
+        使用 jinja2 模板引擎渲染模板字符串
+        支持的变量:
+          - 单条消息: title, text, image, url, user_id
+          - 列表消息: title, user_id, medias (数组，每项包含: title, url, type, vote)
+        """
+        if not template_str:
+            return None
+        try:
+            template = Template(template_str)
+            return template.render(**variables)
+        except Exception as e:
+            raise ValueError(f"模板渲染失败：{str(e)}") from e
+
     def init_config(self):
         if self._client_config:
             self._url = self._client_config.get("url")
             self._method = self._client_config.get("method")
             self._query_params = self.__parse_json(self._client_config.get("query_params"), 'query_params')
-            self._json_body = self.__parse_json(self._client_config.get("json_body"), 'json_body')
+            self._json_tpl = self._client_config.get("json_tpl", "")
+            self._json_list_tpl = self._client_config.get("json_list_tpl", "")
             self._token = self._client_config.get("token")
 
     @classmethod
@@ -65,19 +84,36 @@ class Webhook(_IMessageClient):
         if not self._method:
             return False, "method参数未配置"
         try:
-            media_data = {
+            # 模板变量
+            variables = {
                 'title': title,
                 'text': text,
                 'image': image,
                 'url': url,
                 'user_id': user_id
             }
+
             query_params = self._query_params.copy() if self._query_params else {}
-            json_body = self._json_body.copy() if self._json_body else {}
-            if self._method == 'GET':
-                query_params.update(media_data)
+
+            # 渲染JSON模板
+            if self._json_tpl:
+                rendered_tpl = self.__render_template(self._json_tpl, variables)
+                if rendered_tpl:
+                    json_body = json.loads(rendered_tpl)
+                else:
+                    json_body = {}
             else:
-                json_body.update(media_data)
+                # 模板为空时，使用默认变量结构
+                json_body = {k: v for k, v in variables.items() if v}
+
+            if self._method == 'GET':
+                query_params.update(variables)
+            else:
+                # 如果模板中没有定义某些字段，则添加它们
+                for key, value in variables.items():
+                    if value and key not in json_body:
+                        json_body[key] = value
+
             return self.__send_request(query_params, json_body)
 
         except Exception as msg_e:
@@ -107,12 +143,30 @@ class Webhook(_IMessageClient):
             } for media in medias]
 
             query_params = self._query_params.copy() if self._query_params else {}
-            json_body = self._json_body.copy() if self._json_body else {}
-            json_body.update({
+
+            # 模板变量
+            variables = {
                 'title': title,
-                'user_id': title,
-                'medias': medias_data,
-            })
+                'user_id': user_id,
+                'medias': medias_data
+            }
+
+            # 渲染JSON模板（使用列表消息模板）
+            if self._json_list_tpl:
+                rendered_tpl = self.__render_template(self._json_list_tpl, variables)
+                if rendered_tpl:
+                    json_body = json.loads(rendered_tpl)
+                else:
+                    json_body = {}
+            else:
+                # 模板为空时，使用默认变量结构
+                json_body = {k: v for k, v in variables.items() if v}
+
+            # 如果模板中没有定义某些字段，则添加它们
+            for key, value in variables.items():
+                if value and key not in json_body:
+                    json_body[key] = value
+
             return self.__send_request(query_params, json_body)
         except Exception as msg_e:
             ExceptionUtils.exception_traceback(msg_e)

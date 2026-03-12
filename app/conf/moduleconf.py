@@ -477,6 +477,14 @@ class ModuleConf(object):
                         },
                         "default": "POST"
                     },
+                    "token": {
+                        "id": "token",
+                        "required": False,
+                        "title": "Token",
+                        "tooltip": "会放在Header的Authorization中",
+                        "type": "text",
+                        "placeholder": """Authorization-Token"""
+                    },
                     "query_params": {
                         "id": "query_params",
                         "required": False,
@@ -485,21 +493,21 @@ class ModuleConf(object):
                         "type": "text",
                         "placeholder": """{"search": "keyword"}"""
                     },
-                    "json_body": {
-                        "id": "json_body",
+                    "json_tpl": {
+                        "id": "json_tpl",
                         "required": False,
-                        "title": "额外请求体",
-                        "tooltip": "JSON字符串，GET方法中被忽略，请勿使用title/text/image/url/user_id/medias作为key",
-                        "type": "text",
-                        "placeholder": """{"id": 123, "name": "abcd"}"""
+                        "title": "单条消息模板",
+                        "tooltip": "Jinja2 JSON模板，用于单条消息。可用变量：title, text, image, url, user_id。为空时使用默认结构：{title, text, image, url, user_id}。GET方法中被忽略",
+                        "type": "textarea",
+                        "placeholder": """{\n  "title": "{{ title }}",\n  "text": "{{ text }}",\n  "image": "{{ image }}",\n  "url": "{{ url }}",\n  "user_id": "{{ user_id }}"\n}"""
                     },
-                    "token": {
-                        "id": "token",
+                    "json_list_tpl": {
+                        "id": "json_list_tpl",
                         "required": False,
-                        "title": "Token",
-                        "tooltip": "会放在Header的Authorization中",
-                        "type": "text",
-                        "placeholder": """Authorization-Token"""
+                        "title": "列表消息模板",
+                        "tooltip": "Jinja2 JSON模板，用于列表消息。可用变量：title, user_id, medias（数组，每项包含：title, url, type, vote）。为空时使用默认结构：{title, user_id, medias}",
+                        "type": "textarea",
+                        "placeholder": """{\n  "title": "{{ title }}",\n  "user_id": "{{ user_id }}",\n  "items": [\n    {% for media in medias %}\n    {\n      "title": "{{ media.title }}",\n      "url": "{{ media.url }}",\n      "type": "{{ media.type }}",\n      "vote": "{{ media.vote }}"\n    }{% if not loop.last %},{% endif %}\n    {% endfor %}\n  ]\n}"""
                     },
                 }
             },
