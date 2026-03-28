@@ -185,6 +185,7 @@ class SiteUserInfo(object):
                     pass
 
         try:
+            log.info(f"【Sites】[{site_name}] Building site user info...")
             site_user_info = self.build(url=site_url,
                                         site_id=site_id,
                                         site_name=site_name,
@@ -192,10 +193,13 @@ class SiteUserInfo(object):
                                         ua=ua,
                                         emulate=chrome,
                                         proxy=proxy)
+            log.info(f"【Sites】[{site_name}] Site user info built: {'OK' if site_user_info else 'Failed'}")
             if site_user_info:
                 log.debug(f"【Sites】站点 {site_name} 开始以 {site_user_info.site_schema()} 模型解析")
                 # 开始解析
+                log.info(f"【Sites】[{site_name}] Parsing site user info...")
                 site_user_info.parse()
+                log.info(f"【Sites】[{site_name}] Site user info parsed.")
                 log.debug(f"【Sites】站点 {site_name} 解析完成")
 
                 # 获取不到数据时，仅返回错误信息，不做历史数据更新
@@ -305,7 +309,9 @@ class SiteUserInfo(object):
         if not self.sites.get_sites():
             return
 
+        log.info("【Sites】Attempting to acquire lock for refresh...")
         with lock:
+            log.info("【Sites】Lock acquired for refresh.")
 
             start_time = datetime.now()
             log.info(f"【Sites】开始刷新所有站点数据... Force: {force}, Sites: {specify_sites or 'All'}")
@@ -333,8 +339,10 @@ class SiteUserInfo(object):
             log.info(f"【Sites】共 {len(refresh_sites)} 个站点待刷新，开始并行抓取...")
             # 并发刷新
             with ThreadPool(min(len(refresh_sites), self._MAX_CONCURRENCY)) as p:
+                log.info(f"【Sites】Starting parallel refresh with {min(len(refresh_sites), self._MAX_CONCURRENCY)} threads...")
                 site_user_infos = p.map(self.__refresh_site_data, refresh_sites)
                 site_user_infos = [info for info in site_user_infos if info]
+            log.info("【Sites】Parallel refresh finished.")
 
             log.info(f"【DB】站点数据抓取完成，成功 {len(site_user_infos)} 个。开始更新数据库...")
             # 登记历史数据
