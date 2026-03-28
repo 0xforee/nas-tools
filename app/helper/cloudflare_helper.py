@@ -141,7 +141,7 @@ def _evil_logic(driver: WebDriver):
                 break
 
             except TimeoutException:
-                log.debug("Timeout waiting for selector")
+                log.info(f"【Cloudflare】Attempt {attempt}: Timed out waiting for challenge to resolve, trying to click verification.")
 
                 click_verify(driver)
 

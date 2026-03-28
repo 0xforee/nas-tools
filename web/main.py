@@ -617,7 +617,9 @@ def statistics():
 
     # 显式刷新（单站点/全站）时，保持同步刷新行为
     if refresh_force or refresh_site:
+        log.info(f"【Web】开始执行站点刷新任务... Force: {refresh_force}, Site: {refresh_site or 'All'}")
         SiteUserInfo().get_site_data(specify_sites=refresh_site, force=refresh_force)
+        log.info(f"【Web】站点刷新任务执行完成。")
     # 普通访问：使用缓存数据，不自动刷新（有定时任务负责刷新）
     # 只有当明确要求跳过后台刷新时才不进行任何刷新操作
 

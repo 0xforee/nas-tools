@@ -157,6 +157,7 @@ class SiteUserInfo(object):
         """
         site_id = site_info.get("id")
         site_name = site_info.get("name")
+        log.info(f"【Sites】开始刷新站点：{site_name}")
         site_url = site_info.get("strict_url")
         original_site_url = site_url
         if not site_url:
@@ -306,6 +307,9 @@ class SiteUserInfo(object):
 
         with lock:
 
+            start_time = datetime.now()
+            log.info(f"【Sites】开始刷新所有站点数据... Force: {force}, Sites: {specify_sites or 'All'}")
+
             if not force \
                     and not specify_sites \
                     and self._last_update_time:
@@ -323,13 +327,16 @@ class SiteUserInfo(object):
                                  site.get("name") in specify_sites]
 
             if not refresh_sites:
+                log.info("【Sites】没有需要刷新的站点，任务退出。")
                 return
 
+            log.info(f"【Sites】共 {len(refresh_sites)} 个站点待刷新，开始并行抓取...")
             # 并发刷新
             with ThreadPool(min(len(refresh_sites), self._MAX_CONCURRENCY)) as p:
                 site_user_infos = p.map(self.__refresh_site_data, refresh_sites)
                 site_user_infos = [info for info in site_user_infos if info]
 
+            log.info(f"【DB】站点数据抓取完成，成功 {len(site_user_infos)} 个。开始更新数据库...")
             # 登记历史数据
             self.dbhelper.insert_site_statistics_history(site_user_infos)
             # 实时用户数据
@@ -340,9 +347,11 @@ class SiteUserInfo(object):
             self.dbhelper.update_site_seed_info(site_user_infos)
             # 站点图标重新加载
             self.sites.init_favicons()
+            log.info("【DB】数据库更新完成。")
 
             # 更新时间
             self._last_update_time = datetime.now()
+            log.info(f"【Sites】所有站点数据刷新流程结束，总耗时: {round((datetime.now() - start_time).total_seconds(), 2)}s")
 
     def get_pt_site_statistics_history(self, days=7, end_day=None):
         """
