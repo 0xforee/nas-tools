@@ -12,6 +12,7 @@ except ImportError:
     from bencode import encode as bencode, decode as bdecode
 
 from app.downloader import Downloader
+from app.downloader.client.qbittorrent import QB_PAUSED_UPLOAD_STATES
 from app.media.meta import MetaInfo
 from app.plugins.modules._base import _IPluginModule
 from app.utils import Torrent
@@ -631,7 +632,7 @@ class TorrentTransfer(_IPluginModule):
         判断种子是否可以做种并处于暂停状态
         """
         try:
-            return torrent.get("state") == "pausedUP" and torrent.get("tracker") if dl_type == DownloaderType.QB \
+            return torrent.get("state") in QB_PAUSED_UPLOAD_STATES and torrent.get("tracker") if dl_type == DownloaderType.QB \
                 else (torrent.status.stopped and torrent.percent_done == 1 and torrent.trackers)
         except Exception as e:
             print(str(e))

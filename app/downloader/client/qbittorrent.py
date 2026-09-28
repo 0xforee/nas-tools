@@ -11,6 +11,11 @@ from app.downloader.client._base import _IDownloadClient
 from app.utils import ExceptionUtils, StringUtils
 from app.utils.types import DownloaderType
 
+# qBittorrent v5.0（WebAPI 2.11.0）起把暂停状态由 pausedDL/pausedUP 改名为
+# stoppedDL/stoppedUP，这里新旧命名一并收录，以同时兼容不同版本的下载器
+QB_PAUSED_DOWNLOAD_STATES = ("pausedDL", "stoppedDL")
+QB_PAUSED_UPLOAD_STATES = ("pausedUP", "stoppedUP")
+
 
 class Qbittorrent(_IDownloadClient):
     # 下载器ID
@@ -667,7 +672,7 @@ class Qbittorrent(_IDownloadClient):
         for torrent in Torrents:
             # 进度
             progress = round(torrent.get('progress') * 100, 1)
-            if torrent.get('state') in ['pausedDL']:
+            if torrent.get('state') in QB_PAUSED_DOWNLOAD_STATES:
                 state = "Stoped"
                 speed = "已暂停"
             else:
