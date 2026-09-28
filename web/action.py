@@ -672,12 +672,14 @@ class WebAction:
             if media_info:
                 media_info.site = "WEB"
             # 添加下载
-            Downloader().download(media_info=media_info,
-                                  download_dir=dl_dir,
-                                  download_setting=dl_setting,
-                                  torrent_file=file_path,
-                                  in_from=SearchType.WEB,
-                                  user_name=current_user.username)
+            _, ret, _, ret_msg = Downloader().download(media_info=media_info,
+                                                       download_dir=dl_dir,
+                                                       download_setting=dl_setting,
+                                                       torrent_file=file_path,
+                                                       in_from=SearchType.WEB,
+                                                       user_name=current_user.username)
+            if not ret:
+                return {"code": -1, "msg": ret_msg or "添加下载失败"}
         # 下载链接
         if urls and not isinstance(urls, list):
             urls = [urls]
@@ -691,11 +693,13 @@ class WebAction:
                     return {"code": -1, "msg": "磁力链接未能识别出有效的媒体信息"}
                 media_info.site = "WEB"
                 media_info.enclosure = url
-                Downloader().download(media_info=media_info,
-                                      download_dir=dl_dir,
-                                      download_setting=dl_setting,
-                                      in_from=SearchType.WEB,
-                                      user_name=current_user.username)
+                _, ret, _, ret_msg = Downloader().download(media_info=media_info,
+                                                           download_dir=dl_dir,
+                                                           download_setting=dl_setting,
+                                                           in_from=SearchType.WEB,
+                                                           user_name=current_user.username)
+                if not ret:
+                    return {"code": -1, "msg": ret_msg or "添加下载失败"}
                 continue
             # 查询站点
             site_info = Sites().get_sites(siteurl=url)
@@ -714,12 +718,14 @@ class WebAction:
             if media_info:
                 media_info.site = "WEB"
             # 添加下载
-            Downloader().download(media_info=media_info,
-                                  download_dir=dl_dir,
-                                  download_setting=dl_setting,
-                                  torrent_file=file_path,
-                                  in_from=SearchType.WEB,
-                                  user_name=current_user.username)
+            _, ret, _, ret_msg = Downloader().download(media_info=media_info,
+                                                       download_dir=dl_dir,
+                                                       download_setting=dl_setting,
+                                                       torrent_file=file_path,
+                                                       in_from=SearchType.WEB,
+                                                       user_name=current_user.username)
+            if not ret:
+                return {"code": -1, "msg": ret_msg or "添加下载失败"}
 
         return {"code": 0, "msg": "添加下载完成！"}
 
