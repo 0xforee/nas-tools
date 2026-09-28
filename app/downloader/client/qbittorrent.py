@@ -237,9 +237,9 @@ class Qbittorrent(_IDownloadClient):
                                             tag=tag)
         return None if error else torrents or []
 
-    def remove_torrents_tag(self, ids, tag):
+    def remove_torrents_tag(self, tag):
         """
-        移除种子Tag
+        移除标签
 
         这里用的是 deleteTags（删除标签定义本身，会同时作用于所有带该标签的种子），
         而不是 removeTags（仅把标签从指定种子摘掉）——调用方传入的是添加下载时生成的
@@ -247,9 +247,7 @@ class Qbittorrent(_IDownloadClient):
         下载器的标签列表里，长期运行会不断累积。
 
         注意 torrent_hashes 并非 deleteTags 接受的参数，传了会被 qbittorrent-api
-        静默忽略（不报错但也不生效），故不再传入。也因此本实现不依赖 ids，
-        该参数保留仅为与调用方及其他下载器客户端保持一致。
-        :param ids: 种子Hash列表（本实现不使用）
+        静默忽略（不报错但也不生效），因此本方法不需要种子列表。
         :param tag: 标签内容
         """
         try:
@@ -413,11 +411,12 @@ class Qbittorrent(_IDownloadClient):
             time.sleep(5)
             torrent_id = self.__get_last_add_torrentid_by_tag(tag=tag,
                                                               status=status)
-            if torrent_id is None:
-                continue
-            else:
-                self.remove_torrents_tag(torrent_id, tag)
+            if torrent_id is not None:
                 break
+        # 无论是否找到种子都要清理临时标签：重试耗尽仍找不到时不清理的话，
+        # 标签定义会一直残留在下载器的标签列表里
+        if tag:
+            self.remove_torrents_tag(tag)
         return torrent_id
 
     @staticmethod
