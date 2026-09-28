@@ -185,6 +185,11 @@ class Qbittorrent(_IDownloadClient):
         if not self.qbc:
             return [], True
         try:
+            # qbittorrent-api 新版把 status_filter 当作单个过滤值处理（内部做集合判断），
+            # 直接传列表会抛 TypeError，这里统一归一化成字符串；与旧版库的
+            # _list2string(status, "|") 行为保持一致
+            if isinstance(status, (list, tuple, set)):
+                status = "|".join(str(item) for item in status if item is not None) or None
             torrents = self.qbc.torrents_info(torrent_hashes=ids,
                                               status_filter=status)
             if tag:
