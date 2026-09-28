@@ -240,11 +240,21 @@ class Qbittorrent(_IDownloadClient):
     def remove_torrents_tag(self, ids, tag):
         """
         移除种子Tag
-        :param ids: 种子Hash列表
+
+        这里用的是 deleteTags（删除标签定义本身，会同时作用于所有带该标签的种子），
+        而不是 removeTags（仅把标签从指定种子摘掉）——调用方传入的是添加下载时生成的
+        随机临时标签，删除定义才能把它清理干净；实测 removeTags 会把标签定义留在
+        下载器的标签列表里，长期运行会不断累积。
+
+        注意 torrent_hashes 并非 deleteTags 接受的参数，传了会被 qbittorrent-api
+        静默忽略（不报错但也不生效），故不再传入。也因此本实现不依赖 ids，
+        该参数保留仅为与调用方及其他下载器客户端保持一致。
+        :param ids: 种子Hash列表（本实现不使用）
         :param tag: 标签内容
         """
         try:
-            return self.qbc.torrents_delete_tags(torrent_hashes=ids, tags=tag)
+            self.qbc.torrents_delete_tags(tags=tag)
+            return True
         except Exception as err:
             log.error(f"【{self.client_name}】{self.name} 移除种子tag出错：{str(err)}")
             return False
