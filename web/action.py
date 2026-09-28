@@ -684,6 +684,19 @@ class WebAction:
         for url in urls:
             if not url:
                 continue
+            # 磁力链接自带info-hash，既不需要站点信息、也不需要先下载种子文件，直接交给下载器
+            if Torrent.is_magnet(url):
+                media_info = Media().get_media_info(title=Torrent.get_magnet_name(url) or url)
+                if not media_info:
+                    return {"code": -1, "msg": "磁力链接未能识别出有效的媒体信息"}
+                media_info.site = "WEB"
+                media_info.enclosure = url
+                Downloader().download(media_info=media_info,
+                                      download_dir=dl_dir,
+                                      download_setting=dl_setting,
+                                      in_from=SearchType.WEB,
+                                      user_name=current_user.username)
+                continue
             # 查询站点
             site_info = Sites().get_sites(siteurl=url)
             if not site_info:

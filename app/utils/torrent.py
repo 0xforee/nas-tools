@@ -4,7 +4,7 @@ import time
 import re
 import tempfile
 import hashlib
-from urllib.parse import quote, unquote, urlencode, urlparse
+from urllib.parse import parse_qs, quote, unquote, urlencode, urlparse
 
 import libtorrent
 try:
@@ -440,6 +440,16 @@ class Torrent:
         判断是否是磁力
         """
         return link.lower().startswith("magnet:?xt=urn:btih:")
+
+    @staticmethod
+    def get_magnet_name(link):
+        """
+        取磁力链接中的显示名（dn 参数），用于媒体识别；没有则返回None
+        """
+        if not link or not str(link).lower().startswith("magnet:"):
+            return None
+        names = parse_qs(urlparse(link).query).get("dn")
+        return names[0] if names else None
 
     @staticmethod        
     def maybe_torrent_url(link):
