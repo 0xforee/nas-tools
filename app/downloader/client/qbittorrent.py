@@ -1,6 +1,8 @@
+import json
 import os
 import re
 import time
+from collections.abc import Mapping
 from datetime import datetime
 
 import log
@@ -398,6 +400,60 @@ class Qbittorrent(_IDownloadClient):
                 break
         return torrent_id
 
+    @staticmethod
+    def __get_add_response_value(response, key):
+        """
+        从添加种子的返回体中读取字段，兼容普通字典与带 get 方法的映射对象
+        """
+        if isinstance(response, Mapping):
+            return response.get(key)
+        getter = getattr(response, "get", None)
+        if callable(getter):
+            try:
+                return getter(key)
+            except TypeError:
+                pass
+        return getattr(response, key, None)
+
+    def __parse_add_torrent_response(self, response):
+        """
+        解析添加种子的返回结果
+
+        qBittorrent 5.2.0（WebAPI 2.14.0）起 /torrents/add 的返回体由纯文本 "Ok."
+        改为 JSON：{"added_torrent_ids": [...], "failure_count": 0,
+        "pending_count": 0, "success_count": 1}
+        旧版 qbittorrent-api 不会解析该 JSON，会把原始响应字符串直接返回，因此这里需要
+        同时兼容纯文本、JSON 字符串和已解析的映射对象三种形态
+        """
+        if not response:
+            return False
+        # 旧版为纯文本 "Ok." / "Fails."
+        if isinstance(response, str):
+            if "Ok" in response:
+                return True
+            # 新版服务端搭配旧版客户端库时，字符串内容即为 JSON
+            try:
+                response = json.loads(response)
+            except (TypeError, ValueError):
+                return False
+            if not isinstance(response, Mapping):
+                return False
+        # 优先以实际入队的种子ID为准，其次看成功与待处理计数
+        added_torrent_ids = self.__get_add_response_value(response, "added_torrent_ids") or []
+        if not isinstance(added_torrent_ids, (list, tuple, set)):
+            try:
+                added_torrent_ids = list(added_torrent_ids)
+            except TypeError:
+                added_torrent_ids = [added_torrent_ids]
+        if any(added_torrent_ids):
+            return True
+        success_count = self.__get_add_response_value(response, "success_count") or 0
+        pending_count = self.__get_add_response_value(response, "pending_count") or 0
+        if success_count or pending_count:
+            return True
+        # 兜底：保留原有对纯文本 "Ok" 的判断
+        return "Ok" in str(response)
+
     def add_torrent(self,
                     content,
                     is_paused=False,
@@ -495,7 +551,7 @@ class Qbittorrent(_IDownloadClient):
                                             seeding_time_limit=seeding_time_limit,
                                             use_auto_torrent_management=is_auto,
                                             cookie=cookie)
-            return True if qbc_ret and str(qbc_ret).find("Ok") != -1 else False
+            return self.__parse_add_torrent_response(qbc_ret)
         except Exception as err:
             log.error(f"【{self.client_name}】{self.name} 添加种子出错：{str(err)}")
             return False
