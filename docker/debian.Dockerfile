@@ -1,4 +1,7 @@
-FROM python:3.10.11-slim-bullseye
+# Debian 11 (bullseye) LTS 已于 2026-08-31 结束，其安全源已下线，apt 装包必然失败；
+# 换成 Debian 12 (bookworm)（LTS 支持到 2028-06-30）。
+# 官方没有 3.10.11 的 bookworm 变体，最小可用是 3.10.12，这里取 3.10 系列最新补丁。
+FROM python:3.10.21-slim-bookworm
 COPY --from=shinsenter/s6-overlay / /
 RUN set -xe && \
     export DEBIAN_FRONTEND="noninteractive" && \
@@ -15,9 +18,7 @@ RUN set -xe && \
     ln -sf /usr/bin/chromedriver /usr/lib/chromium/chromedriver && \
     # Python settings
     update-alternatives --install /usr/bin/python python /usr/local/bin/python3.10 3 && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python3.9 2 && \
     update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.10 3 && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2 && \
     # Rclone
     curl https://rclone.org/install.sh | bash && \
     # Minio
