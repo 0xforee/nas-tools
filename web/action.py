@@ -610,7 +610,7 @@ class WebAction:
                                                     download_setting=dl_setting,
                                                     in_from=SearchType.WEB,
                                                     user_name=user_name)
-            if not ret:
+            if ret_msg:
                 return {"retcode": -1, "retmsg": ret_msg}
         return {"retcode": 0, "retmsg": ""}
 
@@ -646,8 +646,8 @@ class WebAction:
                                                 download_setting=dl_setting,
                                                 in_from=SearchType.WEB,
                                                 user_name=current_user.username)
-        if not ret:
-            return {"code": 1, "msg": ret_msg or "如连接正常，请检查下载任务是否存在"}
+        if ret_msg:
+            return {"code": 1, "msg": ret_msg}
         return {"code": 0, "msg": "下载成功"}
 
     @staticmethod
@@ -672,17 +672,34 @@ class WebAction:
             if media_info:
                 media_info.site = "WEB"
             # 添加下载
-            Downloader().download(media_info=media_info,
-                                  download_dir=dl_dir,
-                                  download_setting=dl_setting,
-                                  torrent_file=file_path,
-                                  in_from=SearchType.WEB,
-                                  user_name=current_user.username)
+            _, ret, _, ret_msg = Downloader().download(media_info=media_info,
+                                                       download_dir=dl_dir,
+                                                       download_setting=dl_setting,
+                                                       torrent_file=file_path,
+                                                       in_from=SearchType.WEB,
+                                                       user_name=current_user.username)
+            if ret_msg:
+                return {"code": -1, "msg": ret_msg}
         # 下载链接
         if urls and not isinstance(urls, list):
             urls = [urls]
         for url in urls:
             if not url:
+                continue
+            # 磁力链接自带info-hash，既不需要站点信息、也不需要先下载种子文件，直接交给下载器
+            if Torrent.is_magnet(url):
+                media_info = Media().get_media_info(title=Torrent.get_magnet_name(url) or url)
+                if not media_info:
+                    return {"code": -1, "msg": "磁力链接未能识别出有效的媒体信息"}
+                media_info.site = "WEB"
+                media_info.enclosure = url
+                _, ret, _, ret_msg = Downloader().download(media_info=media_info,
+                                                           download_dir=dl_dir,
+                                                           download_setting=dl_setting,
+                                                           in_from=SearchType.WEB,
+                                                           user_name=current_user.username)
+                if ret_msg:
+                    return {"code": -1, "msg": ret_msg}
                 continue
             # 查询站点
             site_info = Sites().get_sites(siteurl=url)
@@ -701,12 +718,14 @@ class WebAction:
             if media_info:
                 media_info.site = "WEB"
             # 添加下载
-            Downloader().download(media_info=media_info,
-                                  download_dir=dl_dir,
-                                  download_setting=dl_setting,
-                                  torrent_file=file_path,
-                                  in_from=SearchType.WEB,
-                                  user_name=current_user.username)
+            _, ret, _, ret_msg = Downloader().download(media_info=media_info,
+                                                       download_dir=dl_dir,
+                                                       download_setting=dl_setting,
+                                                       torrent_file=file_path,
+                                                       in_from=SearchType.WEB,
+                                                       user_name=current_user.username)
+            if ret_msg:
+                return {"code": -1, "msg": ret_msg}
 
         return {"code": 0, "msg": "添加下载完成！"}
 

@@ -1,0 +1,53 @@
+name: NAStool Tests
+
+# 只跑 qBittorrent 兼容性回归用例（tests/test_qbittorrent_compat.py）。
+#
+# 与 build-package.yml / build.yml 不同，这里不受 `paths: [version.py]` 限制：
+# 那两份 workflow 只在版本号变化时构建，改代码/改测试都不会触发，无法充当
+# 「修复被改回去」的防线。本 workflow 在源码或测试变动时就会跑。
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'app/**'
+      - 'web/**'
+      - 'tests/**'
+      - 'requirements.txt'
+      - '.github/workflows/test.yml'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  qbittorrent-compat:
+    runs-on: ubuntu-latest
+    name: qBittorrent compatibility tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Init Python 3.10.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10.11'
+          cache: 'pip'
+
+      - name: Install dependent packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: config/config.yaml 必须保持为配置模板
+        # 本地源码启动会把 api_key / 密码哈希写回配置文件。这里挡住「活配置被提交」——
+        # 一旦提交，构建产物（Docker 镜像 / EXE）就会带上真实密钥。
+        run: |
+          if grep -nE '^[[:space:]]*api_key:[[:space:]]*[^[:space:]]' config/config.yaml; then
+            echo "::error::config/config.yaml 的 api_key 非空，疑似本地运行过的活配置，请勿提交"
+            exit 1
+          fi
+
+      - name: Run regression tests
+        env:
+          # 被测模块在 import 期会读取配置，指向仓库内的模板即可（只读，不会改写它）
+          NASTOOL_CONFIG: ${{ github.workspace }}/config/config.yaml
+        run: |
+          python -m unittest tests.test_qbittorrent_compat -v

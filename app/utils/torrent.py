@@ -4,7 +4,7 @@ import time
 import re
 import tempfile
 import hashlib
-from urllib.parse import quote, unquote, urlencode, urlparse
+from urllib.parse import parse_qs, quote, unquote, urlencode, urlparse
 
 import libtorrent
 try:
@@ -40,7 +40,7 @@ class Torrent:
         """
         if not url:
             return None, None, "", [], "URL为空"
-        if url.startswith("magnet:"):
+        if Torrent.is_magnet(url):
             return None, url, "", [], f"{url} 为磁力链接"
         try:
             # 下载保存种子文件
@@ -78,7 +78,7 @@ class Torrent:
             ).get_res(url=url, allow_redirects=False)
         while req and req.status_code in [301, 302]:
             url = req.headers['Location']
-            if url and url.startswith("magnet:"):
+            if Torrent.is_magnet(url):
                 return None, url, f"获取到磁力链接：{url}"
             req = RequestUtils(
                 headers=ua,
@@ -90,7 +90,7 @@ class Torrent:
             if not req.content:
                 return None, None, "未下载到种子数据"
             # 解析内容格式
-            if req.text and str(req.text).startswith("magnet:"):
+            if Torrent.is_magnet(req.text):
                 # 磁力链接
                 return None, req.text, "磁力链接"
             elif req.text and "下载种子文件" in req.text:
@@ -437,9 +437,26 @@ class Torrent:
     @staticmethod
     def is_magnet(link):
         """
-        判断是否是磁力
+        判断是否是磁力链接
+
+        只按 magnet: 协议前缀判断（大小写不敏感），不约束参数顺序与 xt 的类型：
+        实际链接里 dn/tr/xt 的顺序并不固定，且 BT v2 用的是 urn:btmh: 而不是
+        urn:btih:，原先写死 "magnet:?xt=urn:btih:" 会把这两类都漏掉。链接本身
+        是否有效由下载器判定，这里只负责识别协议。
         """
-        return link.lower().startswith("magnet:?xt=urn:btih:")
+        if not link:
+            return False
+        return str(link).lower().startswith("magnet:")
+
+    @staticmethod
+    def get_magnet_name(link):
+        """
+        取磁力链接中的显示名（dn 参数），用于媒体识别；没有则返回None
+        """
+        if not Torrent.is_magnet(link):
+            return None
+        names = parse_qs(urlparse(link).query).get("dn")
+        return names[0] if names else None
 
     @staticmethod        
     def maybe_torrent_url(link):

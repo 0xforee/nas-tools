@@ -586,6 +586,8 @@ class ModuleConf(object):
                 "error": "暂停_发生错误",
                 "pausedDL": "暂停_下载未完成",
                 "pausedUP": "暂停_下载完成",
+                "stoppedDL": "暂停_下载未完成(qB5+)",
+                "stoppedUP": "暂停_下载完成(qB5+)",
                 "missingFiles": "暂停_文件丢失",
                 "checkingDL": "检查中_下载未完成",
                 "checkingUP": "检查中_下载完成",
