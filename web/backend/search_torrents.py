@@ -273,6 +273,10 @@ def search_media_by_message(input_str, in_from: SearchType, user_id, user_name=N
                                                title="%s 无法识别媒体信息！" % magnet_name,
                                                user_id=user_id)
                     return
+                # 先把识别到的媒体信息回给用户，再交给下载器
+                __send_media_info_msg(in_from=in_from,
+                                      media_info=meta_info,
+                                      user_id=user_id)
                 # 开始下载
                 meta_info.set_torrent_info(enclosure=input_str)
                 Downloader().download(media_info=meta_info,
@@ -304,6 +308,10 @@ def search_media_by_message(input_str, in_from: SearchType, user_id, user_name=N
                                            title="无法识别种子文件名！",
                                            user_id=user_id)
                 return
+            # 先把识别到的媒体信息回给用户，再交给下载器
+            __send_media_info_msg(in_from=in_from,
+                                  media_info=meta_info,
+                                  user_id=user_id)
             # 开始下载
             meta_info.set_torrent_info(enclosure=input_str)
             Downloader().download(media_info=meta_info,
@@ -478,6 +486,26 @@ def __search_media(in_from, media_info, user_id, user_name=None):
                     user_id=user_id,
                     state='R',
                     user_name=user_name)
+
+
+def __send_media_info_msg(in_from, media_info, user_id=None):
+    """
+    把识别到的媒体信息回给用户，与「搜索」流程看到的内容保持一致。
+
+    下载器自己发的通知（Message().send_download_message）只有标题、评分与下载参数，
+    没有简介、海报与 TMDB 详情页链接，且是广播给所有客户端的；这条是只回给发起人。
+
+    TMDB 没命中时 media_info.tmdb_info 为空字典，此时简介/海报/链接都取不到，
+    多发一条只会是一条空壳消息，所以直接不发 —— 下载照常进行。
+    """
+    if not media_info or not media_info.tmdb_info:
+        return
+    Message().send_channel_msg(channel=in_from,
+                               title=media_info.get_title_vote_string(),
+                               text=media_info.get_overview_string(),
+                               image=media_info.get_message_image(),
+                               url=media_info.get_detail_url(),
+                               user_id=user_id)
 
 
 def __rss_media(in_from, media_info, user_id=None, state='D', user_name=None):
