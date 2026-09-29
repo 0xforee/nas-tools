@@ -239,8 +239,10 @@ def search_media_by_message(input_str, in_from: SearchType, user_id, user_name=N
             # 订阅
             SEARCH_MEDIA_TYPE[user_id] = "SUBSCRIBE"
             input_str = re.sub(r"订阅[:：\s]*", "", input_str)
-        elif input_str.startswith("http"):
-            # 下载链接
+        elif input_str.startswith("http") or Torrent.is_magnet(input_str):
+            # 下载链接（http 种子链接或磁力链接）
+            # 磁链必须在这里判定：它的协议是 magnet: 而不是 http:，漏掉就会掉进下面的
+            # 「搜索」分支，把整条磁链当片名去查媒体信息，必然查不到并报「查询不到媒体信息！」
             SEARCH_MEDIA_TYPE[user_id] = "DOWNLOAD"
         elif OpenAiHelper().get_state() \
                 and not input_str.startswith("搜索") \
@@ -254,6 +256,30 @@ def search_media_by_message(input_str, in_from: SearchType, user_id, user_name=N
 
         # 下载链接
         if SEARCH_MEDIA_TYPE[user_id] == "DOWNLOAD":
+            # 磁力链接：自带 info-hash，DHT/tracker 即可取到元数据，
+            # 所以既不需要站点 Cookie、也不需要先把种子文件落盘 —— 这两步对它都是多余前置
+            # （对磁链调 save_torrent_file 只会失败并返回「无法打开链接」）。直接从 dn 识别媒体。
+            if Torrent.is_magnet(input_str):
+                magnet_name = Torrent.get_magnet_name(input_str)
+                if not magnet_name:
+                    Message().send_channel_msg(channel=in_from,
+                                               title="磁力链接中没有 dn 参数，无法识别媒体信息！",
+                                               user_id=user_id)
+                    return
+                # 识别
+                meta_info = Media().get_media_info(title=magnet_name)
+                if not meta_info:
+                    Message().send_channel_msg(channel=in_from,
+                                               title="%s 无法识别媒体信息！" % magnet_name,
+                                               user_id=user_id)
+                    return
+                # 开始下载
+                meta_info.set_torrent_info(enclosure=input_str)
+                Downloader().download(media_info=meta_info,
+                                      torrent_file=None,
+                                      in_from=in_from,
+                                      user_name=user_name)
+                return
             # 检查是不是有这个站点
             site_info = Sites().get_sites(siteurl=input_str)
             # 偿试下载种子文件
