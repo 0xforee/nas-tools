@@ -325,7 +325,7 @@ class Downloader:
                 __download_fail("下载链接为空")
                 return None, None, None, "下载链接为空"
             # 获取种子内容，磁力链不解析
-            if url.startswith("magnet:"):
+            if Torrent.is_magnet(url):
                 content = url
             else:
                 # 获取Cookie和ua等
