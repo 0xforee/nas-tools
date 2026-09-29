@@ -12,7 +12,7 @@ git
 inotify-tools
 locales
 musl-dev
-netcat
+netcat-openbsd
 procps
 redis
 sudo
