@@ -610,7 +610,7 @@ class WebAction:
                                                     download_setting=dl_setting,
                                                     in_from=SearchType.WEB,
                                                     user_name=user_name)
-            if not ret:
+            if ret_msg:
                 return {"retcode": -1, "retmsg": ret_msg}
         return {"retcode": 0, "retmsg": ""}
 
@@ -646,8 +646,8 @@ class WebAction:
                                                 download_setting=dl_setting,
                                                 in_from=SearchType.WEB,
                                                 user_name=current_user.username)
-        if not ret:
-            return {"code": 1, "msg": ret_msg or "如连接正常，请检查下载任务是否存在"}
+        if ret_msg:
+            return {"code": 1, "msg": ret_msg}
         return {"code": 0, "msg": "下载成功"}
 
     @staticmethod
@@ -678,8 +678,8 @@ class WebAction:
                                                        torrent_file=file_path,
                                                        in_from=SearchType.WEB,
                                                        user_name=current_user.username)
-            if not ret:
-                return {"code": -1, "msg": ret_msg or "添加下载失败"}
+            if ret_msg:
+                return {"code": -1, "msg": ret_msg}
         # 下载链接
         if urls and not isinstance(urls, list):
             urls = [urls]
@@ -698,8 +698,8 @@ class WebAction:
                                                            download_setting=dl_setting,
                                                            in_from=SearchType.WEB,
                                                            user_name=current_user.username)
-                if not ret:
-                    return {"code": -1, "msg": ret_msg or "添加下载失败"}
+                if ret_msg:
+                    return {"code": -1, "msg": ret_msg}
                 continue
             # 查询站点
             site_info = Sites().get_sites(siteurl=url)
@@ -724,8 +724,8 @@ class WebAction:
                                                        torrent_file=file_path,
                                                        in_from=SearchType.WEB,
                                                        user_name=current_user.username)
-            if not ret:
-                return {"code": -1, "msg": ret_msg or "添加下载失败"}
+            if ret_msg:
+                return {"code": -1, "msg": ret_msg}
 
         return {"code": 0, "msg": "添加下载完成！"}
 
