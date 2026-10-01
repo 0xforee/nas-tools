@@ -1,7 +1,9 @@
 import os
 import re
 import time
+from collections.abc import Mapping
 from datetime import datetime
+from typing import Any
 
 import log
 import qbittorrentapi
@@ -398,6 +400,40 @@ class Qbittorrent(_IDownloadClient):
                 break
         return torrent_id
 
+    @staticmethod
+    def __get_mapping_value(response: Any, key: str):
+        if isinstance(response, Mapping):
+            return response.get(key)
+        if hasattr(response, "get"):
+            try:
+                return response.get(key)
+            except TypeError:
+                pass
+        return getattr(response, key, None)
+
+    def __parse_add_torrent_response(self, response: Any) -> bool:
+        if not response:
+            return False
+        if isinstance(response, str):
+            return "Ok" in response
+
+        success_count = self.__get_mapping_value(response, "success_count") or 0
+        pending_count = self.__get_mapping_value(response, "pending_count") or 0
+        added_torrent_ids = self.__get_mapping_value(response, "added_torrent_ids") or []
+
+        if not isinstance(added_torrent_ids, list):
+            try:
+                added_torrent_ids = list(added_torrent_ids)
+            except TypeError:
+                added_torrent_ids = [added_torrent_ids]
+
+        added_torrent_ids = [str(torrent_id) for torrent_id in added_torrent_ids if torrent_id]
+        if added_torrent_ids:
+            return True
+        if success_count or pending_count:
+            return True
+        return "Ok" in str(response)
+
     def add_torrent(self,
                     content,
                     is_paused=False,
@@ -495,7 +531,7 @@ class Qbittorrent(_IDownloadClient):
                                             seeding_time_limit=seeding_time_limit,
                                             use_auto_torrent_management=is_auto,
                                             cookie=cookie)
-            return True if qbc_ret and str(qbc_ret).find("Ok") != -1 else False
+            return self.__parse_add_torrent_response(qbc_ret)
         except Exception as err:
             log.error(f"【{self.client_name}】{self.name} 添加种子出错：{str(err)}")
             return False
