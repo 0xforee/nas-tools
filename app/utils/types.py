@@ -1,5 +1,10 @@
 from enum import Enum
 
+# qBittorrent v5.0 (Web API v2.11.0) renamed paused states to stopped states.
+QB_PAUSED_DOWNLOAD_STATES = ("pausedDL", "stoppedDL")
+QB_PAUSED_UPLOAD_STATES = ("pausedUP", "stoppedUP")
+
+
 class MyMediaLibraryType(Enum):
     MINE = '我的媒体库'
     WATCHING = '正在观看'

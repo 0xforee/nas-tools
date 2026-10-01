@@ -15,7 +15,7 @@ from app.plugins.modules._base import _IPluginModule
 from app.plugins.modules.iyuu.iyuu_helper import IyuuHelper
 from app.sites import Sites
 from app.utils import RequestUtils
-from app.utils.types import DownloaderType
+from app.utils.types import DownloaderType, QB_PAUSED_UPLOAD_STATES
 from config import Config
 
 
@@ -739,7 +739,7 @@ class IYUUAutoSeed(_IPluginModule):
         判断种子是否可以做种并处于暂停状态
         """
         try:
-            return torrent.get("state") == "pausedUP" if dl_type == DownloaderType.QB \
+            return torrent.get("state") in QB_PAUSED_UPLOAD_STATES if dl_type == DownloaderType.QB \
                 else (torrent.status.stopped and torrent.percent_done == 1)
         except Exception as e:
             print(str(e))

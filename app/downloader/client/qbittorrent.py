@@ -1,7 +1,7 @@
+import json
 import os
 import re
 import time
-from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
@@ -9,7 +9,7 @@ import log
 import qbittorrentapi
 from app.downloader.client._base import _IDownloadClient
 from app.utils import ExceptionUtils, StringUtils
-from app.utils.types import DownloaderType
+from app.utils.types import DownloaderType, QB_PAUSED_DOWNLOAD_STATES
 
 
 class Qbittorrent(_IDownloadClient):
@@ -84,10 +84,13 @@ class Qbittorrent(_IDownloadClient):
                 qbt.auth_log_in()
                 self.ver = qbt.app_version()
             except qbittorrentapi.LoginFailed as e:
-                log.error(f"【{self.client_name}】{self.name} 登录出错：{str(e)}")
+                log.error(f"【{self.client_name}】{self.name} 登录失败：qBittorrent API 未返回 Ok.，请检查用户名、密码及 WebUI 地址和端口")
+                ExceptionUtils.exception_traceback(e)
+                return None
             return qbt
         except Exception as err:
-            log.error(f"【{self.client_name}】{self.name} 连接出错：{str(err)}")
+            log.error(f"【{self.client_name}】{self.name} 连接出错：{type(err).__name__}: {str(err)}")
+            ExceptionUtils.exception_traceback(err)
             return None
 
     def get_status(self):
@@ -212,7 +215,7 @@ class Qbittorrent(_IDownloadClient):
         """
         if not self.qbc:
             return None
-        torrents, error = self.get_torrents(status=["completed"], ids=ids, tag=tag)
+        torrents, error = self.get_torrents(status="completed", ids=ids, tag=tag)
         return None if error else torrents or []
 
     def get_downloading_torrents(self, ids=None, tag=None):
@@ -223,7 +226,7 @@ class Qbittorrent(_IDownloadClient):
         if not self.qbc:
             return None
         torrents, error = self.get_torrents(ids=ids,
-                                            status=["downloading"],
+                                            status="downloading",
                                             tag=tag)
         return None if error else torrents or []
 
@@ -400,26 +403,21 @@ class Qbittorrent(_IDownloadClient):
                 break
         return torrent_id
 
-    @staticmethod
-    def __get_mapping_value(response: Any, key: str):
-        if isinstance(response, Mapping):
-            return response.get(key)
-        if hasattr(response, "get"):
-            try:
-                return response.get(key)
-            except TypeError:
-                pass
-        return getattr(response, key, None)
-
     def __parse_add_torrent_response(self, response: Any) -> bool:
         if not response:
             return False
         if isinstance(response, str):
-            return "Ok" in response
+            try:
+                response = json.loads(response)
+            except json.JSONDecodeError:
+                return "Ok" in response
 
-        success_count = self.__get_mapping_value(response, "success_count") or 0
-        pending_count = self.__get_mapping_value(response, "pending_count") or 0
-        added_torrent_ids = self.__get_mapping_value(response, "added_torrent_ids") or []
+        if not hasattr(response, "get"):
+            return False
+
+        success_count = response.get("success_count") or 0
+        pending_count = response.get("pending_count") or 0
+        added_torrent_ids = response.get("added_torrent_ids") or []
 
         if not isinstance(added_torrent_ids, list):
             try:
@@ -432,7 +430,7 @@ class Qbittorrent(_IDownloadClient):
             return True
         if success_count or pending_count:
             return True
-        return "Ok" in str(response)
+        return False
 
     def add_torrent(self,
                     content,
@@ -540,6 +538,8 @@ class Qbittorrent(_IDownloadClient):
         if not self.qbc:
             return False
         try:
+            if self.__uses_start_stop_endpoints():
+                return self.qbc.torrents_start(torrent_hashes=ids)
             return self.qbc.torrents_resume(torrent_hashes=ids)
         except Exception as err:
             log.error(f"【{self.client_name}】{self.name} 开始下载出错：{str(err)}")
@@ -549,10 +549,16 @@ class Qbittorrent(_IDownloadClient):
         if not self.qbc:
             return False
         try:
+            if self.__uses_start_stop_endpoints():
+                return self.qbc.torrents_stop(torrent_hashes=ids)
             return self.qbc.torrents_pause(torrent_hashes=ids)
         except Exception as err:
             log.error(f"【{self.client_name}】{self.name} 停止下载出错：{str(err)}")
             return False
+
+    def __uses_start_stop_endpoints(self):
+        version_match = re.search(r"\d+", str(self.ver))
+        return bool(version_match and int(version_match.group()) >= 5)
 
     def delete_torrents(self, delete_file, ids):
         if not self.qbc:
@@ -642,7 +648,7 @@ class Qbittorrent(_IDownloadClient):
         for torrent in Torrents:
             # 进度
             progress = round(torrent.get('progress') * 100, 1)
-            if torrent.get('state') in ['pausedDL']:
+            if torrent.get('state') in QB_PAUSED_DOWNLOAD_STATES:
                 state = "Stoped"
                 speed = "已暂停"
             else:
