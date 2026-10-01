@@ -1,5 +1,5 @@
 import re
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 import log
 from app.mediaserver.client._base import _IMediaClient
@@ -65,15 +65,68 @@ class Jellyfin(_IMediaClient):
         """
         return True if self.get_medias_count() else False
 
+    def _get_auth_headers(self):
+        """构造 Jellyfin 新版 MediaBrowser 认证头。"""
+        return {
+            "Authorization": f'MediaBrowser Token="{self._apikey}", Client="NAStool", '
+                             'Device="NAStool", DeviceId="NAStool", Version="1.0.0"'
+        }
+
+    def _get_res(self, url, params=None):
+        """优先使用 Authorization 头；旧版服务器拒绝时再回退到 ApiKey 参数。"""
+        res = RequestUtils(headers=self._get_auth_headers()).get_res(url, params=params)
+        if res is not None and res.status_code == 401:
+            legacy_params = dict(params or {})
+            legacy_params["ApiKey"] = self._apikey
+            return RequestUtils().get_res(url, params=legacy_params)
+        return res
+
+    def _post_res(self, url, params=None, **kwargs):
+        """优先使用 Authorization 头；旧版服务器拒绝时再回退到 ApiKey 参数。"""
+        res = RequestUtils(headers=self._get_auth_headers()).post_res(url, params=params, **kwargs)
+        if res is not None and res.status_code == 401:
+            legacy_params = dict(params or {})
+            legacy_params["ApiKey"] = self._apikey
+            return RequestUtils().post_res(url, params=legacy_params, **kwargs)
+        return res
+
+    def is_jellyfin_image_url(self, url):
+        """判断图片 URL 是否指向配置的 Jellyfin 服务，以便中转时附加认证头。"""
+        if not url:
+            return False
+        parsed_url = urlsplit(url)
+        if parsed_url.scheme not in ("http", "https"):
+            return False
+        for host in (self._host, self._play_host):
+            if not host:
+                continue
+            parsed_host = urlsplit(host)
+            base_path = parsed_host.path.rstrip("/")
+            path_matches = not base_path or parsed_url.path == base_path or parsed_url.path.startswith(
+                f"{base_path}/")
+            if parsed_url.netloc.lower() == parsed_host.netloc.lower() and path_matches \
+                    and "/Items/" in parsed_url.path and "/Images/" in parsed_url.path:
+                return True
+        return False
+
+    def get_image_content(self, url):
+        """以 Jellyfin 认证头读取中转图片。"""
+        if not self.is_jellyfin_image_url(url):
+            return None
+        res = self._get_res(url)
+        if res is not None and res.status_code == 200:
+            return res.content
+        return None
+
     def __get_jellyfin_librarys(self):
         """
         获取Jellyfin媒体库的信息
         """
         if not self._host or not self._apikey:
             return []
-        req_url = f"{self._host}Users/{self._user}/Views?api_key={self._apikey}"
+        req_url = f"{self._host}Users/{self._user}/Views"
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url)
             if res:
                 return res.json().get("Items")
             else:
@@ -90,9 +143,9 @@ class Jellyfin(_IMediaClient):
         """
         if not self._host or not self._apikey:
             return 0
-        req_url = "%sUsers?api_key=%s" % (self._host, self._apikey)
+        req_url = "%sUsers" % self._host
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url)
             if res:
                 return len(res.json())
             else:
@@ -109,9 +162,9 @@ class Jellyfin(_IMediaClient):
         """
         if not self._host or not self._apikey:
             return None
-        req_url = "%sUsers?api_key=%s" % (self._host, self._apikey)
+        req_url = "%sUsers" % self._host
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url)
             if res:
                 users = res.json()
                 # 先查询是否有与当前用户名称匹配的
@@ -136,9 +189,9 @@ class Jellyfin(_IMediaClient):
         """
         if not self._host or not self._apikey:
             return None
-        req_url = "%sSystem/Info?api_key=%s" % (self._host, self._apikey)
+        req_url = "%sSystem/Info" % self._host
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url)
             if res:
                 return res.json().get("Id")
             else:
@@ -154,10 +207,10 @@ class Jellyfin(_IMediaClient):
         """
         if not self._host or not self._apikey:
             return []
-        req_url = "%sSystem/ActivityLog/Entries?api_key=%s&Limit=%s" % (self._host, self._apikey, num)
+        req_url = "%sSystem/ActivityLog/Entries?Limit=%s" % (self._host, num)
         ret_array = []
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url)
             if res:
                 ret_json = res.json()
                 items = ret_json.get('Items')
@@ -191,9 +244,9 @@ class Jellyfin(_IMediaClient):
         """
         if not self._host or not self._apikey:
             return None
-        req_url = "%sItems/Counts?api_key=%s" % (self._host, self._apikey)
+        req_url = "%sItems/Counts" % self._host
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url)
             if res:
                 return res.json()
             else:
@@ -210,10 +263,10 @@ class Jellyfin(_IMediaClient):
         """
         if not self._host or not self._apikey or not self._user:
             return None
-        req_url = "%sUsers/%s/Items?api_key=%s&searchTerm=%s&IncludeItemTypes=Series&Limit=10&Recursive=true" % (
-            self._host, self._user, self._apikey, name)
+        req_url = "%sUsers/%s/Items" % (self._host, self._user)
+        params = {"searchTerm": name, "IncludeItemTypes": "Series", "Limit": 10, "Recursive": "true"}
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url, params=params)
             if res:
                 res_items = res.json().get("Items")
                 if res_items:
@@ -236,10 +289,10 @@ class Jellyfin(_IMediaClient):
         """
         if not self._host or not self._apikey or not self._user:
             return None
-        req_url = "%sUsers/%s/Items?api_key=%s&searchTerm=%s&IncludeItemTypes=Movie&Limit=10&Recursive=true" % (
-            self._host, self._user, self._apikey, title)
+        req_url = "%sUsers/%s/Items" % (self._host, self._user)
+        params = {"searchTerm": title, "IncludeItemTypes": "Movie", "Limit": 10, "Recursive": "true"}
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url, params=params)
             if res:
                 res_items = res.json().get("Items")
                 if res_items:
@@ -287,10 +340,10 @@ class Jellyfin(_IMediaClient):
                     return []
         if not season:
             season = ""
-        req_url = "%sShows/%s/Episodes?season=%s&&userId=%s&isMissing=false&api_key=%s" % (
-            self._host, item_id, season, self._user, self._apikey)
+        req_url = "%sShows/%s/Episodes?season=%s&userId=%s&isMissing=false" % (
+            self._host, item_id, season, self._user)
         try:
-            res_json = RequestUtils().get_res(req_url)
+            res_json = self._get_res(req_url)
             if res_json:
                 res_items = res_json.json().get("Items")
                 exists_episodes = []
@@ -331,8 +384,8 @@ class Jellyfin(_IMediaClient):
 
     def get_episode_image_by_id(self, item_id, season_id, episode_id):
         """
-        根据itemid、season_id、episode_id从Emby查询图片地址
-        :param item_id: 在Emby中的ID
+        根据itemid、season_id、episode_id从Jellyfin查询图片地址
+        :param item_id: 在Jellyfin中的ID
         :param season_id: 季
         :param episode_id: 集
         :return: 图片对应在TMDB中的URL
@@ -340,10 +393,10 @@ class Jellyfin(_IMediaClient):
         if not self._host or not self._apikey or not self._user:
             return None
         # 查询所有剧集
-        req_url = "%sShows/%s/Episodes?season=%s&&userId=%s&isMissing=false&api_key=%s" % (
-            self._host, item_id, season_id, self._user, self._apikey)
+        req_url = "%sShows/%s/Episodes?season=%s&userId=%s&isMissing=false" % (
+            self._host, item_id, season_id, self._user)
         try:
-            res_json = RequestUtils().get_res(req_url)
+            res_json = self._get_res(req_url)
             if res_json:
                 res_items = res_json.json().get("Items")
                 for res_item in res_items:
@@ -354,8 +407,9 @@ class Jellyfin(_IMediaClient):
                         # 没查到tmdb图片则判断播放地址是不是外网，使用jellyfin刮削的图片（直接挂载网盘场景）
                         if not img_url and not IpUtils.is_internal(self._play_host) \
                                 and res_item.get('ImageTags', {}).get('Primary'):
-                            return "%sItems/%s/Images/Primary?maxHeight=225&maxWidth=400&tag=%s&quality=90" % (
+                            image_url = "%sItems/%s/Images/Primary?maxHeight=225&maxWidth=400&tag=%s&quality=90" % (
                                 self._play_host, res_item.get("Id"), res_item.get('ImageTags', {}).get('Primary'))
+                            return self.get_nt_image_url(url=image_url, remote=True)
                         return img_url
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
@@ -365,15 +419,15 @@ class Jellyfin(_IMediaClient):
     def get_remote_image_by_id(self, item_id, image_type):
         """
         根据ItemId从Jellyfin查询TMDB图片地址
-        :param item_id: 在Emby中的ID
+        :param item_id: 在Jellyfin中的ID
         :param image_type: 图片的类弄地，poster或者backdrop等
         :return: 图片对应在TMDB中的URL
         """
         if not self._host or not self._apikey:
             return None
-        req_url = "%sItems/%s/RemoteImages?api_key=%s" % (self._host, item_id, self._apikey)
+        req_url = "%sItems/%s/RemoteImages" % (self._host, item_id)
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url)
             if res:
                 images = res.json().get("Images")
                 for image in images:
@@ -391,23 +445,15 @@ class Jellyfin(_IMediaClient):
     def get_local_image_by_id(self, item_id, remote=True, inner=False):
         """
         根据ItemId从媒体服务器查询有声书图片地址
-        :param: item_id: 在Emby中的ID
+        :param: item_id: 在Jellyfin中的ID
         :param: remote 是否远程使用，TG微信等客户端调用应为True
-        :param: inner 是否NT内部调用，为True是会使用NT中转
+        :param: inner 兼容保留；Jellyfin 图片统一通过NT中转
         """
         if not self._host or not self._apikey:
             return None
-        if not remote:
-            image_url = "%sItems/%s/Images/Primary" % (self._host, item_id)
-            if inner:
-                return self.get_nt_image_url(image_url)
-            return image_url
-        else:
-            host = self._play_host or self._host
-            image_url = "%sItems/%s/Images/Primary" % (host, item_id)
-            if IpUtils.is_internal(host):
-                return self.get_nt_image_url(url=image_url, remote=True)
-            return image_url
+        host = (self._play_host or self._host) if remote else self._host
+        image_url = "%sItems/%s/Images/Primary" % (host, item_id)
+        return self.get_nt_image_url(url=image_url, remote=remote)
 
     def refresh_root_library(self):
         """
@@ -415,9 +461,9 @@ class Jellyfin(_IMediaClient):
         """
         if not self._host or not self._apikey:
             return False
-        req_url = "%sLibrary/Refresh?api_key=%s" % (self._host, self._apikey)
+        req_url = "%sLibrary/Refresh" % self._host
         try:
-            res = RequestUtils().post_res(req_url)
+            res = self._post_res(req_url)
             if res:
                 return True
             else:
@@ -473,28 +519,18 @@ class Jellyfin(_IMediaClient):
     def __get_backdrop_url(self, item_id, image_tag, remote=True, inner=False):
         """
         获取Backdrop图片地址
-        :param: item_id: 在Emby中的ID
+        :param: item_id: 在Jellyfin中的ID
         :param: image_tag: 图片的tag
         :param: remote 是否远程使用，TG微信等客户端调用应为True
-        :param: inner 是否NT内部调用，为True是会使用NT中转
+        :param: inner 兼容保留；Jellyfin 图片统一通过NT中转
         """
         if not self._host or not self._apikey:
             return ""
         if not image_tag or not item_id:
             return ""
-        if not remote:
-            image_url = f"{self._host}Items/{item_id}/" \
-                        f"Images/Backdrop?tag={image_tag}&fillWidth=666&api_key={self._apikey}"
-            if inner:
-                return self.get_nt_image_url(image_url)
-            return image_url
-        else:
-            host = self._play_host or self._host
-            image_url = f"{host}Items/{item_id}/" \
-                        f"Images/Backdrop?tag={image_tag}&fillWidth=666&api_key={self._apikey}"
-            if IpUtils.is_internal(host):
-                return self.get_nt_image_url(url=image_url, remote=True)
-            return image_url
+        host = (self._play_host or self._host) if remote else self._host
+        image_url = f"{host}Items/{item_id}/Images/Backdrop?tag={image_tag}&fillWidth=666"
+        return self.get_nt_image_url(url=image_url, remote=remote)
 
     def get_iteminfo(self, itemid):
         """
@@ -504,10 +540,9 @@ class Jellyfin(_IMediaClient):
             return {}
         if not self._host or not self._apikey:
             return {}
-        req_url = "%sUsers/%s/Items/%s?api_key=%s" % (
-            self._host, self._user, itemid, self._apikey)
+        req_url = "%sUsers/%s/Items/%s" % (self._host, self._user, itemid)
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url)
             if res and res.status_code == 200:
                 return res.json()
         except Exception as e:
@@ -522,9 +557,9 @@ class Jellyfin(_IMediaClient):
             yield {}
         if not self._host or not self._apikey:
             yield {}
-        req_url = "%sUsers/%s/Items?parentId=%s&api_key=%s" % (self._host, self._user, parent, self._apikey)
+        req_url = "%sUsers/%s/Items?parentId=%s" % (self._host, self._user, parent)
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url)
             if res and res.status_code == 200:
                 results = res.json().get("Items") or []
                 for result in results:
@@ -564,9 +599,9 @@ class Jellyfin(_IMediaClient):
         if not self._host or not self._apikey:
             return []
         playing_sessions = []
-        req_url = "%sSessions?api_key=%s" % (self._host, self._apikey)
+        req_url = "%sSessions" % self._host
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url)
             if res and res.status_code == 200:
                 sessions = res.json()
                 for session in sessions:
@@ -594,9 +629,9 @@ class Jellyfin(_IMediaClient):
         """
         if not self._host or not self._apikey:
             return None
-        req_url = f"{self._host}Users/{self._user}/Items/Resume?Limit={num}&MediaTypes=Video&api_key={self._apikey}"
+        req_url = f"{self._host}Users/{self._user}/Items/Resume?Limit={num}&MediaTypes=Video"
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url)
             if res:
                 result = res.json().get("Items") or []
                 ret_resume = []
@@ -641,9 +676,9 @@ class Jellyfin(_IMediaClient):
         """
         if not self._host or not self._apikey:
             return None
-        req_url = f"{self._host}Users/{self._user}/Items/Latest?Limit={num}&MediaTypes=Video&api_key={self._apikey}"
+        req_url = f"{self._host}Users/{self._user}/Items/Latest?Limit={num}&MediaTypes=Video"
         try:
-            res = RequestUtils().get_res(req_url)
+            res = self._get_res(req_url)
             if res:
                 result = res.json() or []
                 ret_latest = []

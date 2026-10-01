@@ -1777,7 +1777,17 @@ def Img():
     
     # 获取图片数据
     try:
-      img = WebUtils.request_cache(url)
+      if (Config().get_config('media') or {}).get('media_server') == 'jellyfin' \
+              and "/Items/" in url and "/Images/" in url:
+          media_server = MediaServer().server
+          if media_server and media_server.is_jellyfin_image_url(url):
+              img = media_server.get_image_content(url)
+              if img is None:
+                  raise Exception("Jellyfin 图片请求失败")
+          else:
+              img = WebUtils.request_cache(url)
+      else:
+          img = WebUtils.request_cache(url)
       response = Response(
           img,
           mimetype='image/jpeg'
